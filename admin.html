@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Manage GCs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Admin Panel - GC Configuration</h1>
+    <form id="gc-form">
+        <label for="gc-name">GC Name:</label>
+        <input type="text" id="gc-name" placeholder="Enter GC Name" required>
+        
+        <label for="gc-runtime">Run Time (minutes):</label>
+        <input type="number" id="gc-runtime" placeholder="Enter Run Time" required>
+
+        <button type="submit">Add/Update GC</button>
+    </form>
+
+    <h2>Existing GCs</h2>
+    <ul id="gc-list"></ul>
+
+    <script src="admin.js"></script>
+</body>
+</html>

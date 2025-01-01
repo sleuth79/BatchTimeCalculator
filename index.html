@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Time Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Batch Time Calculator</h1>
+    <form id="batch-form">
+        <label for="gc-type">Select GC:</label>
+        <select id="gc-type">
+            <option value="">-- Select a GC --</option>
+        </select>
+
+        <label for="position">Sample Position:</label>
+        <select id="position" required>
+            <option value="full-batch">Full Batch</option>
+            <option value="">-- Select a Position --</option>
+        </select>
+
+        <label for="wait-time">15-Minute Wait Before Blanks:</label>
+        <select id="wait-time" required>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select>
+
+        <label for="start-time">Start Time:</label>
+        <input type="time" id="start-time" required>
+
+        <button type="submit">Calculate End Time</button>
+    </form>
+
+    <h2>Results</h2>
+    <table id="results-table">
+        <thead>
+            <tr>
+                <th>Sample Position</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script src="app.js"></script>
+</body>
+</html>
