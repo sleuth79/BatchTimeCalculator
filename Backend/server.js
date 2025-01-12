@@ -29,5 +29,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../Frontend/index.html'));
 });
 
-// Start the server
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+// Start the server and bind it to 0.0.0.0
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running at http://localhost:${PORT}`));
+
