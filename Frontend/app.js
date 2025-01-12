@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nonStandardResults = document.getElementById("non-standard-results");
 
     // Fetch GC configurations from the backend
-    fetch("http://localhost:3000/api/gc-config")
+    fetch("http://localhost:10000/api/gc-config")
         .then(response => {
             if (!response.ok) {
                 throw new Error("Failed to fetch GC configurations");
