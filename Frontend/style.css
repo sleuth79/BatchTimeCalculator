@@ -1,0 +1,278 @@
+/* General Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 10px; /* Reduced margin for closer spacing */
+    line-height: 1.5; /* Improved readability */
+    text-align: left; /* Ensure all content is aligned to the left */
+}
+
+/* Button Styling */
+button {
+    background-color: blue;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 5px;
+    font-size: 1rem;
+    padding: 8px 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: darkblue;
+}
+
+/* Heading Styles */
+h1 {
+    font-size: 1.4rem; /* Uniform font size for the heading */
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 1rem; /* Match font size with other form labels */
+    font-weight: bold; /* Keep the bold styling */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove any padding */
+    line-height: 1.5; /* Ensure consistent line spacing */
+    text-align: left; /* Align the text to the left */
+}
+
+/* Form Styling */
+form {
+    margin-bottom: 20px;
+    max-width: 400px; /* Limit form width */
+    text-align: left; /* Align form content to the left */
+}
+
+/* Label Styling */
+label {
+    font-size: 1rem; /* Unified label font size */
+    font-weight: bold; /* Unified label font weight */
+    display: block;
+    margin-bottom: 5px; /* Consistent spacing below labels */
+    text-align: left;
+}
+
+/* Specific Styling for Wait Time Section Label */
+#wait-time-section > label {
+    font-size: 0.75rem !important; /* Slightly smaller font size */
+    font-weight: bold !important; /* Remove bold styling */
+    margin-bottom: 3px !important; /* Reduce spacing below the label */
+}
+
+/* Input, Select, and Button Styling */
+select, input[type="time"], input[type="number"], button {
+    font-size: 1rem; /* Consistent input font size */
+    padding: 6px 10px;
+    margin-bottom: 10px; /* Uniform vertical spacing */
+    width: 100%; /* Full width */
+    max-width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+/* Radio Button Group Styling */
+.radio-group {
+    display: flex; /* Arrange radio buttons in a horizontal row */
+    align-items: center; /* Align buttons and labels vertically */
+    gap: 8px; /* Reduce space between each radio button */
+    margin-bottom: 5px; /* Reduce spacing below the group */
+}
+
+/* Individual Radio Button Labels */
+.radio-group label {
+    margin-bottom: 0; /* Remove default vertical margin */
+    font-size: 0.7rem; /* Slightly smaller text size */
+    font-weight: normal; /* Consistent label weight */
+}
+
+/* Start Time Section */
+#start-time-section {
+    margin-top: 0px; /* Ensure no extra space above */
+    margin-bottom: 10px; /* Consistent spacing below */
+    padding: 0; /* Ensure no extra padding is added */
+}
+
+#start-time-section label {
+    font-size: 1rem; /* Match label font size to others */
+    font-weight: bold; /* Match label font weight to others */
+    margin-bottom: 5px; /* Spacing below Start Time label */
+}
+
+#start-time-section input[type="time"] {
+    font-size: 1rem !important; /* Ensure consistent font size */
+    padding: 6px 10px; /* Ensure consistent padding */
+    width: 100%; /* Full width like other inputs */
+    max-width: 300px; /* Ensure consistent width */
+    border: 1px solid #ddd; /* Add border for consistency */
+    border-radius: 5px; /* Match other inputs */
+    box-sizing: border-box;
+    -webkit-appearance: none; /* Remove native browser styling */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+#results {
+    position: relative; /* Ensure it does not interfere with fixed elements */
+    margin-top: 0; /* Remove all space above the section */
+    padding: 2px 6px; /* Keep reduced padding for a tighter look */
+    border: 1px solid red; /* Debugging border */
+    background-color: #f9f9f9; /* Light background for contrast */
+    border-radius: 5px; /* Rounded corners */
+    text-align: left; /* Align text */
+    font-size: 1rem; /* Consistent font size */
+    line-height: 1; /* Tighten the spacing between lines further */
+}
+
+#results p, #results h3 {
+    margin: 0.1; /* Remove all margin for paragraphs and headers */
+    padding: 0; /* Remove any padding */
+}
+
+/* Config Button Container */
+#config-button-container {
+    position: fixed; /* Fixes container to the viewport */
+    top: 0;
+    right: 0;
+    z-index: 1000; /* Keeps it above other elements */
+    width: 100%; /* Optional: Ensures it spans full width */
+    pointer-events: none; /* Prevent interactions with the container */
+}
+
+/* Config Button Styling */
+.config-button {
+    position: fixed; /* Keep the button fixed to the viewport */
+    top: 20px; /* Distance from the top of the viewport */
+    right: 20px; /* Distance from the right of the viewport */
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+    z-index: 9999; /* Ensure it's always above all other elements */
+}
+
+.config-button:hover {
+    background-color: #0056b3;
+}
+
+/* Table Styling for Run Details */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #fff; /* Ensure table has a white background */
+}
+
+th, td {
+    border: 1px solid #ddd; /* Add border to cells */
+    padding: 8px;
+    text-align: left; /* Align text to the left */
+    font-size: 1rem; /* Ensure consistent font size */
+}
+
+th {
+    background-color: #f4f4f4; /* Light gray background for headers */
+    font-weight: bold; /* Bold font for headers */
+}
+
+/* Adjust Table Styling */
+#config-table th, #config-table td {
+    padding: 2px 15px; /* Increased padding for a more compact table */
+    font-size: 1rem; /* Slightly larger font size */
+    text-align: center; /* Center-align the text in cells */
+}
+
+#config-table td {
+    vertical-align: middle; /* Vertically align content in cells */
+    width: 150px; /* Set a minimum width for cells */
+}
+
+/* Adjust Input Fields */
+input[type="text"], input[type="number"] {
+    font-size: 1rem; /* Maintain consistent font size */
+    padding: 5px 12px; /* Increase padding for better height */
+    width: 100%; /* Full width to match the table columns */
+    box-sizing: border-box; /* Include padding and border in width calculation */
+    min-height: 25px; /* Ensure the input fields are tall enough */
+}
+
+/* Make the config button container slim as well */
+.config-button {
+    padding: 8px 16px; /* Slightly smaller padding */
+    font-size: 0.9rem; /* Slightly smaller text for the button */
+}
+
+/* Responsive Layout */
+@media screen and (max-width: 768px) {
+    select, input[type="time"], input[type="number"], button {
+        width: 100%; /* Full width for smaller screens */
+    }
+
+    form {
+        max-width: 100%;
+    }
+
+    .radio-group {
+        flex-wrap: wrap; /* Allow wrapping of radio buttons on smaller screens */
+        gap: 10px; /* Adjust spacing for smaller screens */
+    }
+
+    table {
+        font-size: 0.9rem; /* Reduce table font size for smaller screens */
+    }
+}
+
+/* Hidden Class for Misc Mode and Wait Time */
+.hidden {
+    display: none;
+}
+
+/* Navigation Bar Styling */
+#nav-bar {
+    background-color: #f8f9fa; /* Light gray background */
+    border-bottom: 1px solid #ddd; /* Subtle border for separation */
+    padding: 10px 0;
+    margin-bottom: 20px;
+}
+
+#nav-bar ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-around; /* Evenly spaced items */
+    margin: 0;
+    padding: 0;
+}
+
+#nav-bar li {
+    margin: 0;
+}
+
+#nav-bar a {
+    text-decoration: none;
+    color: #007bff; /* Blue color for links */
+    font-weight: bold;
+    padding: 5px 10px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+#nav-bar a:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
+
+/* Highlight active tab */
+#nav-bar a.active {
+    color: white; /* White text for the active tab */
+    background-color: #007bff; /* Blue background for active tab */
+    border-radius: 5px; /* Add rounded corners */
+}
