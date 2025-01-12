@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Batch Time Calculator</h1>
+
+    <!-- Navigation Bar -->
+    <nav id="nav-bar">
+        <ul>
+            <li><a href="#" id="standard-batch" class="nav-item">Standard Batch Mode</a></li>
+            <li><a href="#" id="time-delay" class="nav-item">Time Delay Calculator</a></li>
+            <li><a href="#" id="misc-batch" class="nav-item">Non-Standard Batch Mode</a></li>
+            <li><a href="#" id="config" class="nav-item">Config</a></li>
+        </ul>
+    </nav>
+
+    <!-- Standard Batch Content -->
+    <div id="standard-batch-content" class="content-section">
+        <form id="batch-form">
+            <!-- GC Type Dropdown -->
+            <label for="gc-type">Select GC:</label>
+            <select id="gc-type">
+                <option value="">--Select a GC--</option>
+            </select>
+
+            <!-- Batch Position Dropdown -->
+            <label for="batch-position">Select Final Position:</label>
+            <select id="batch-position">
+                <!-- Options will be populated dynamically via JS -->
+            </select>
+
+            <!-- Wait Time Section -->
+            <div id="wait-time-section" class="hidden">
+                <label>15 Minute Wait Time:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="wait-time" value="yes" checked> Yes</label>
+                    <label><input type="radio" name="wait-time" value="no"> No</label>
+                </div>
+            </div>
+
+            <!-- Start Time Input -->
+            <label for="start-time">Start Time:</label>
+            <input type="time" id="start-time" required>
+
+            <!-- Submit Button -->
+            <button type="submit">Calculate</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results"></div>
+    </div>
+
+    <!-- Time Delay Content -->
+    <div id="time-delay-content" class="content-section" style="display: none;">
+        <h2>Time Delay Calculator</h2>
+
+        <!-- GC Type Dropdown -->
+        <form id="time-delay-form">
+            <label for="gc-type-time-delay">Select GC:</label>
+            <select id="gc-type-time-delay">
+                <option value="">--Select a GC--</option>
+                <!-- Options can be dynamically populated via JS -->
+            </select>
+
+            <!-- Additional content for Time Delay Calculator can be added here -->
+        </form>
+
+        <!-- Results Section -->
+        <div id="time-delay-results"></div>
+    </div>
+
+    <!-- Non-Standard Batch Content -->
+    <div id="misc-batch-content" class="content-section" style="display: none;">
+        <form id="non-standard-batch-form">
+            <!-- GC Type Dropdown -->
+            <label for="gc-type-non-standard">Select GC:</label>
+            <select id="gc-type-non-standard">
+                <option value="">--Select a GC--</option>
+            </select>
+
+            <!-- Number of Runs Input -->
+            <label for="number-of-runs">Number of Runs:</label>
+            <input type="number" id="number-of-runs" min="1" placeholder="Enter number of runs">
+
+            <!-- Start Time Input -->
+            <label for="start-time-non-standard">Start Time:</label>
+            <input type="time" id="start-time-non-standard" required>
+
+            <!-- Submit Button -->
+            <button type="submit" id="calculate-non-standard">Calculate</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="non-standard-results"></div>
+    </div>
+
+    <!-- Config Content -->
+    <div id="config-content" class="content-section" style="display: none;">
+        <h2>GC Configuration</h2>
+    
+        <!-- Editable Table for Configurations -->
+        <table id="config-table">
+            <thead>
+                <tr>
+                    <th>GC Name (Current)</th>
+                    <th>GC Name (New)</th>
+                    <th>Run Time (Current)</th>
+                    <th>Run Time (New)</th>
+                </tr>
+            </thead>
+            <tbody id="config-list">
+                <tr>
+                    <td>1708</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>18.91</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+                <tr>
+                    <td>2024</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>25.50</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+                <tr>
+                    <td>2181</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>30.93</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+                <tr>
+                    <td>1709</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>15.88</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+                <tr>
+                    <td>1772</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>15.47</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+                <tr>
+                    <td>2180</td>
+                    <td><input type="text" placeholder="Enter GC Name"></td>
+                    <td>15.00</td>
+                    <td><input type="number" placeholder="Enter Run Time" class="run-time-input" step="0.01" min="0" required></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Save Changes Button -->
+        <button id="save-changes-btn">Save Changes</button>
+    </div>
+
+    <script src="app.js"></script>
+
+    <!-- Script to highlight active tab -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navItems.forEach((item, index) => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    // Remove active class from all nav items and hide all sections
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    contentSections.forEach(section => section.style.display = 'none');
+
+                    // Add active class to clicked nav item and show corresponding section
+                    item.classList.add('active');
+                    contentSections[index].style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
