@@ -1,6 +1,10 @@
 function isLocalhost() {
     return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  }
+}
+
+const baseURL = isLocalhost()
+    ? 'http://localhost:10000'
+    : 'https://batch-time-calculator.onrender.com';
 
 document.addEventListener("DOMContentLoaded", () => {
     // Tab management: Mapping tab IDs to their corresponding content sections
@@ -53,9 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const nonStandardResults = document.getElementById("non-standard-results");
 
     // Fetch GC configurations from the backend
-    const baseURL = isLocalhost()
-        ? 'http://localhost:10000'
-        : 'https://batch-time-calculator.onrender.com'
 
         fetch(`${baseURL}/api/gc-config`)
         .then(response => {
@@ -165,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Perform Non-Standard Batch Calculations
     function performNonStandardCalculations(gcType, numberOfRuns, startTime) {
-        fetch("http://localhost:3000/api/gc-config")
+        fetch(`${baseURL}/api/gc-config`)
             .then(response => response.json())
             .then(data => {
                 const gcDetails = data[gcType];
@@ -221,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function performCalculations(gcType, startTime, batchPosition, waitTime = "no") {
-    fetch("http://localhost:10000/api/gc-config")
+    fetch(`${baseURL}/api/gc-config`)
         .then(response => response.json())
         .then(data => {
             const gcDetails = data[gcType];
