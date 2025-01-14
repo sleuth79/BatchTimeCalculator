@@ -4,8 +4,8 @@
   "description": "Batch Time Calculator application",
   "main": "Backend/server.js",
   "scripts": {
-    "start": "node Backend/server.js",
-    "dev": "nodemon Backend/server.js"
+    "start": "node Server/server.js",
+    "dev": "nodemon Server/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
