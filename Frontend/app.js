@@ -49,7 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const nonStandardResults = document.getElementById("non-standard-results");
 
     // Fetch GC configurations from the backend
-    fetch(`${process.env.RENDER_URL || 'http://localhost:10000'}/api/gc-config`)
+    const baseURL = process.env.NODE_ENV === "production"
+        ? 'https://batch-time-calculator.onrender.com'
+        : 'http://localhost:10000';
+
+    fetch(`${baseUrl}/api/gc-config`)
         .then(response => {
             if (!response.ok) {
                 throw new Error("Failed to fetch GC configurations");
