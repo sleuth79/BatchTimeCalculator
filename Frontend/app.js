@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Object.keys(data).forEach(gcKey => {
                     const gc = data[gcKey];
                     const optionTimeDelay = document.createElement("option");
-                    optionTimeDelay.value = "gcKey";
+                    optionTimeDelay.value = gcKey;
                     optionTimeDelay.textContent = `${gc.name} (${gc.runTime} mins)`; // Corrected string interpolation
                     gcTypeTimeDelayDropdown.appendChild(optionTimeDelay);
                 });
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function performCalculations(gcType, startTime, batchPosition, waitTime = "no") {
-    fetch("http://localhost:3000/api/gc-config")
+    fetch("http://localhost:10000/api/gc-config")
         .then(response => response.json())
         .then(data => {
             const gcDetails = data[gcType];
