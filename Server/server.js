@@ -11,13 +11,14 @@ app.use(express.json());
 
 // Endpoint to fetch GC configurations
 app.get('/api/gc-config', (req, res) => {
-    const dataPath = path.join(__dirname, './data/gc_config.json'); // Correct path here
+    const dataPath = path.join(__dirname, 'data', 'gc_config.json'); 
+
     try {
-        const data = fs.readFileSync(dataPath, 'utf8'); // Read JSON file safely
-        res.json(JSON.parse(data)); // Parse and send JSON response
+        const data = fs.readFileSync(dataPath, 'utf8'); 
+        res.json(JSON.parse(data)); // Parse and send JSON response 
     } catch (error) {
         console.error('Error reading gc_config.json:', error.message);
-        res.status(500).json({ error: 'Failed to read configuration file' });
+        res.status(500).json({ error: 'Failed to read configuration file' }); 
     }
 });
 
