@@ -1,3 +1,7 @@
+function isLocalhost() {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+
 document.addEventListener("DOMContentLoaded", () => {
     // Tab management: Mapping tab IDs to their corresponding content sections
     const tabs = {
@@ -49,11 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const nonStandardResults = document.getElementById("non-standard-results");
 
     // Fetch GC configurations from the backend
-    const baseURL = process.env.NODE_ENV === "production"
-        ? 'https://batch-time-calculator.onrender.com'
-        : 'http://localhost:10000';
+    const baseURL = isLocalhost()
+        ? 'http://localhost:10000'
+        : 'https://batch-time-calculator.onrender.com'
 
-    fetch(`${baseUrl}/api/gc-config`)
+        fetch(`${baseURL}/api/gc-config`)
         .then(response => {
             if (!response.ok) {
                 throw new Error("Failed to fetch GC configurations");
