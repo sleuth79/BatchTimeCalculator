@@ -59,10 +59,7 @@ export default {
     };
 
     // Determine API endpoint (local vs Netlify function)
-    const API_URL =
-      window.location.hostname === "localhost"
-        ? "/data/gc_config.json"
-        : "/.netlify/functions/update-config";
+    const API_URL = "/data/gc_config.json"
 
     // Fetch Configuration with cache busting
     const fetchConfig = async () => {
