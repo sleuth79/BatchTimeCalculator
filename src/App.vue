@@ -14,7 +14,7 @@
 import { computed, onMounted } from 'vue';
 import { useGcStore } from './store';
 import ConfigSection from './components/ConfigSection.vue';
-import ConfigWindow from './components/Configwindow.vue';
+import ConfigWindow from './components/ConfigWindow.vue';
 import ResultsDisplay from './components/ResultsDisplay.vue';
 
 export default {
