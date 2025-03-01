@@ -508,11 +508,17 @@ export default {
 </script>
 
 <style scoped>
-.main-heading {
-  font-size: 1.3rem;
+/* Unified Heading Styles for all headings */
+.main-heading,
+.batch-label,
+.delayed-runs-heading {
+  font-size: 1.3rem !important;
   margin-top: 0.5rem !important;
   margin-bottom: 10px;
+  font-weight: bold;
 }
+
+/* The rest of your styles */
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
@@ -527,6 +533,7 @@ export default {
   margin-bottom: 10px;
 }
 .additional-runs-input label {
+  /* Removed font-size so it inherits unified style */
   font-weight: bold;
   white-space: nowrap;
 }
@@ -541,11 +548,6 @@ export default {
 }
 .delayed-runs-section {
   margin-top: 10px;
-}
-.delayed-runs-heading {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
 }
 .delayed-runs-inputs {
   display: flex;
@@ -586,11 +588,5 @@ label {
 }
 .highlight-green {
   color: var(--highlight-color);
-}
-.delayed-runs-heading {
-  display: block;
-  margin-top: -5px;
-  margin-bottom: 5px;
-  font-weight: bold;
 }
 </style>
