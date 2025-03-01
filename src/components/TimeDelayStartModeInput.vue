@@ -84,6 +84,11 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
+    // --- New: Computed property to determine if required inputs are complete ---
+    const inputsComplete = computed(() => {
+      return props.gcType !== "" && props.batch1EndTime && props.primaryFinalPosition;
+    });
+
     // --- Local Input States ---
     const sequentialFinalPosition = ref(null);
     const additionalRuns = ref(null);
@@ -243,7 +248,7 @@ export default {
       return '';
     });
 
-    // --- New: Computed property for calibration runs ---
+    // --- Computed property for calibration runs ---
     // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
@@ -359,7 +364,6 @@ export default {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
       if (calibrationSelected.value) {
-        // Use unwrapped calibrationRuns value
         const cal = calibrationRuns.value;
         if (cal === "") {
           arr.push("Calibration");
@@ -378,8 +382,7 @@ export default {
       return hours > 0 ? `${hours} hr, ${minutes} min` : `${minutes} minutes`;
     });
 
-    const hideInputs = computed(() => false);
-
+    // --- New: Watcher to emit payload only when required inputs are complete ---
     watch(
       [
         sequentialFinalPosition,
@@ -390,31 +393,30 @@ export default {
         () => props.batch1EndTime,
         () => props.gcRuntime,
         () => props.primaryFinalPosition,
+        () => props.gcType
       ],
       () => {
-        if (!(
-          (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
-          delayedRunSelected.value ||
-          additionalRuns.value
-        )) {
+        if (!inputsComplete.value) {
+          // Emit an empty payload (or one with default/empty values) so that no extra results display.
           const fallbackPayload = {
             sequentialBatchActive: false,
             sequentialFinalPosition: null,
             sequentialBatchEndTime: '',
             additionalRuns: additionalRuns.value,
             additionalRunsEndTime: '',
-            prerunsDescription: prerunsDescription.value,
-            totalDelayedRuns: totalPreruns.value,
-            totalRuns: totalRuns.value,
-            timeDelayRequired: timeDelayRequiredLocal.value,
-            timeGapTo730AM: timeGapTo730AM.value,
+            prerunsDescription: '',
+            totalDelayedRuns: 0,
+            totalRuns: 0,
+            timeDelayRequired: '',
+            timeGapTo730AM: '',
             delayedRunsStartTime: '',
             delayedRunsEndTime: '',
-            totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
+            totalDelayedDurationFormatted: '',
           };
           emit('update-time-delay', fallbackPayload);
           return;
         }
+        // Otherwise, emit the full calculated payload.
         const payload = {
           sequentialBatchActive: (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0),
           sequentialFinalPosition: sequentialFinalPosition.value ? Number(sequentialFinalPosition.value) : null,
@@ -436,25 +438,21 @@ export default {
     );
 
     onMounted(() => {
-      if (!(
-        (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
-        delayedRunSelected.value ||
-        additionalRuns.value
-      )) {
+      if (!inputsComplete.value) {
         const emptyPayload = {
           sequentialBatchActive: false,
           sequentialFinalPosition: null,
           sequentialBatchEndTime: '',
           additionalRuns: additionalRuns.value,
           additionalRunsEndTime: '',
-          prerunsDescription: prerunsDescription.value,
-          totalDelayedRuns: totalPreruns.value,
-          totalRuns: totalRuns.value,
+          prerunsDescription: '',
+          totalDelayedRuns: 0,
+          totalRuns: 0,
           timeDelayRequired: '',
           timeGapTo730AM: '',
           delayedRunsStartTime: '',
           delayedRunsEndTime: '',
-          totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
+          totalDelayedDurationFormatted: '',
         };
         emit('update-time-delay', emptyPayload);
       } else {
