@@ -1,10 +1,10 @@
 <template>
   <div class="time-delay-input">
     <h3 class="main-heading">Additional Runs</h3>
-    <!-- All input boxes are always available -->
+    <!-- All input boxes are always visible -->
     <div>
-      <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
-      <div v-if="!delayedMode" class="sequential-batch-section">
+      <!-- Sequential Batch Optional Field: Always shown -->
+      <div class="sequential-batch-section">
         <label>
           Final Position for Sequential Batch:
           <span style="font-size: 0.80em;">(if required)</span>
@@ -28,8 +28,8 @@
         </div>
       </div>
 
-      <!-- Separator line between Additional Runs and Delayed Runs -->
-      <hr v-if="!delayedMode" class="separator" />
+      <!-- Separator line -->
+      <hr class="separator" />
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
@@ -84,7 +84,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // inputsComplete is true only if Selected GC, Start Time, and Final Position are provided.
+    // inputsComplete: true only if Selected GC, Start Time, and Final Position are provided.
     const inputsComplete = computed(() => {
       return props.gcType !== "" && props.batch1EndTime && props.primaryFinalPosition;
     });
@@ -397,7 +397,7 @@ export default {
       ],
       () => {
         if (!inputsComplete.value) {
-          // Emit an empty payload so that no extra results display.
+          // Emit an empty payload so that no calculated results display.
           const fallbackPayload = {
             sequentialBatchActive: false,
             sequentialFinalPosition: null,
