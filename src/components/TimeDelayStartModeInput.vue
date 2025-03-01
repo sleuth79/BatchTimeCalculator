@@ -33,7 +33,7 @@
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
-        <label> class="delayed-runs-heading">Delayed Runs</label>>
+        <h3 class="delayed-runs-heading">Delayed Runs:</h3>
         <div class="delayed-runs-inputs">
           <div
             class="box"
