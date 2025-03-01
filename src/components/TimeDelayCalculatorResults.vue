@@ -5,13 +5,11 @@
       Current Time:
       <span class="result-value">{{ currentTimeFormatted }}</span>
     </p>
-
     <!-- Always show the time gap -->
     <p>
       Time Gap to 7:30 AM:
       <span class="result-value">{{ formattedTimeGap }}</span>
     </p>
-
     <!-- If delayed runs are active, show extra details -->
     <template v-if="hasDelayedRuns">
       <p>
@@ -49,11 +47,13 @@ export default {
   setup() {
     const gcStore = useGcStore();
 
+    // Use the stored preruns description (set by the input component)
     const prerunsDescription = computed(() =>
       (gcStore.timeDelayResults && gcStore.timeDelayResults.prerunsDescription) || "None"
     );
     const hasDelayedRuns = computed(() => prerunsDescription.value.toLowerCase() !== "none");
 
+    // Parse misc runs from the preruns description or from stored value
     const miscRuns = computed(() => {
       if (gcStore.timeDelayResults && gcStore.timeDelayResults.miscRuns != null) {
         const val = Number(gcStore.timeDelayResults.miscRuns);
@@ -63,14 +63,56 @@ export default {
       return match && match[1] ? Number(match[1]) || 0 : 0;
     });
 
-    const baseDelayedRuns = computed(() => {
-      const lowerDesc = prerunsDescription.value.toLowerCase();
-      if (lowerDesc.includes("prebatch")) return 4;
-      if (lowerDesc.includes("calibration")) return 9;
-      return 0;
+    // Determine GC type from the store's selected GC data
+    const gcType = computed(() => {
+      return gcStore.selectedGcData && gcStore.selectedGcData.type
+        ? gcStore.selectedGcData.type
+        : "";
+    });
+    // Compute calibration value: empty if no GC selected; else 8 for Energy, 9 otherwise.
+    const calibrationValue = computed(() => {
+      if (!gcType.value) return "";
+      return gcType.value === "Energy" ? 8 : 9;
     });
 
-    const totalDelayedRuns = computed(() => baseDelayedRuns.value + miscRuns.value);
+    // Override display of delayed runs if calibration is active.
+    const displayDelayedRuns = computed(() => {
+      const lowerDesc = (prerunsDescription.value || "").trim().toLowerCase();
+      if (lowerDesc.includes("prebatch")) {
+        return miscRuns.value > 0
+          ? `Prebatch, Misc Runs: ${miscRuns.value}`
+          : `Prebatch`;
+      }
+      if (lowerDesc.includes("calibration")) {
+        if (calibrationValue.value !== "") {
+          return miscRuns.value > 0
+            ? `Calibration (${calibrationValue.value}), Misc Runs: ${miscRuns.value}`
+            : `Calibration (${calibrationValue.value})`;
+        } else {
+          return miscRuns.value > 0
+            ? `Calibration, Misc Runs: ${miscRuns.value}`
+            : `Calibration`;
+        }
+      }
+      if (lowerDesc.includes("misc runs:")) {
+        return `Misc Runs: ${miscRuns.value}`;
+      }
+      return prerunsDescription.value;
+    });
+
+    // For total delayed runs, if calibration is present, use the computed calibration value.
+    const totalDelayedRuns = computed(() => {
+      const baseDelayed = computed(() => {
+        const lowerDesc = prerunsDescription.value.toLowerCase();
+        if (lowerDesc.includes("prebatch")) return 4;
+        if (lowerDesc.includes("calibration")) {
+          return calibrationValue.value !== "" ? calibrationValue.value : 9;
+        }
+        return 0;
+      });
+      return baseDelayed.value + miscRuns.value;
+    });
+
     const currentTimeFormatted = computed(() =>
       formatTimeWithAmPmAndSeconds(new Date())
     );
@@ -82,7 +124,7 @@ export default {
     });
     const runtimeSeconds = computed(() => runtimeMinutes.value * 60);
 
-    // Total delayed duration (in ms)
+    // Total delayed duration in milliseconds.
     const D = computed(() => totalDelayedRuns.value * runtimeSeconds.value * 1000);
     const totalDelayedDurationFormatted = computed(() => {
       const totalMinutes = Math.round(D.value / 60000);
@@ -119,7 +161,6 @@ export default {
         ? "No time delay required"
         : `${computedDelayHours.value} hours`;
     });
-
     const adjustedEndTime = computed(() => {
       const nowMs = Date.now();
       const computedTime = nowMs + D.value + computedDelayHours.value * 3600000;
@@ -128,29 +169,9 @@ export default {
     const formattedAdjustedEndTime = computed(() =>
       formatTimeWithAmPmAndSeconds(adjustedEndTime.value)
     );
-
     const delayedRunsStartTime = computed(() =>
       (gcStore.timeDelayResults && gcStore.timeDelayResults.delayedRunsStartTime) || ""
     );
-
-    // Display delayed runs with misc runs info removed if redundant.
-    const displayDelayedRuns = computed(() => {
-      const lowerDesc = (prerunsDescription.value || "").trim().toLowerCase();
-      if (lowerDesc.includes("prebatch")) {
-        return miscRuns.value > 0
-          ? `Prebatch, Misc Runs: ${miscRuns.value}`
-          : `Prebatch`;
-      }
-      if (lowerDesc.includes("calibration")) {
-        return miscRuns.value > 0
-          ? `Calibrations, Misc Runs: ${miscRuns.value}`
-          : `Calibrations`;
-      }
-      if (lowerDesc.includes("misc runs:")) {
-        return `Misc Runs: ${miscRuns.value}`;
-      }
-      return prerunsDescription.value;
-    });
 
     return {
       currentTimeFormatted,
