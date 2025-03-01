@@ -52,9 +52,14 @@
         </div>
       </div>
 
+      <!-- Final Position with Toggle -->
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
+        <button type="button" @click="toggleFinalPositionSelector">
+          Toggle Position Selector
+        </button>
         <position-selector
+          v-if="showFinalPositionSelector"
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
           mode="start-time"
@@ -117,6 +122,12 @@ export default {
       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
+
+    // New reactive variable for toggling the final position selector
+    const showFinalPositionSelector = ref(true);
+    const toggleFinalPositionSelector = () => {
+      showFinalPositionSelector.value = !showFinalPositionSelector.value;
+    };
 
     watch(
       () => gcStore.selectedGc,
@@ -214,6 +225,8 @@ export default {
       showWaitInput,
       setAmPm,
       setWait15,
+      showFinalPositionSelector,
+      toggleFinalPositionSelector,
     };
   },
 };
@@ -288,5 +301,9 @@ export default {
 
 .result-value {
   font-weight: bold;
+}
+
+.input-group {
+  margin-bottom: 10px;
 }
 </style>
