@@ -44,7 +44,7 @@ export const useGcStore = defineStore('gc', {
     async fetchGcData() {
       this.isLoading = true;
       try {
-        const response = await fetch(`/data/gc_config.json?v=${Date.now()}`);
+        const response = await fetch(`/update-config?v=${Date.now()}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
