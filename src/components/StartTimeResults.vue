@@ -110,14 +110,19 @@ export default {
   border-radius: 4px;
 }
 
-/* Apply a subtle text shadow to all paragraph text within results */
-.start-time-results p,
-.result-value {
-  text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.1);
+/* Remove any text shadow from paragraphs */
+.start-time-results p {
   margin-bottom: 0px;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
+}
+
+/* Apply a drop shadow to the result values only */
+.result-value {
+  font-weight: bold;
+  font-size: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Default hr style with extra top margin */
@@ -130,7 +135,6 @@ hr {
 
 /* Style for the hr above the time gap */
 .time-gap-hr {
-  /* Extra top margin to move the line down a bit */
   margin-top: 10px;
   margin-bottom: 5px;
 }

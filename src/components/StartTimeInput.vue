@@ -122,8 +122,6 @@ export default {
     ];
 
     // Reactive variable to hold the selected final position.
-    // When a position is clicked, if it’s the same as the current selection,
-    // it will be toggled off (set to null) by the PositionSelector.
     const finalPosition = ref(null);
 
     // When finalPosition changes, update the store and recalculate
@@ -229,6 +227,10 @@ export default {
 <style scoped>
 .time-input input {
   width: 90px;
+  border: 2px solid #ccc; /* Increased border thickness */
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Drop shadow for emphasis */
+  padding: 4px;
 }
 
 .ampm-selector {
