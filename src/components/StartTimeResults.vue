@@ -105,18 +105,25 @@ export default {
 
 <style scoped>
 .start-time-results {
-  padding: 0;
+  padding: 10px;
+  /* Slight drop shadow to give the results container some depth */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 4px;
 }
+
 .start-time-results p {
   margin-bottom: 0px;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
+
 .result-value {
   font-weight: bold;
   font-size: 1rem;
 }
+
 /* Default hr style */
 hr {
   border: none;
@@ -124,6 +131,7 @@ hr {
   margin: 5px 0;
   padding: 0;
 }
+
 /* Style for the hr above the time gap */
 .time-gap-hr {
   margin-top: 0;
