@@ -112,7 +112,7 @@ export default {
   font-size: 14px;
   border-radius: 5px;
   transition: background-color 0.3s ease, color 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added drop shadow */
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 .grid-item:hover {

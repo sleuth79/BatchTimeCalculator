@@ -300,4 +300,9 @@ export default {
 .input-group {
   margin-bottom: 10px;
 }
+
+/* Add a subtle drop shadow to all headings (labels in this case) */
+label {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
+}
 </style>
