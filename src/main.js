@@ -3,5 +3,9 @@ import App from './App.vue';
 import { pinia } from './store'; // Import the Pinia instance
 
 const app = createApp(App);
-app.use(pinia); // Use Pinia
+
+// Force enable Vue Devtools (for debugging only)
+app.config.devtools = true;
+
+app.use(pinia);
 app.mount('#app');
