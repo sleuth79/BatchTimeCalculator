@@ -17,7 +17,7 @@
         />
         <!-- Additional Runs input -->
         <div class="additional-runs-input">
-          <label>Misc Additional Runs:</label>
+          <label class="section-label">Additional Runs:</label>
           <input
             type="number"
             v-model="additionalRunsInput"
@@ -50,7 +50,7 @@
             Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
-            <span class="misc-label">Misc Delayed Runs:</span>
+            <span class="misc-label bold-label">Misc Delayed Runs:</span>
             <input
               type="number"
               v-model="miscRunsInput"
@@ -243,7 +243,7 @@ export default {
       return '';
     });
 
-    // --- New: Computed property for calibration runs ---
+    // --- Computed property for calibration runs ---
     // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
@@ -359,7 +359,6 @@ export default {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
       if (calibrationSelected.value) {
-        // Use unwrapped calibrationRuns value
         const cal = calibrationRuns.value;
         if (cal === "") {
           arr.push("Calibration");
@@ -529,6 +528,7 @@ export default {
 .additional-runs-input label {
   font-weight: bold;
   white-space: nowrap;
+  font-size: 1rem; /* Same size as sequential batch heading */
 }
 .additional-runs-input input {
   width: 60px;
@@ -559,6 +559,7 @@ export default {
 }
 .misc-runs .misc-label {
   white-space: nowrap;
+  font-weight: bold; /* Make misc delayed runs label bold */
 }
 .misc-runs input {
   width: 60px;
