@@ -1,4 +1,5 @@
 <template>
+  <!-- Only display results if resultsComplete is true -->
   <div class="time-delay-result" v-if="resultsComplete">
     <!-- Additional Runs Section -->
     <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime">
@@ -95,10 +96,9 @@ export default {
     return {};
   },
   computed: {
-    // Only display results if the payload includes a non-empty timeDelayRequired.
-    // (This assumes that an empty string in timeDelayRequired means the required fields aren't complete.)
+    // Only show results if sequentialBatchEndTime is non-empty.
     resultsComplete() {
-      return this.timeDelayData && this.timeDelayData.timeDelayRequired !== "";
+      return this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '';
     },
     sequentialBatchRuns() {
       if (this.timeDelayData.sequentialFinalPosition !== null) {
