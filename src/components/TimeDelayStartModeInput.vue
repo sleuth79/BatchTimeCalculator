@@ -1,7 +1,6 @@
 <template>
   <div class="time-delay-input">
     <label class="main-heading">Additional Runs</label>
-    <!-- We no longer hide the inputs -->
     <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
@@ -10,7 +9,7 @@
           <span class="optional-text">(if required)</span>
         </label>
         <position-selector
-          :allowed-positions="allowedPositionsForSequential"
+          :allowed-positions="allowedFinalPositions"
           mode="sequential"
           field="sequential"
           v-model="sequentialFinalPosition"
@@ -168,11 +167,10 @@ export default {
       if (calibrationSelected.value) prebatchSelected.value = false;
     };
 
-    const allowedPositionsForSequential = ref([
-      3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-      13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
+    const allowedFinalPositions = [
+      3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
-    ]);
+    ];
 
     const delayedMode = ref(false);
     const handleDelayedRunsModeChange = (mode) => {
@@ -576,7 +574,6 @@ export default {
   font-size: 0.80em;
 }
 
-/* Additional styling for inputs and separators */
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
