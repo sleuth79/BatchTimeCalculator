@@ -29,9 +29,14 @@
         @update-config="handleUpdateConfig"
       />
 
-      <button class="revert-button" @click="revertToDefaults">
-        Revert to Defaults
-      </button>
+      <div class="revert-section">
+        <p class="warning-text">
+          Beware: this will erase the current config and revert the table to defaults
+        </p>
+        <button class="revert-button" @click="revertToDefaults">
+          Revert to Defaults
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -201,21 +206,32 @@ export default {
   font-weight: bold;
 }
 
+.revert-section {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.warning-text {
+  font-size: 0.75rem;
+  color: #b00;
+  margin: 0;
+}
+
 .revert-button {
-  background-color: #ee930a;
+  background-color: #d32f2f; /* red color */
   color: #fff;
   padding: 7px 7px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
-  display: block;
-  width: 25%;
-  margin: 14px auto 0;
+  width: auto;
 }
 
 .revert-button:hover {
-  background-color: #F57C00;
+  background-color: #b71c1c;
 }
 
 .error-message {
