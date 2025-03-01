@@ -1,13 +1,13 @@
 <template>
   <div class="time-delay-input">
-    <label class="main-heading">Additional Runs</label>
+    <h3 class="main-heading">Additional Runs</h3>
     <!-- We no longer hide the inputs -->
     <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
-        <label class="batch-label">
-          Final Position For Sequential Batch:
-          <span class="optional-text">(if required)</span>
+        <label>
+          Final Position for Sequential Batch:
+          <span style="font-size: 0.80em;">(if required)</span>
         </label>
         <position-selector
           :allowed-positions="allowedPositionsForSequential"
@@ -17,7 +17,7 @@
         />
         <!-- Additional Runs input -->
         <div class="additional-runs-input">
-          <label class="batch-label">Misc Additional Runs:</label>
+          <label>Misc Additional Runs:</label>
           <input
             type="number"
             v-model="additionalRunsInput"
@@ -33,7 +33,7 @@
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
-        <label class="batch-label">Delayed Runs</label>
+        <h3 class="delayed-runs-heading">Delayed Runs:</h3>
         <div class="delayed-runs-inputs">
           <div
             class="box"
@@ -50,7 +50,7 @@
             Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
-            <label class="batch-label">Misc Delayed Runs:</label>
+            <span class="misc-label">Misc Delayed Runs:</span>
             <input
               type="number"
               v-model="miscRunsInput"
@@ -243,7 +243,8 @@ export default {
       return '';
     });
 
-    // --- Computed property for calibration runs ---
+    // --- New: Computed property for calibration runs ---
+    // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -251,6 +252,7 @@ export default {
       return props.gcType === 'Energy' ? 8 : 9;
     });
 
+    // Update totalPreruns to use calibrationRuns
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
@@ -352,10 +354,12 @@ export default {
       return formatTimeWithAmPmAndSeconds(finalEndTime.value);
     });
 
+    // Updated prerunsDescription:
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
       if (calibrationSelected.value) {
+        // Use unwrapped calibrationRuns value
         const cal = calibrationRuns.value;
         if (cal === "") {
           arr.push("Calibration");
@@ -504,57 +508,61 @@ export default {
 </script>
 
 <style scoped>
+.main-heading {
+  font-size: 1.3rem;
+  margin-top: 0.5rem !important;
+  margin-bottom: 10px;
+}
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
   padding-top: 0;
 }
-
-/* Use a unified font-size (1.1rem) for all headings/labels to match starttimeinput.vue */
-.batch-label,
-.main-heading {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-top: 0.5rem;
-  margin-bottom: 10px;
+.info-message {
+  color: #666;
+  font-style: italic;
+  margin: 10px 0;
 }
-
-.optional-text {
-  font-size: 0.80em;
-}
-
 .sequential-batch-section {
   margin-bottom: 10px;
 }
-
-.additional-runs-input input,
-.misc-runs input {
+.additional-runs-input label {
+  font-weight: bold;
+  white-space: nowrap;
+}
+.additional-runs-input input {
   width: 60px;
 }
-
 .separator {
   border: none;
   border-top: 1px solid #ccc;
   margin: 0 !important;
   padding: 0;
 }
-
 .delayed-runs-section {
   margin-top: 10px;
 }
-
+.delayed-runs-heading {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
 .delayed-runs-inputs {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .misc-runs {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-
+.misc-runs .misc-label {
+  white-space: nowrap;
+}
+.misc-runs input {
+  width: 60px;
+}
 .box {
   display: inline-block;
   border: 1px solid #ccc;
@@ -567,16 +575,22 @@ export default {
   background-color: #fff;
   transition: background-color 0.2s ease;
 }
-
 .box:hover {
   background-color: #f0f0f0;
 }
-
 .box.selected {
   background-color: var(--highlight-color);
 }
-
 label {
+  font-weight: bold;
+}
+.highlight-green {
+  color: var(--highlight-color);
+}
+.delayed-runs-heading {
+  display: block;
+  margin-top: -5px;
+  margin-bottom: 5px;
   font-weight: bold;
 }
 </style>
