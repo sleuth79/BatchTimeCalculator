@@ -1,12 +1,8 @@
 <template>
   <div class="time-delay-input">
     <h3 class="main-heading">Additional Runs</h3>
-    <!-- If the required fields are not complete, show a notice -->
-    <div v-if="!inputsComplete" class="incomplete-message">
-      <p>Please select a GC, enter the Start Time, and provide the Final Position to unlock additional options.</p>
-    </div>
-    <!-- Once the required fields are complete, display the additional options -->
-    <div v-else>
+    <!-- All input boxes are always available -->
+    <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
         <label>
@@ -88,7 +84,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // inputsComplete: true only if Selected GC, Start Time, and Final Position are provided.
+    // inputsComplete is true only if Selected GC, Start Time, and Final Position are provided.
     const inputsComplete = computed(() => {
       return props.gcType !== "" && props.batch1EndTime && props.primaryFinalPosition;
     });
@@ -386,7 +382,7 @@ export default {
       return hours > 0 ? `${hours} hr, ${minutes} min` : `${minutes} minutes`;
     });
 
-    // --- New: Watcher to emit payload only when required inputs are complete ---
+    // --- Watcher to emit payload only when required inputs are complete ---
     watch(
       [
         sequentialFinalPosition,
@@ -401,7 +397,7 @@ export default {
       ],
       () => {
         if (!inputsComplete.value) {
-          // Emit an empty payload (or one with default/empty values)
+          // Emit an empty payload so that no extra results display.
           const fallbackPayload = {
             sequentialBatchActive: false,
             sequentialFinalPosition: null,
@@ -515,14 +511,6 @@ export default {
   font-size: 1.3rem;
   margin-top: 0.5rem !important;
   margin-bottom: 10px;
-}
-.incomplete-message {
-  font-size: 0.9rem;
-  color: #888;
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
 }
 .time-delay-input {
   border-top: 1px solid #ddd;
