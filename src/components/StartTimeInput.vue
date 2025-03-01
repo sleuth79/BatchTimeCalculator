@@ -1,7 +1,7 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Always show batch-related inputs -->
+      <!-- Batch Start Time Input -->
       <div class="input-group">
         <label for="batch-start-time">Batch Start Time:</label>
         <div class="time-input">
@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <!-- Only show wait input when an Energy GC is selected -->
+      <!-- 15-Minute Wait Input -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
         <div class="wait-selector">
@@ -52,18 +52,16 @@
         </div>
       </div>
 
-      <!-- Final Position with Toggle -->
+      <!-- Final Position Selector -->
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
-        <button type="button" @click="toggleFinalPositionSelector">
-          Toggle Position Selector
-        </button>
+        <!-- Bind finalPosition using v-model -->
         <position-selector
-          v-if="showFinalPositionSelector"
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
           mode="start-time"
           field="start-time"
+          v-model="finalPosition"
         />
         <div class="error-message">{{ startTimeFinalPositionError }}</div>
       </div>
@@ -123,11 +121,16 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // New reactive variable for toggling the final position selector
-    const showFinalPositionSelector = ref(true);
-    const toggleFinalPositionSelector = () => {
-      showFinalPositionSelector.value = !showFinalPositionSelector.value;
-    };
+    // Reactive variable to hold the selected final position.
+    // When a position is clicked, if it’s the same as the current selection,
+    // it will be toggled off (set to null) by the PositionSelector.
+    const finalPosition = ref(null);
+
+    // When finalPosition changes, update the store and recalculate
+    watch(finalPosition, (newVal) => {
+      gcStore.startTime.finalPosition = newVal;
+      recalculateResults();
+    });
 
     watch(
       () => gcStore.selectedGc,
@@ -149,19 +152,15 @@ export default {
       recalculateResults();
     });
 
-    watch(
-      () => gcStore.startTime.finalPosition,
-      (newFinalPosition) => {
-        if (newFinalPosition !== null) {
-          emitUpdateResultsIfValid();
-        }
-      }
-    );
-
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
-        value = value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
+        value =
+          value.slice(0, 2) +
+          ":" +
+          value.slice(2, 4) +
+          ":" +
+          value.slice(4, 6);
       } else if (value.length > 2) {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
@@ -188,10 +187,6 @@ export default {
         localBatchStartTime.value = "";
         alert("Invalid time. Enter a valid time in HH:mm:ss format.");
       }
-    };
-
-    const emitUpdateResultsIfValid = () => {
-      gcStore.calculateStartTimeBatch();
     };
 
     const recalculateResults = () => {
@@ -225,8 +220,7 @@ export default {
       showWaitInput,
       setAmPm,
       setWait15,
-      showFinalPositionSelector,
-      toggleFinalPositionSelector,
+      finalPosition, // v-model binding for final position
     };
   },
 };
