@@ -451,3 +451,8 @@ label {
 .highlight-green {
   color: var(--highlight-color);
 }
+
+/* Global Drop Shadow for All Boxes */
+[class*="box"] {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
