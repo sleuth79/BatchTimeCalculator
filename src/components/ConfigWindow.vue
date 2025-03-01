@@ -31,7 +31,7 @@
 
       <div class="revert-section">
         <p class="warning-text">
-          Beware! this button will erase the current config table and revert all setting to defaults
+          Beware! This button will erase the current config table and revert all setting to defaults
         </p>
         <button class="revert-button" @click="revertToDefaults">
           Revert to Defaults
