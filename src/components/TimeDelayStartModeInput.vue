@@ -512,7 +512,7 @@ export default {
 
 /* Remove explicit font-size so labels inherit the default style like in starttimeinput.vue */
 .batch-label {
-  font-size: 1rem !important;
+  font-size: 1.2rem !important;
   font-weight: bold;
   margin-top: 0.5rem;
   margin-bottom: 10px;
