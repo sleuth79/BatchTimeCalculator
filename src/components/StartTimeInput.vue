@@ -1,7 +1,7 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Batch Start Time (unchanged) -->
+      <!-- Always show batch-related inputs -->
       <div class="input-group">
         <label for="batch-start-time">Batch Start Time:</label>
         <div class="time-input">
@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <!-- Wait input (unchanged) -->
+      <!-- Only show wait input when an Energy GC is selected -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
         <div class="wait-selector">
@@ -52,20 +52,14 @@
         </div>
       </div>
 
-      <!-- Final Position Toggle Grid -->
       <div class="input-group">
-        <label>Final Position:</label>
-        <div class="position-grid">
-          <div
-            v-for="pos in allowedFinalPositions"
-            :key="pos"
-            class="position-box"
-            :class="{ selected: finalPosition === pos }"
-            @click="togglePosition(pos)"
-          >
-            {{ pos }}
-          </div>
-        </div>
+        <label for="position-selector">Final Position:</label>
+        <position-selector
+          id="position-selector"
+          :allowed-positions="allowedFinalPositions"
+          mode="start-time"
+          field="start-time"
+        />
         <div class="error-message">{{ startTimeFinalPositionError }}</div>
       </div>
     </div>
@@ -76,9 +70,11 @@
 <script>
 import { computed, ref, watch, onMounted } from "vue";
 import { useGcStore } from "../store";
+import PositionSelector from "./PositionSelector.vue";
 
 export default {
   name: "StartTimeInput",
+  components: { PositionSelector },
   setup(_, { emit }) {
     const gcStore = useGcStore();
     const startTimeFinalPositionError = ref("");
@@ -117,32 +113,10 @@ export default {
       return selectedGc && gcStore.allGcData[selectedGc]?.type === "Energy";
     });
 
-    // Allowed positions for final selection
     const allowedFinalPositions = [
       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
-
-    // Final position selection as a toggle grid
-    const finalPosition = ref(null);
-    const togglePosition = (pos) => {
-      // If the clicked position is already selected, deselect it; otherwise, select it.
-      finalPosition.value === pos ? (finalPosition.value = null) : (finalPosition.value = pos);
-    };
-
-    // When finalPosition changes, update the store and recalc results.
-    watch(finalPosition, (newPos) => {
-      gcStore.setFinalPosition(newPos);
-      recalculateResults();
-    });
-
-    const isFormValid = computed(() => {
-      return (
-        localBatchStartTime.value &&
-        gcStore.startTime.finalPosition !== null &&
-        !startTimeFinalPositionError.value
-      );
-    });
 
     watch(
       () => gcStore.selectedGc,
@@ -240,8 +214,6 @@ export default {
       showWaitInput,
       setAmPm,
       setWait15,
-      finalPosition,
-      togglePosition,
     };
   },
 };
@@ -307,32 +279,14 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Position Grid Toggle Styles */
-.position-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 5px;
-}
-.position-box {
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 1rem;
-  border-radius: 4px;
-  background-color: #fff;
-  transition: background-color 0.2s ease;
-}
-.position-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-.position-box:hover {
-  background-color: #f0f0f0;
+.start-time-results p {
+  margin-bottom: 2px !important;
+  line-height: 1.2 !important;
+  font-size: 1rem !important;
+  color: #333;
 }
 
-/* Generic Label */
-label {
+.result-value {
   font-weight: bold;
 }
 </style>
