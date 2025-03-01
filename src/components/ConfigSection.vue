@@ -129,11 +129,13 @@ export default {
 }
 
 .config-section h1 {
-  font-size: 3.0rem;                    
-  margin-top: -10px;                     /* Slight negative margin to align with ModeSelector */
-  margin-bottom: 5px;
+  font-size: 2.4rem;
+  margin-top: 0;
+  margin-bottom: 20px;
   text-align: left;
   color: #131313;
+  /* Adjusted subtle text shadow for a less intense drop shadow effect */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .config-section label {
