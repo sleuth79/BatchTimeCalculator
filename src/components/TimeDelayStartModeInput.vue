@@ -17,7 +17,7 @@
         />
         <!-- Additional Runs input -->
         <div class="additional-runs-input">
-          <label class="section-label">Additional Runs:</label>
+          <label class="section-label">Misc Additional Runs:</label>
           <input
             type="number"
             v-model="additionalRunsInput"
@@ -559,7 +559,7 @@ export default {
 }
 .misc-runs .misc-label {
   white-space: nowrap;
-  font-weight: bold; /* Make misc delayed runs label bold */
+  font-weight: bold;
 }
 .misc-runs input {
   width: 60px;
@@ -587,6 +587,11 @@ label {
 }
 .highlight-green {
   color: var(--highlight-color);
+}
+.additional-runs-input label {
+  font-weight: bold;
+  white-space: nowrap;
+  font-size: 1.3rem;
 }
 .delayed-runs-heading {
   display: block;
