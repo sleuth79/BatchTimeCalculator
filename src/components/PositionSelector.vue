@@ -43,6 +43,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
+    // Compute the current selected position based on the mode.
     const selectedPosition = computed(() => {
       if (props.mode === 'start-time') {
         return gcStore.startTime.finalPosition;
@@ -52,17 +53,31 @@ export default {
       return null;
     });
 
+    // Return true if the given position matches the current selection.
     const isSelected = (position) => {
       return position === selectedPosition.value;
     };
 
+    // When a position is clicked, toggle it off if already selected.
     const selectPosition = (position) => {
-      if (props.mode === 'start-time') {
-        gcStore.setStartTimeFinalPosition(position);
-        gcStore.calculateStartTimeBatch();
-      } else if (props.mode === 'sequential') {
-        gcStore.setSequentialFinalPosition(position);
-        emit('update:modelValue', gcStore.sequentialFinalPosition);
+      if (selectedPosition.value === position) {
+        // Toggling off: set selection to null.
+        if (props.mode === 'start-time') {
+          gcStore.setStartTimeFinalPosition(null);
+          gcStore.calculateStartTimeBatch();
+        } else if (props.mode === 'sequential') {
+          gcStore.setSequentialFinalPosition(null);
+          emit('update:modelValue', null);
+        }
+      } else {
+        // Set the new selection.
+        if (props.mode === 'start-time') {
+          gcStore.setStartTimeFinalPosition(position);
+          gcStore.calculateStartTimeBatch();
+        } else if (props.mode === 'sequential') {
+          gcStore.setSequentialFinalPosition(position);
+          emit('update:modelValue', position);
+        }
       }
     };
 
