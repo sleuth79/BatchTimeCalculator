@@ -15,7 +15,7 @@
             Prebatch
           </div>
           <div class="box" :class="{ selected: calibrationSelected }" @click="toggleCalibration">
-            Calibration
+            Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
             <span class="misc-label">Misc Delayed Runs:</span>
@@ -91,11 +91,26 @@ export default {
       return gcStore.results && gcStore.results.timeDelayRequired === "No time delay required";
     });
 
+    // --- New: Computed property for calibration runs ---
+    const calibrationRuns = computed(() => {
+      if (!props.gcType || props.gcType === "") {
+        return "";
+      }
+      return props.gcType === 'Energy' ? 8 : 9;
+    });
+
     // --- Computed: Delayed Runs Description ---
     const prerunsDescription = computed(() => {
       const parts = [];
       if (prebatchSelected.value) parts.push("Prebatch");
-      if (calibrationSelected.value) parts.push("Calibration");
+      if (calibrationSelected.value) {
+        const cal = calibrationRuns.value;
+        if (cal === "") {
+          parts.push("Calibration");
+        } else {
+          parts.push(`Calibration (${cal})`);
+        }
+      }
       if (miscRuns.value > 0) parts.push(`Misc Runs: ${miscRuns.value}`);
       return parts.length ? parts.join(", ") : "None";
     });
@@ -104,7 +119,7 @@ export default {
     const totalDelayedRuns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
-      if (calibrationSelected.value) total += 9;
+      if (calibrationSelected.value) total += (calibrationRuns.value || 0);
       total += miscRuns.value;
       return total;
     });
@@ -180,6 +195,7 @@ export default {
       hideInputs,
       delayedRunsStartTime,
       limitMiscRuns,
+      calibrationRuns,
     };
   },
 };

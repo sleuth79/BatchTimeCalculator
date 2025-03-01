@@ -47,8 +47,7 @@
             :class="{ selected: calibrationSelected }"
             @click="toggleCalibration"
           >
-            Calibration
-            <span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
+            Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
             <span class="misc-label">Misc Delayed Runs:</span>
@@ -245,7 +244,7 @@ export default {
     });
 
     // --- New: Computed property for calibration runs ---
-    // Only return a value if a GC is selected (gcType is truthy and non-empty)
+    // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -355,12 +354,19 @@ export default {
       return formatTimeWithAmPmAndSeconds(finalEndTime.value);
     });
 
+    // Updated prerunsDescription:
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
-      if (calibrationSelected.value) arr.push(
-        `Calibration${calibrationRuns !== "" ? " (" + calibrationRuns + ")" : ""}`
-      );
+      if (calibrationSelected.value) {
+        // Use unwrapped calibrationRuns value
+        const cal = calibrationRuns.value;
+        if (cal === "") {
+          arr.push("Calibration");
+        } else {
+          arr.push(`Calibration (${cal})`);
+        }
+      }
       if (miscRuns.value > 0) arr.push(`Misc Runs: ${miscRuns.value}`);
       return arr.length ? arr.join(", ") : "None";
     });
