@@ -1,6 +1,6 @@
 <template>
   <div class="time-delay-input">
-    <h3 class="main-heading">Additional Runs</h3>
+    <label class="main-heading">Additional Runs</label>
     <!-- We no longer hide the inputs -->
     <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
@@ -33,7 +33,7 @@
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
-        <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+        <label class="delayed-runs-heading">Delayed Runs:</label>
         <div class="delayed-runs-inputs">
           <div
             class="box"
@@ -244,7 +244,6 @@ export default {
     });
 
     // --- Computed property for calibration runs ---
-    // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -252,7 +251,6 @@ export default {
       return props.gcType === 'Energy' ? 8 : 9;
     });
 
-    // Update totalPreruns to use calibrationRuns
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
@@ -354,7 +352,6 @@ export default {
       return formatTimeWithAmPmAndSeconds(finalEndTime.value);
     });
 
-    // Updated prerunsDescription:
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
@@ -507,11 +504,6 @@ export default {
 </script>
 
 <style scoped>
-.main-heading {
-  font-size: 1.3rem;
-  margin-top: 0.5rem !important;
-  margin-bottom: 10px;
-}
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
@@ -528,7 +520,7 @@ export default {
 .additional-runs-input label {
   font-weight: bold;
   white-space: nowrap;
-  font-size: 1rem; /* Same size as sequential batch heading */
+  font-size: 1rem;
 }
 .additional-runs-input input {
   width: 60px;
@@ -546,6 +538,7 @@ export default {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
+  font-size: 1rem;
 }
 .delayed-runs-inputs {
   display: flex;
@@ -588,15 +581,9 @@ label {
 .highlight-green {
   color: var(--highlight-color);
 }
-.additional-runs-input label {
-  font-weight: bold;
-  white-space: nowrap;
-  font-size: 1.3rem;
-}
-.delayed-runs-heading {
-  display: block;
-  margin-top: -5px;
-  margin-bottom: 5px;
-  font-weight: bold;
+.main-heading {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 10px;
 }
 </style>
