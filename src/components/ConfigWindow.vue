@@ -142,7 +142,6 @@ export default {
       error,
       handleUpdateConfig,
       revertToDefaults,
-      // Optionally, remove fetchConfig from return if not needed for debugging.
     };
   },
   methods: {
@@ -219,7 +218,7 @@ export default {
 
 /* Settings Modification Box */
 .settings-modification-box {
-  margin-top: 16px;
+  margin: 12px 0; /* Uniform top and bottom margin */
   padding: 12px;
   background-color: #fff;
   border: 1px solid #ddd;
