@@ -6,7 +6,7 @@
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
         <label class="batch-label">
-          Final Position for Sequential Batch:
+          Final Position for Sequential Batch
           <span class="optional-text">(if required)</span>
         </label>
         <position-selector
@@ -17,7 +17,7 @@
         />
         <!-- Additional Runs input -->
         <div class="additional-runs-input">
-          <label class="batch-label">Misc Additional Runs:</label>
+          <label class="batch-label">Misc Additional Runs</label>
           <input
             type="number"
             v-model="additionalRunsInput"
@@ -33,7 +33,7 @@
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
-        <label class="batch-label">Delayed Runs:</label>
+        <label class="batch-label">Delayed Runs</label>
         <div class="delayed-runs-inputs">
           <div
             class="box"
@@ -50,7 +50,7 @@
             Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
-            <label class="batch-label">Misc Delayed Runs:</label>
+            <label class="batch-label">Misc Delayed Runs</label>
             <input
               type="number"
               v-model="miscRunsInput"
@@ -510,10 +510,9 @@ export default {
   padding-top: 0;
 }
 
-/* Uniform label style matching initial batch labels */
+/* Remove explicit font-size so labels inherit the default style like in starttimeinput.vue */
 .batch-label,
 .main-heading {
-  font-size: 1rem;
   font-weight: bold;
   margin-top: 0.5rem;
   margin-bottom: 10px;
