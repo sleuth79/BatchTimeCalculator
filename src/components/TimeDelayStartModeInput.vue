@@ -47,7 +47,7 @@
             :class="{ selected: calibrationSelected }"
             @click="toggleCalibration"
           >
-            Calibration
+            Calibration ({{ calibrationRuns }})
           </div>
           <div class="misc-runs">
             <span class="misc-label">Misc Delayed Runs:</span>
@@ -91,8 +91,7 @@ export default {
     const calibrationSelected = ref(false);
     const miscRuns = ref(0);
 
-    // Watch the reset counter so that every time resetStartTime() is called,
-    // the local inputs get cleared, even if selectedMode remains 'start-time'
+    // Reset local inputs when the store signals a reset
     watch(
       () => gcStore.startTimeResetCounter,
       () => {
@@ -104,7 +103,7 @@ export default {
       }
     );
 
-    // Also watch selectedMode if needed
+    // Also watch selectedMode for resets
     watch(
       () => gcStore.selectedMode,
       (newMode) => {
@@ -118,7 +117,7 @@ export default {
       }
     );
 
-    // Computed setters for capping to 99
+    // Computed setters for capping inputs to 99
     const additionalRunsInput = computed({
       get() {
         return additionalRuns.value === null ? '' : additionalRuns.value;
@@ -244,10 +243,16 @@ export default {
       return '';
     });
 
+    // --- New: Computed property for calibration runs ---
+    const calibrationRuns = computed(() => {
+      return props.gcType === 'Energy' ? 8 : 9;
+    });
+
+    // Update totalPreruns to use calibrationRuns
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
-      if (calibrationSelected.value) total += 9;
+      if (calibrationSelected.value) total += calibrationRuns.value;
       total += miscRuns.value || 0;
       return total;
     });
@@ -348,7 +353,7 @@ export default {
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
-      if (calibrationSelected.value) arr.push("Calibration");
+      if (calibrationSelected.value) arr.push(`Calibration (${calibrationRuns.value})`);
       if (miscRuns.value > 0) arr.push(`Misc Runs: ${miscRuns.value}`);
       return arr.length ? arr.join(", ") : "None";
     });
@@ -483,6 +488,7 @@ export default {
       totalDelayedDurationFormatted,
       limitAdditionalRuns,
       limitMiscRuns,
+      calibrationRuns,
     };
   },
 };
