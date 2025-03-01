@@ -237,12 +237,15 @@ export default {
 
 <style scoped>
 .settings-modification {
-  margin-top: 16px;
+  /* Uniform vertical margin and padding around the box */
+  margin: 8px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
+  /* Optional: you can also add a subtle drop shadow to this box */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Add a subtle drop shadow to all h3 headings to make them pop */
