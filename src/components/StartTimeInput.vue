@@ -1,7 +1,7 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Always show batch-related inputs -->
+      <!-- Batch Start Time (unchanged) -->
       <div class="input-group">
         <label for="batch-start-time">Batch Start Time:</label>
         <div class="time-input">
@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <!-- Only show wait input when an Energy GC is selected -->
+      <!-- Wait input (unchanged) -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
         <div class="wait-selector">
@@ -52,14 +52,25 @@
         </div>
       </div>
 
+      <!-- Final Position Toggle -->
       <div class="input-group">
-        <label for="position-selector">Final Position:</label>
-        <position-selector
-          id="position-selector"
-          :allowed-positions="allowedFinalPositions"
-          mode="start-time"
-          field="start-time"
-        />
+        <label>Final Position:</label>
+        <div class="toggle-final-position">
+          <div
+            class="toggle-box"
+            :class="{ selected: finalPositionActive }"
+            @click="setFinalPositionActive(true)"
+          >
+            On
+          </div>
+          <div
+            class="toggle-box"
+            :class="{ selected: !finalPositionActive }"
+            @click="setFinalPositionActive(false)"
+          >
+            Off
+          </div>
+        </div>
         <div class="error-message">{{ startTimeFinalPositionError }}</div>
       </div>
     </div>
@@ -70,11 +81,9 @@
 <script>
 import { computed, ref, watch, onMounted } from "vue";
 import { useGcStore } from "../store";
-import PositionSelector from "./PositionSelector.vue";
 
 export default {
   name: "StartTimeInput",
-  components: { PositionSelector },
   setup(_, { emit }) {
     const gcStore = useGcStore();
     const startTimeFinalPositionError = ref("");
@@ -113,10 +122,28 @@ export default {
       return selectedGc && gcStore.allGcData[selectedGc]?.type === "Energy";
     });
 
+    // Allowed positions remain for reference (could be used for a default value)
     const allowedFinalPositions = [
       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
+
+    // New toggle for final position
+    const finalPositionActive = ref(false);
+    const setFinalPositionActive = (val) => {
+      finalPositionActive.value = val;
+    };
+
+    // Watch the toggle and update the store's final position accordingly
+    watch(finalPositionActive, (newVal) => {
+      if (!newVal) {
+        gcStore.setFinalPosition(null);
+      } else {
+        // Use a default value – here, the first allowed position.
+        gcStore.setFinalPosition(allowedFinalPositions[0]);
+      }
+      recalculateResults();
+    });
 
     const isFormValid = computed(() => {
       return (
@@ -158,7 +185,8 @@ export default {
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
-        value = value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
+        value =
+          value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
       } else if (value.length > 2) {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
@@ -222,6 +250,8 @@ export default {
       showWaitInput,
       setAmPm,
       setWait15,
+      finalPositionActive,
+      setFinalPositionActive,
     };
   },
 };
@@ -295,6 +325,38 @@ export default {
 }
 
 .result-value {
+  font-weight: bold;
+}
+
+/* Toggle styles for Final Position */
+.toggle-final-position {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.toggle-box {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 1rem;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-box.selected {
+  background-color: var(--highlight-color);
+  color: var(--text-highlight);
+}
+
+.toggle-box:hover {
+  background-color: #f0f0f0;
+}
+
+/* Generic Label */
+label {
   font-weight: bold;
 }
 </style>
