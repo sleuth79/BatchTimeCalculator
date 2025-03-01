@@ -1,8 +1,12 @@
 <template>
   <div class="time-delay-input">
     <h3 class="main-heading">Additional Runs</h3>
-    <!-- We no longer hide the inputs -->
-    <div>
+    <!-- If the required fields are not complete, show a notice -->
+    <div v-if="!inputsComplete" class="incomplete-message">
+      <p>Please select a GC, enter the Start Time, and provide the Final Position to unlock additional options.</p>
+    </div>
+    <!-- Once the required fields are complete, display the additional options -->
+    <div v-else>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
         <label>
@@ -84,7 +88,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // --- New: Computed property to determine if required inputs are complete ---
+    // inputsComplete: true only if Selected GC, Start Time, and Final Position are provided.
     const inputsComplete = computed(() => {
       return props.gcType !== "" && props.batch1EndTime && props.primaryFinalPosition;
     });
@@ -397,7 +401,7 @@ export default {
       ],
       () => {
         if (!inputsComplete.value) {
-          // Emit an empty payload (or one with default/empty values) so that no extra results display.
+          // Emit an empty payload (or one with default/empty values)
           const fallbackPayload = {
             sequentialBatchActive: false,
             sequentialFinalPosition: null,
@@ -476,6 +480,7 @@ export default {
     });
 
     return {
+      inputsComplete,
       sequentialFinalPosition,
       additionalRuns,
       additionalRunsInput,
@@ -510,6 +515,14 @@ export default {
   font-size: 1.3rem;
   margin-top: 0.5rem !important;
   margin-bottom: 10px;
+}
+.incomplete-message {
+  font-size: 0.9rem;
+  color: #888;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
 }
 .time-delay-input {
   border-top: 1px solid #ddd;
