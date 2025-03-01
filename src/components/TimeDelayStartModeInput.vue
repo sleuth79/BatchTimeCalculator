@@ -47,7 +47,8 @@
             :class="{ selected: calibrationSelected }"
             @click="toggleCalibration"
           >
-            Calibration ({{ calibrationRuns }})
+            Calibration
+            <span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
             <span class="misc-label">Misc Delayed Runs:</span>
@@ -244,7 +245,11 @@ export default {
     });
 
     // --- New: Computed property for calibration runs ---
+    // Only return a value if a GC is selected (gcType is truthy and non-empty)
     const calibrationRuns = computed(() => {
+      if (!props.gcType || props.gcType === "") {
+        return "";
+      }
       return props.gcType === 'Energy' ? 8 : 9;
     });
 
@@ -353,7 +358,9 @@ export default {
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
-      if (calibrationSelected.value) arr.push(`Calibration (${calibrationRuns.value})`);
+      if (calibrationSelected.value) arr.push(
+        `Calibration${calibrationRuns !== "" ? " (" + calibrationRuns + ")" : ""}`
+      );
       if (miscRuns.value > 0) arr.push(`Misc Runs: ${miscRuns.value}`);
       return arr.length ? arr.join(", ") : "None";
     });
