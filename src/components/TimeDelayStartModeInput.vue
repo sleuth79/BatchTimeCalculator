@@ -510,15 +510,10 @@ export default {
   padding-top: 0;
 }
 
-/* Remove explicit font-size so labels inherit the default style like in starttimeinput.vue */
-.batch-label {
-  font-size: 1.2rem !important;
-  font-weight: bold;
-  margin-top: 0.5rem;
-  margin-bottom: 10px;
-}
-
+/* Use a unified font-size (1.1rem) for all headings/labels to match starttimeinput.vue */
+.batch-label,
 .main-heading {
+  font-size: 1.1rem;
   font-weight: bold;
   margin-top: 0.5rem;
   margin-bottom: 10px;
