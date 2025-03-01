@@ -52,23 +52,18 @@
         </div>
       </div>
 
-      <!-- Final Position Toggle -->
+      <!-- Final Position Toggle Grid -->
       <div class="input-group">
         <label>Final Position:</label>
-        <div class="toggle-final-position">
+        <div class="position-grid">
           <div
-            class="toggle-box"
-            :class="{ selected: finalPositionActive }"
-            @click="setFinalPositionActive(true)"
+            v-for="pos in allowedFinalPositions"
+            :key="pos"
+            class="position-box"
+            :class="{ selected: finalPosition === pos }"
+            @click="togglePosition(pos)"
           >
-            On
-          </div>
-          <div
-            class="toggle-box"
-            :class="{ selected: !finalPositionActive }"
-            @click="setFinalPositionActive(false)"
-          >
-            Off
+            {{ pos }}
           </div>
         </div>
         <div class="error-message">{{ startTimeFinalPositionError }}</div>
@@ -122,26 +117,22 @@ export default {
       return selectedGc && gcStore.allGcData[selectedGc]?.type === "Energy";
     });
 
-    // Allowed positions remain for reference (could be used for a default value)
+    // Allowed positions for final selection
     const allowedFinalPositions = [
       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // New toggle for final position
-    const finalPositionActive = ref(false);
-    const setFinalPositionActive = (val) => {
-      finalPositionActive.value = val;
+    // Final position selection as a toggle grid
+    const finalPosition = ref(null);
+    const togglePosition = (pos) => {
+      // If the clicked position is already selected, deselect it; otherwise, select it.
+      finalPosition.value === pos ? (finalPosition.value = null) : (finalPosition.value = pos);
     };
 
-    // Watch the toggle and update the store's final position accordingly
-    watch(finalPositionActive, (newVal) => {
-      if (!newVal) {
-        gcStore.setFinalPosition(null);
-      } else {
-        // Use a default value – here, the first allowed position.
-        gcStore.setFinalPosition(allowedFinalPositions[0]);
-      }
+    // When finalPosition changes, update the store and recalc results.
+    watch(finalPosition, (newPos) => {
+      gcStore.setFinalPosition(newPos);
       recalculateResults();
     });
 
@@ -185,8 +176,7 @@ export default {
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
-        value =
-          value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
+        value = value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
       } else if (value.length > 2) {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
@@ -250,8 +240,8 @@ export default {
       showWaitInput,
       setAmPm,
       setWait15,
-      finalPositionActive,
-      setFinalPositionActive,
+      finalPosition,
+      togglePosition,
     };
   },
 };
@@ -317,41 +307,27 @@ export default {
   color: var(--text-highlight);
 }
 
-.start-time-results p {
-  margin-bottom: 2px !important;
-  line-height: 1.2 !important;
-  font-size: 1rem !important;
-  color: #333;
-}
-
-.result-value {
-  font-weight: bold;
-}
-
-/* Toggle styles for Final Position */
-.toggle-final-position {
+/* Position Grid Toggle Styles */
+.position-grid {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 5px;
 }
-
-.toggle-box {
+.position-box {
   border: 1px solid #ccc;
-  padding: 5px 10px;
+  padding: 8px 12px;
   cursor: pointer;
-  user-select: none;
   font-size: 1rem;
   border-radius: 4px;
   background-color: #fff;
   transition: background-color 0.2s ease;
 }
-
-.toggle-box.selected {
+.position-box.selected {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
 }
-
-.toggle-box:hover {
+.position-box:hover {
   background-color: #f0f0f0;
 }
 
