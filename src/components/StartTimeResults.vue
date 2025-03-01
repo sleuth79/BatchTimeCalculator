@@ -106,35 +106,32 @@ export default {
 <style scoped>
 .start-time-results {
   padding: 10px;
-  /* Slight drop shadow to give the results container some depth */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   border-radius: 4px;
 }
 
-.start-time-results p {
+/* Apply a subtle text shadow to all paragraph text within results */
+.start-time-results p,
+.result-value {
+  text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.1);
   margin-bottom: 0px;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
 
-.result-value {
-  font-weight: bold;
-  font-size: 1rem;
-}
-
-/* Default hr style */
+/* Default hr style with extra top margin */
 hr {
   border: none;
   border-top: 1px solid #ccc;
-  margin: 5px 0;
+  margin: 10px 0 5px 0;
   padding: 0;
 }
 
 /* Style for the hr above the time gap */
 .time-gap-hr {
-  margin-top: 0;
+  /* Extra top margin to move the line down a bit */
+  margin-top: 10px;
   margin-bottom: 5px;
 }
 </style>
