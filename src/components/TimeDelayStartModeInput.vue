@@ -5,9 +5,9 @@
     <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
-        <label>
+        <label class="batch-label">
           Final Position for Sequential Batch:
-          <span style="font-size: 0.80em;">(if required)</span>
+          <span class="optional-text">(if required)</span>
         </label>
         <position-selector
           :allowed-positions="allowedPositionsForSequential"
@@ -17,7 +17,7 @@
         />
         <!-- Additional Runs input -->
         <div class="additional-runs-input">
-          <label class="section-label">Misc Additional Runs:</label>
+          <label class="batch-label">Misc Additional Runs:</label>
           <input
             type="number"
             v-model="additionalRunsInput"
@@ -33,7 +33,7 @@
 
       <!-- Delayed Runs Section -->
       <div class="delayed-runs-section">
-        <label class="delayed-runs-heading">Delayed Runs:</label>
+        <label class="batch-label">Delayed Runs:</label>
         <div class="delayed-runs-inputs">
           <div
             class="box"
@@ -50,7 +50,7 @@
             Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
           </div>
           <div class="misc-runs">
-            <span class="misc-label bold-label">Misc Delayed Runs:</span>
+            <label class="batch-label">Misc Delayed Runs:</label>
             <input
               type="number"
               v-model="miscRunsInput"
@@ -509,54 +509,52 @@ export default {
   margin-top: 0;
   padding-top: 0;
 }
-.info-message {
-  color: #666;
-  font-style: italic;
-  margin: 10px 0;
+
+/* Uniform label style matching initial batch labels */
+.batch-label,
+.main-heading {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 0.5rem;
+  margin-bottom: 10px;
 }
+
+.optional-text {
+  font-size: 0.80em;
+}
+
 .sequential-batch-section {
   margin-bottom: 10px;
 }
-.additional-runs-input label {
-  font-weight: bold;
-  white-space: nowrap;
-  font-size: 1rem;
-}
-.additional-runs-input input {
+
+.additional-runs-input input,
+.misc-runs input {
   width: 60px;
 }
+
 .separator {
   border: none;
   border-top: 1px solid #ccc;
   margin: 0 !important;
   padding: 0;
 }
+
 .delayed-runs-section {
   margin-top: 10px;
 }
-.delayed-runs-heading {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  font-size: 1rem;
-}
+
 .delayed-runs-inputs {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .misc-runs {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-.misc-runs .misc-label {
-  white-space: nowrap;
-  font-weight: bold;
-}
-.misc-runs input {
-  width: 60px;
-}
+
 .box {
   display: inline-block;
   border: 1px solid #ccc;
@@ -569,21 +567,16 @@ export default {
   background-color: #fff;
   transition: background-color 0.2s ease;
 }
+
 .box:hover {
   background-color: #f0f0f0;
 }
+
 .box.selected {
   background-color: var(--highlight-color);
 }
+
 label {
   font-weight: bold;
-}
-.highlight-green {
-  color: var(--highlight-color);
-}
-.main-heading {
-  font-size: 1rem;
-  margin-top: 0.5rem;
-  margin-bottom: 10px;
 }
 </style>
