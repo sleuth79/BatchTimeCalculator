@@ -245,10 +245,12 @@ export default {
   font-size: 0.9rem;
 }
 
+/* Add a subtle drop shadow to all h3 headings to make them pop */
 .settings-modification h3 {
   margin-top: 0;
   margin-bottom: 12px;
   font-size: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .update-section {

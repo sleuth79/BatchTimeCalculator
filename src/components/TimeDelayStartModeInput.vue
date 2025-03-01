@@ -589,4 +589,8 @@ label {
 .highlight-green {
   color: var(--highlight-color);
 }
+/* Add a subtle drop shadow to all headings (labels in this case) */
+label {
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
+}
 </style>

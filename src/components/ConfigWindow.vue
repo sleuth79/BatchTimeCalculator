@@ -183,16 +183,21 @@ export default {
   font-size: 2.1rem;
   color: #131313;
   text-align: left;
+  /* Subtle drop shadow to make the title pop */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+/* Add drop shadow and slight elevation to the table */
 .config-table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   margin-top: 8px;
   font-size: 0.85rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Style table cells */
 .config-table th,
 .config-table td {
   padding: 8px 12px;
@@ -201,11 +206,15 @@ export default {
   width: 33.33%;
 }
 
+/* Header styling */
 .config-table th {
   background-color: #f2f2f2;
   font-weight: bold;
+  /* Adding text shadow for extra pop */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Revert section styling */
 .revert-section {
   margin-top: 14px;
   display: flex;
