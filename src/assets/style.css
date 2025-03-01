@@ -1,7 +1,7 @@
 :root {
   --highlight-color: #8ce681;   /* Main green color */
   --highlight-hover: #43A047;   /* Darker green for hover effects */
-  --text-highlight: #ffffff;      /* White text on highlight backgrounds */
+  --text-highlight: #ffffff;    /* White text on highlight backgrounds */
 }
 
 /* General Styles */
@@ -61,7 +61,7 @@ body {
   font-size: 1.1rem;
 }
 
-/* Inputs, Selects, and Buttons in Config Section */
+/* Inputs, Selects, and Buttons */
 .config-section select,
 .config-section input[type="text"],
 .config-section input[type="number"],
@@ -74,13 +74,14 @@ body {
   border-radius: 4px;
   box-sizing: border-box;
   height: 40px;
-  outline: none; /* Removes the default focus outline */
+  outline: none; /* Removes yellow focus */
 }
 
 .config-section input:focus,
 .config-section select:focus,
 .config-section button:focus {
-  border: 1px solid #aaa; /* Keeps selection gray instead of yellow */
+  border: 1px solid #999; /* Keeps selection subtle gray */
+  outline: none;
 }
 
 /* Results Display Styles */
@@ -113,28 +114,7 @@ body {
   margin-top: 3px;
 }
 
-/* Current Time Input Styles */
-.current-time-input {
-  margin-bottom: 20px;
-}
-
-.current-time-input .input-group {
-  margin-bottom: 10px;
-}
-
-.current-time-input label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.current-time-input input[type="number"] {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-/* Start Time Input Styles */
+/* Start Time Input */
 .start-time-input {
   margin-bottom: 20px;
 }
@@ -157,17 +137,6 @@ body {
   padding: 5px;
   border: 1px solid #ddd;
   border-radius: 5px;
-}
-
-.start-time-input .time-input {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.start-time-input .time-input select {
-  width: auto;
-  padding: 5px;
 }
 
 /* AM/PM Selector - Now Inline */
@@ -220,23 +189,6 @@ button:disabled {
   cursor: default;
 }
 
-/* GC Selector Styles */
-.gc-box {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.gc-box:hover {
-  background-color: #e0e0e0;
-  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
-}
-
 /* Additional Runs Input - Now Inline */
 .additional-runs-input {
   display: flex;
@@ -254,6 +206,40 @@ button:disabled {
   padding: 5px;
   border: 1px solid #ddd;
   border-radius: 5px;
+}
+
+/* 🔄 FIXED: Position Selector */
+.position-selector {
+  display: flex;
+  justify-content: flex-start !important;
+  margin-bottom: 20px;
+}
+
+.position-selector table {
+  border-collapse: collapse;
+  width: auto;
+  table-layout: fixed;
+}
+
+.position-selector td {
+  border: 1px solid #ddd;
+  padding: 5px;
+  text-align: center;
+  cursor: pointer;
+  width: 25px;
+  height: 25px;
+  font-size: 14px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.position-selector td:hover {
+  background-color: #e0e0e0;
+}
+
+.position-selector td.selected {
+  background-color: #b0bec5;
+  color: white;
 }
 
 /* Box Styles */
