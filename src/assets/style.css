@@ -1,6 +1,6 @@
 :root {
   --highlight-color: #8ce681;   /* Main green color */
-  --highlight-hover: #43A047;     /* Darker green for hover effects */
+  --highlight-hover: #43A047;   /* Darker green for hover effects */
   --text-highlight: #ffffff;      /* White text on highlight backgrounds */
 }
 
@@ -41,9 +41,9 @@ body {
   width: 45%;
   background-color: #f5f5f5;
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
   border-radius: 8px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15); /* Added drop shadow */
 }
 
 .config-section h1 {
@@ -84,6 +84,7 @@ body {
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 8px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15); /* Added drop shadow */
 }
 
 .results-display h2 {
@@ -97,7 +98,7 @@ body {
   font-weight: bold;
 }
 
-/* Input component styles */
+/* Error Messages */
 .error-message {
   color: #d9534f;
   font-weight: bold;
@@ -126,80 +127,7 @@ body {
   border-radius: 5px;
 }
 
-.current-time-input .error-message {
-  color: red;
-  font-size: 0.9em;
-  margin-top: 3px;
-}
-
-/* Start Time Input Styles */
-.start-time-input {
-  margin-bottom: 20px;
-}
-
-.start-time-input .input-group {
-  margin-bottom: 10px;
-}
-
-.start-time-input label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.start-time-input input[type="number"],
-.start-time-input input[type="text"] {
-  width: 70px;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.start-time-input .time-input {
-  display: flex;
-  align-items: center;
-}
-
-.start-time-input .time-input select {
-  margin-left: 5px;
-  width: auto;
-  padding: 5px;
-}
-
-.start-time-input .radio-group {
-  display: flex;
-  align-items: center;
-}
-
-.start-time-input .radio-group label {
-  margin-right: 10px;
-}
-
-.ampm-selector {
-  display: flex;
-  margin-left: 5px;
-}
-
-.ampm-box {
-  border: 1px solid #ddd;
-  padding: 5px 10px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.ampm-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-
-.ampm-box:hover {
-  background-color: #e0e0e0;
-}
-
-/* Button Styles */
+/* Buttons */
 button {
   padding: 8px 15px;
   background-color: var(--highlight-color);
@@ -208,12 +136,13 @@ button {
   cursor: pointer;
   border-radius: 4px;
   width: 100%;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 button:hover {
   background-color: var(--highlight-hover);
-  color: var(--text-highlight);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 button:disabled {
@@ -222,21 +151,6 @@ button:disabled {
 }
 
 /* GC Selector Styles */
-.gc-selector {
-  margin-bottom: 15px;
-}
-
-.gc-selector label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.gc-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
 .gc-box {
   border: 1px solid #ddd;
   padding: 10px;
@@ -244,48 +158,16 @@ button:disabled {
   cursor: pointer;
   user-select: none;
   border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.gc-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 .gc-box:hover {
   background-color: #e0e0e0;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Mode Selector Styles */
-.mode-selector {
-  margin-bottom: 10px;
-}
-
-.mode-selector label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.mode-selector select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  height: 40px;
-}
-
-.mode-selector .mode-explanations {
-  margin-top: 5px;
-  font-size: 0.9em;
-  color: #777;
-}
-
-.mode-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
+/* Mode Selector */
 .mode-box {
   border: 1px solid #ddd;
   padding: 10px;
@@ -293,42 +175,16 @@ button:disabled {
   cursor: pointer;
   user-select: none;
   border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.mode-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-  font-weight: bold;
-}
-
-.mode-title {
-  font-weight: bold;
-}
-
-.mode-explanation {
-  margin-top: 5px;
-  font-size: 0.9em;
-  color: #555;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 .mode-box:hover {
   background-color: #e0e0e0;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Position Selector Styles */
-.position-selector {
-  display: flex;
-  justify-content: flex-start !important;
-  margin-bottom: 20px;
-}
-
-.position-selector table {
-  border-collapse: collapse;
-  width: auto;
-  table-layout: fixed;
-}
-
+/* Position Selector */
 .position-selector td {
   border: 1px solid #ddd;
   padding: 5px;
@@ -338,85 +194,16 @@ button:disabled {
   height: 25px;
   font-size: 14px;
   border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 .position-selector td:hover {
   background-color: #e0e0e0;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
 }
 
-.position-selector td.selected {
-  background-color: #b0bec5;
-  color: white;
-}
-
-/* Result Styles */
-.results-heading {
-  color: #333;
-  margin-bottom: 15px;
-  font-size: 1.7rem;
-}
-
-.results-display .result-value {
-  font-weight: 600;
-}
-
-.results-display p {
-  margin-bottom: 10px;
-  font-size: 1rem;
-  color: #333;
-}
-
-/* Additional Runs Input Styles (used in TimeDelayCurrentModeInput.vue) */
-.additional-runs-input {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.additional-runs-input label {
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.additional-runs-input input {
-  width: 60px;
-}
-
-/* Delayed Runs Section Styles */
-.delayed-runs-section {
-  margin-bottom: 10px;
-}
-
-.delayed-runs-heading {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.delayed-runs-inputs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Misc Runs Styles */
-.misc-runs {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.misc-runs .misc-label {
-  white-space: nowrap;
-}
-
-.misc-runs input {
-  width: 60px;
-}
-
-/* Box Styles for Delayed Runs */
+/* Box Styles */
 .box {
   display: inline-block;
   border: 1px solid #ccc;
@@ -427,11 +214,13 @@ button:disabled {
   font-size: 14px;
   border-radius: 4px;
   background-color: #fff;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* Added drop shadow */
 }
 
 .box.selected {
-  background-color: var(--highlight-color) !important;
-  color: var(--text-highlight) !important;
+  background-color: var(--highlight-color);
+  color: var(--text-highlight);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Generic Label */
