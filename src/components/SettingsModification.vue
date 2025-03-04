@@ -284,19 +284,22 @@ export default {
   vertical-align: middle;
 }
 
+/* Fixed-width label column, left-justified */
 .label-cell {
-  text-align: right;
-  width: 30%;
+  text-align: left;
+  width: 200px;
   font-weight: bold;
 }
 
+/* Input column fills remaining space */
 .input-cell {
-  width: 70%;
+  width: calc(100% - 200px);
 }
 
 .settings-table input,
 .settings-table select {
   width: 100%;
+  box-sizing: border-box;
   padding: 4px;
   font-size: 0.9rem;
   border: 1px solid #ccc;
