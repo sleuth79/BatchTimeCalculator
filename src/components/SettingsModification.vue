@@ -1,74 +1,104 @@
 <template>
   <div class="settings-modification">
     <h3>Settings Modification</h3>
-    <!-- Update Existing GC Section -->
-    <div class="update-section">
-      <div class="setting">
-        <label for="selectedGC">Select GC:</label>
-        <select id="selectedGC" v-model="selectedGC">
-          <option disabled value="">-- Select GC --</option>
-          <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
-            {{ value.name !== key ? value.name : key }}
-          </option>
-        </select>
-      </div>
-      <div class="setting">
-        <label for="newRunTime">Run Time:</label>
-        <input
-          type="text"
-          id="newRunTime"
-          v-model="newRunTimeInput"
-          inputmode="decimal"
-          placeholder="Run Time"
-          @keypress="handleNumericInput"
-          @input="validateUpdateRunTime"
-        />
-      </div>
-      <div class="setting">
-        <label for="newType">Type:</label>
-        <select id="newType" v-model="newType">
-          <option disabled value="">--Select--</option>
-          <option value="Energy">Energy</option>
-          <option value="Sulphur">Sulphur</option>
-        </select>
-      </div>
-      <div class="setting">
-        <label for="newName">Change Name:</label>
-        <input type="text" id="newName" v-model="newName" placeholder="New Name" />
-      </div>
-      <div class="button-group">
-        <button @click="updateSettings">Update GC</button>
-        <button class="delete-button" @click="deleteGC">Delete GC</button>
-      </div>
+    <!-- Update Existing GC Section using a table -->
+    <table class="settings-table">
+      <tr>
+        <td class="label-cell">
+          <label for="selectedGC">Select GC:</label>
+        </td>
+        <td class="input-cell">
+          <select id="selectedGC" v-model="selectedGC">
+            <option disabled value="">-- Select GC --</option>
+            <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
+              {{ value.name !== key ? value.name : key }}
+            </option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">
+          <label for="newRunTime">Run Time:</label>
+        </td>
+        <td class="input-cell">
+          <input
+            type="text"
+            id="newRunTime"
+            v-model="newRunTimeInput"
+            inputmode="decimal"
+            placeholder="Run Time"
+            @keypress="handleNumericInput"
+            @input="validateUpdateRunTime"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">
+          <label for="newType">Type:</label>
+        </td>
+        <td class="input-cell">
+          <select id="newType" v-model="newType">
+            <option disabled value="">--Select--</option>
+            <option value="Energy">Energy</option>
+            <option value="Sulphur">Sulphur</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">
+          <label for="newName">Change Name:</label>
+        </td>
+        <td class="input-cell">
+          <input type="text" id="newName" v-model="newName" placeholder="New Name" />
+        </td>
+      </tr>
+    </table>
+    <div class="button-group">
+      <button @click="updateSettings">Update GC</button>
+      <button class="delete-button" @click="deleteGC">Delete GC</button>
     </div>
 
-    <!-- Add New GC Section -->
+    <!-- Add New GC Section using a table -->
     <div class="add-gc">
       <h3>Add New GC</h3>
-      <div class="setting">
-        <label for="newGCId">GC name:</label>
-        <input type="text" id="newGCId" v-model="newGCId" placeholder="GC name" />
-      </div>
-      <div class="setting">
-        <label for="newGCRunTime">Run Time:</label>
-        <input
-          type="text"
-          id="newGCRunTime"
-          v-model="newGCRunTimeInput"
-          inputmode="decimal"
-          placeholder="Run Time"
-          @keypress="handleNumericInput"
-          @input="validateAddRunTime"
-        />
-      </div>
-      <div class="setting">
-        <label for="newGCType">Type:</label>
-        <select id="newGCType" v-model="newGCType">
-          <option disabled value="">--Select--</option>
-          <option value="Energy">Energy</option>
-          <option value="Sulphur">Sulphur</option>
-        </select>
-      </div>
+      <table class="settings-table">
+        <tr>
+          <td class="label-cell">
+            <label for="newGCId">GC name:</label>
+          </td>
+          <td class="input-cell">
+            <input type="text" id="newGCId" v-model="newGCId" placeholder="GC name" />
+          </td>
+        </tr>
+        <tr>
+          <td class="label-cell">
+            <label for="newGCRunTime">Run Time:</label>
+          </td>
+          <td class="input-cell">
+            <input
+              type="text"
+              id="newGCRunTime"
+              v-model="newGCRunTimeInput"
+              inputmode="decimal"
+              placeholder="Run Time"
+              @keypress="handleNumericInput"
+              @input="validateAddRunTime"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td class="label-cell">
+            <label for="newGCType">Type:</label>
+          </td>
+          <td class="input-cell">
+            <select id="newGCType" v-model="newGCType">
+              <option disabled value="">--Select--</option>
+              <option value="Energy">Energy</option>
+              <option value="Sulphur">Sulphur</option>
+            </select>
+          </td>
+        </tr>
+      </table>
       <button @click="addGC">Add New GC</button>
     </div>
   </div>
@@ -234,42 +264,45 @@ export default {
   background-color: #f9f9f9;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .settings-modification h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
+  margin: 0 0 12px 0;
   font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
 }
 
-/* Use CSS Grid to align labels and inputs/selects */
-.setting {
-  display: grid;
-  grid-template-columns: max-content 400px;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
 }
 
-.setting label {
-  font-weight: bold;
-  font-size: 0.9rem;
+.settings-table td {
+  padding: 8px;
+  vertical-align: middle;
+}
+
+.label-cell {
   text-align: right;
+  width: 30%;
+  font-weight: bold;
 }
 
-.setting input,
-.setting select {
-  width: 400px;
+.input-cell {
+  width: 70%;
+}
+
+.settings-table input,
+.settings-table select {
+  width: 100%;
   padding: 4px;
   font-size: 0.9rem;
-  background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-/* Button Group remains unchanged */
 .button-group {
   display: flex;
   justify-content: space-between;
@@ -307,28 +340,8 @@ export default {
   border-top: 1px solid #ccc;
 }
 
-.add-gc .setting {
-  display: grid;
-  grid-template-columns: max-content 400px;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.add-gc .setting label {
-  font-weight: bold;
-  font-size: 0.9rem;
-  text-align: right;
-}
-
-.add-gc .setting input,
-.add-gc .setting select {
-  width: 400px;
-  padding: 4px;
-  font-size: 0.9rem;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.add-gc .settings-table {
+  margin-bottom: 16px;
 }
 
 .add-gc button {
