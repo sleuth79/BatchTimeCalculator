@@ -375,7 +375,7 @@ export default {
       const totalDurationMinutes = totalPreruns.value * parseFloat(props.gcRuntime);
       const hours = Math.floor(totalDurationMinutes / 60);
       const minutes = Math.round(totalDurationMinutes - hours * 60);
-      return hours > 0 ? `${hours} hr, ${minutes} min` : `${minutes} minutes`;
+      return hours > 0 ? `${hours} h ${minutes} m` : `${minutes} minutes`;
     });
 
     const hideInputs = computed(() => false);
