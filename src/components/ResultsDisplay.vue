@@ -5,7 +5,7 @@
     <p>
       Selected GC:
       <span class="result-value">
-        {{ selectedGcData ? (selectedGcData.name + " (Runtime: " + selectedGcData.runTime + ")") : "" }}
+        {{ formattedSelectedGc }}
       </span>
     </p>
 
@@ -130,6 +130,13 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
+    // Computed property to format the selected GC with runtime to 2 decimals
+    const formattedSelectedGc = computed(() => {
+      if (!gcStore.selectedGcData) return "";
+      const runtime = Number(gcStore.selectedGcData.runTime);
+      return `${gcStore.selectedGcData.name} (Runtime: ${runtime.toFixed(2)})`;
+    });
+
     watch(
       () => gcStore.selectedMode,
       (newMode) => {
@@ -143,6 +150,7 @@ export default {
     return {
       selectedMode,
       selectedGcData,
+      formattedSelectedGc,
       results,
       timeDelayResults,
       batchStartTime,
