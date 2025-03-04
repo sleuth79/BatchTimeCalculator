@@ -66,17 +66,23 @@
       </tr>
     </table>
 
-    <!-- Add New GC Section remains a 2-column table -->
+    <!-- Add New GC Section as a 3-column table -->
     <div class="add-gc">
       <h3>Add New GC</h3>
-      <table class="settings-table">
+      <table class="update-table">
         <tr>
           <td class="label-cell">
             <label for="newGCId">GC name:</label>
           </td>
           <td class="input-cell">
-            <input type="text" id="newGCId" v-model="newGCId" placeholder="GC name" />
+            <input
+              type="text"
+              id="newGCId"
+              v-model="newGCId"
+              placeholder="GC name"
+            />
           </td>
+          <td class="button-cell"></td>
         </tr>
         <tr>
           <td class="label-cell">
@@ -92,6 +98,9 @@
               @input="validateAddRunTime"
             />
           </td>
+          <td class="button-cell">
+            <button @click="addGC">Add New GC</button>
+          </td>
         </tr>
         <tr>
           <td class="label-cell">
@@ -104,9 +113,9 @@
               <option value="Sulphur">Sulphur</option>
             </select>
           </td>
+          <td class="button-cell"></td>
         </tr>
       </table>
-      <button @click="addGC">Add New GC</button>
     </div>
   </div>
 </template>
@@ -261,7 +270,7 @@ export default {
   margin: 8px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
@@ -275,22 +284,22 @@ export default {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .update-table td {
-  padding: 8px;
+  padding: 5px;
   vertical-align: middle;
 }
 .label-cell {
-  width: 33.33%;
+  width: 20%;
   text-align: left;
   font-weight: bold;
 }
 .input-cell {
-  width: 33.33%;
+  width: 40%;
 }
 .button-cell {
-  width: 33.33%;
+  width: 40%;
   text-align: center;
 }
 input,
@@ -326,24 +335,5 @@ button:hover {
   margin-top: 16px;
   padding-top: 8px;
   border-top: 1px solid #ccc;
-}
-.add-gc .settings-table {
-  margin-bottom: 16px;
-}
-.add-gc button {
-  display: block;
-  width: 48%;
-  margin: 0 auto;
-  padding: 6px 12px;
-  background-color: var(--highlight-color, #007bff);
-  color: var(--text-highlight, #fff);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  text-align: center;
-}
-.add-gc button:hover {
-  background-color: var(--highlight-hover, #0056b3);
 }
 </style>
