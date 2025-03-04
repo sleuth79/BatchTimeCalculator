@@ -1,61 +1,60 @@
 <template>
   <div class="settings-modification">
     <h3>Settings Modification</h3>
-    <!-- Update Existing GC Section using a 3-column table -->
+    <!-- Update GC Section as a 3-column table -->
     <table class="update-table">
       <tr>
-        <td>
+        <td class="label-cell">
           <label for="selectedGC">Select GC:</label>
         </td>
-        <td>
+        <td class="input-cell">
           <select id="selectedGC" v-model="selectedGC">
             <option disabled value="">-- Select GC --</option>
-            <option
-              v-for="([key, value]) in sortedEntries"
-              :key="key"
-              :value="key"
-            >
+            <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
               {{ value.name !== key ? value.name : key }}
             </option>
           </select>
         </td>
-        <td><!-- Empty cell for equal columns --></td>
+        <td class="button-cell"></td>
       </tr>
       <tr>
-        <td>
+        <td class="label-cell">
           <label for="newRunTime">Run Time:</label>
         </td>
-        <td>
+        <td class="input-cell">
           <input
             type="text"
             id="newRunTime"
             v-model="newRunTimeInput"
-            inputmode="decimal"
             placeholder="Run Time"
             @keypress="handleNumericInput"
             @input="validateUpdateRunTime"
           />
         </td>
-        <td><!-- Empty cell for equal columns --></td>
+        <td class="button-cell">
+          <button @click="updateSettings">Update GC</button>
+        </td>
       </tr>
       <tr>
-        <td>
+        <td class="label-cell">
           <label for="newType">Type:</label>
         </td>
-        <td>
+        <td class="input-cell">
           <select id="newType" v-model="newType">
             <option disabled value="">--Select--</option>
             <option value="Energy">Energy</option>
             <option value="Sulphur">Sulphur</option>
           </select>
         </td>
-        <td><!-- Empty cell for equal columns --></td>
+        <td class="button-cell">
+          <button class="delete-button" @click="deleteGC">Delete GC</button>
+        </td>
       </tr>
       <tr>
-        <td>
+        <td class="label-cell">
           <label for="newName">Change Name:</label>
         </td>
-        <td>
+        <td class="input-cell">
           <input
             type="text"
             id="newName"
@@ -63,22 +62,11 @@
             placeholder="New Name"
           />
         </td>
-        <td><!-- Empty cell for equal columns --></td>
-      </tr>
-      <!-- Row for buttons in 3rd column only -->
-      <tr>
-        <td></td>
-        <td></td>
-        <td>
-          <div class="button-group">
-            <button @click="updateSettings">Update GC</button>
-            <button class="delete-button" @click="deleteGC">Delete GC</button>
-          </div>
-        </td>
+        <td class="button-cell"></td>
       </tr>
     </table>
 
-    <!-- Add New GC Section remains a two-column table -->
+    <!-- Add New GC Section remains a 2-column table -->
     <div class="add-gc">
       <h3>Add New GC</h3>
       <table class="settings-table">
@@ -87,12 +75,7 @@
             <label for="newGCId">GC name:</label>
           </td>
           <td class="input-cell">
-            <input
-              type="text"
-              id="newGCId"
-              v-model="newGCId"
-              placeholder="GC name"
-            />
+            <input type="text" id="newGCId" v-model="newGCId" placeholder="GC name" />
           </td>
         </tr>
         <tr>
@@ -104,7 +87,6 @@
               type="text"
               id="newGCRunTime"
               v-model="newGCRunTimeInput"
-              inputmode="decimal"
               placeholder="Run Time"
               @keypress="handleNumericInput"
               @input="validateAddRunTime"
@@ -133,14 +115,8 @@
 export default {
   name: "SettingsModification",
   props: {
-    config: {
-      type: Object,
-      required: true,
-    },
-    sortedEntries: {
-      type: Array,
-      required: true,
-    },
+    config: { type: Object, required: true },
+    sortedEntries: { type: Array, required: true },
   },
   data() {
     return {
@@ -160,9 +136,7 @@ export default {
       if (newVal && this.config[newVal]) {
         const currentRuntime = this.config[newVal].runTime;
         this.newRunTimeInput =
-          currentRuntime !== undefined
-            ? Number(currentRuntime).toFixed(2)
-            : "";
+          currentRuntime !== undefined ? Number(currentRuntime).toFixed(2) : "";
         this.newRunTime =
           currentRuntime !== undefined ? currentRuntime : null;
         this.newType = this.config[newVal].type || "";
@@ -178,9 +152,8 @@ export default {
   methods: {
     handleNumericInput(e) {
       const allowedChars = /[0-9\.]/;
-      const key = e.key;
       if (e.ctrlKey || e.altKey || e.metaKey) return;
-      if (!allowedChars.test(key)) {
+      if (!allowedChars.test(e.key)) {
         e.preventDefault();
       }
     },
@@ -231,9 +204,7 @@ export default {
           ...updatedConfig[this.selectedGC],
           runTime: this.newRunTime,
           type: this.newType,
-          name: this.newName
-            ? this.newName
-            : updatedConfig[this.selectedGC].name,
+          name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
         };
         this.$emit("update-config", updatedConfig);
         alert("GC updated locally. (Persist via backend API)");
@@ -293,52 +264,35 @@ export default {
   background-color: #f9f9f9;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
-
 .settings-modification h3 {
-  margin: 0 0 12px 0;
+  margin-bottom: 12px;
   font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
 }
-
-/* Update section: 3-column table with equal widths */
 .update-table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   margin-bottom: 16px;
 }
-
 .update-table td {
   padding: 8px;
   vertical-align: middle;
-  width: 33.33%;
 }
-
-/* For the add section table (2 columns) */
-.settings-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-}
-
-.settings-table td {
-  padding: 8px;
-  vertical-align: middle;
-}
-
 .label-cell {
-  width: 40%;
+  width: 33.33%;
   text-align: left;
   font-weight: bold;
 }
-
 .input-cell {
-  width: 60%;
+  width: 33.33%;
 }
-
-/* Uniform control styles */
+.button-cell {
+  width: 33.33%;
+  text-align: center;
+}
 input,
 select {
   width: 100%;
@@ -348,54 +302,48 @@ select {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-
-/* Button group styles */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.button-group button {
+button {
   padding: 6px 12px;
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
+  background-color: var(--highlight-color, #007bff);
+  color: var(--text-highlight, #fff);
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
 }
-
-.button-group button:hover {
-  background-color: var(--highlight-hover);
+button:hover {
+  background-color: var(--highlight-hover, #0056b3);
 }
-
-.button-group .delete-button {
+.delete-button {
   background-color: #ee930a;
-  color: #ffffff;
+  color: #fff;
 }
-
-.button-group .delete-button:hover {
+.delete-button:hover {
   background-color: #c08c2b;
 }
-
-/* Add section button styling */
+.add-gc {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #ccc;
+}
+.add-gc .settings-table {
+  margin-bottom: 16px;
+}
 .add-gc button {
   display: block;
   width: 48%;
   margin: 0 auto;
   padding: 6px 12px;
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
+  background-color: var(--highlight-color, #007bff);
+  color: var(--text-highlight, #fff);
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
   text-align: center;
 }
-
 .add-gc button:hover {
-  background-color: var(--highlight-hover);
+  background-color: var(--highlight-hover, #0056b3);
 }
 </style>
