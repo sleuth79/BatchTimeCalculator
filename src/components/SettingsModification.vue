@@ -1,26 +1,31 @@
 <template>
   <div class="settings-modification">
     <h3>Settings Modification</h3>
-    <!-- Update Existing GC Section using a table -->
-    <table class="settings-table">
+    <!-- Update Existing GC Section using a 3-column table -->
+    <table class="update-table">
       <tr>
-        <td class="label-cell">
+        <td>
           <label for="selectedGC">Select GC:</label>
         </td>
-        <td class="input-cell">
+        <td>
           <select id="selectedGC" v-model="selectedGC">
             <option disabled value="">-- Select GC --</option>
-            <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
+            <option
+              v-for="([key, value]) in sortedEntries"
+              :key="key"
+              :value="key"
+            >
               {{ value.name !== key ? value.name : key }}
             </option>
           </select>
         </td>
+        <td><!-- Empty cell for equal columns --></td>
       </tr>
       <tr>
-        <td class="label-cell">
+        <td>
           <label for="newRunTime">Run Time:</label>
         </td>
-        <td class="input-cell">
+        <td>
           <input
             type="text"
             id="newRunTime"
@@ -31,34 +36,49 @@
             @input="validateUpdateRunTime"
           />
         </td>
+        <td><!-- Empty cell for equal columns --></td>
       </tr>
       <tr>
-        <td class="label-cell">
+        <td>
           <label for="newType">Type:</label>
         </td>
-        <td class="input-cell">
+        <td>
           <select id="newType" v-model="newType">
             <option disabled value="">--Select--</option>
             <option value="Energy">Energy</option>
             <option value="Sulphur">Sulphur</option>
           </select>
         </td>
+        <td><!-- Empty cell for equal columns --></td>
       </tr>
       <tr>
-        <td class="label-cell">
+        <td>
           <label for="newName">Change Name:</label>
         </td>
-        <td class="input-cell">
-          <input type="text" id="newName" v-model="newName" placeholder="New Name" />
+        <td>
+          <input
+            type="text"
+            id="newName"
+            v-model="newName"
+            placeholder="New Name"
+          />
+        </td>
+        <td><!-- Empty cell for equal columns --></td>
+      </tr>
+      <!-- Row for buttons in 3rd column only -->
+      <tr>
+        <td></td>
+        <td></td>
+        <td>
+          <div class="button-group">
+            <button @click="updateSettings">Update GC</button>
+            <button class="delete-button" @click="deleteGC">Delete GC</button>
+          </div>
         </td>
       </tr>
     </table>
-    <div class="button-group">
-      <button @click="updateSettings">Update GC</button>
-      <button class="delete-button" @click="deleteGC">Delete GC</button>
-    </div>
 
-    <!-- Add New GC Section using a table -->
+    <!-- Add New GC Section remains a two-column table -->
     <div class="add-gc">
       <h3>Add New GC</h3>
       <table class="settings-table">
@@ -67,7 +87,12 @@
             <label for="newGCId">GC name:</label>
           </td>
           <td class="input-cell">
-            <input type="text" id="newGCId" v-model="newGCId" placeholder="GC name" />
+            <input
+              type="text"
+              id="newGCId"
+              v-model="newGCId"
+              placeholder="GC name"
+            />
           </td>
         </tr>
         <tr>
@@ -135,7 +160,9 @@ export default {
       if (newVal && this.config[newVal]) {
         const currentRuntime = this.config[newVal].runTime;
         this.newRunTimeInput =
-          currentRuntime !== undefined ? Number(currentRuntime).toFixed(2) : "";
+          currentRuntime !== undefined
+            ? Number(currentRuntime).toFixed(2)
+            : "";
         this.newRunTime =
           currentRuntime !== undefined ? currentRuntime : null;
         this.newType = this.config[newVal].type || "";
@@ -146,7 +173,7 @@ export default {
         this.newType = "";
         this.newName = "";
       }
-    }
+    },
   },
   methods: {
     handleNumericInput(e) {
@@ -204,7 +231,9 @@ export default {
           ...updatedConfig[this.selectedGC],
           runTime: this.newRunTime,
           type: this.newType,
-          name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
+          name: this.newName
+            ? this.newName
+            : updatedConfig[this.selectedGC].name,
         };
         this.$emit("update-config", updatedConfig);
         alert("GC updated locally. (Persist via backend API)");
@@ -264,15 +293,30 @@ export default {
   background-color: #f9f9f9;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .settings-modification h3 {
   margin: 0 0 12px 0;
   font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+/* Update section: 3-column table with equal widths */
+.update-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.update-table td {
+  padding: 8px;
+  vertical-align: middle;
+  width: 33.33%;
+}
+
+/* For the add section table (2 columns) */
 .settings-table {
   width: 100%;
   border-collapse: collapse;
@@ -284,20 +328,19 @@ export default {
   vertical-align: middle;
 }
 
-/* Fixed-width label column, left-justified */
 .label-cell {
+  width: 40%;
   text-align: left;
-  width: 200px;
   font-weight: bold;
 }
 
-/* Input column fills remaining space */
 .input-cell {
-  width: calc(100% - 200px);
+  width: 60%;
 }
 
-.settings-table input,
-.settings-table select {
+/* Uniform control styles */
+input,
+select {
   width: 100%;
   box-sizing: border-box;
   padding: 4px;
@@ -306,11 +349,11 @@ export default {
   border-radius: 4px;
 }
 
+/* Button group styles */
 .button-group {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 6px;
-  margin-top: 8px;
 }
 
 .button-group button {
@@ -337,16 +380,7 @@ export default {
   background-color: #c08c2b;
 }
 
-.add-gc {
-  margin-top: 16px;
-  padding-top: 8px;
-  border-top: 1px solid #ccc;
-}
-
-.add-gc .settings-table {
-  margin-bottom: 16px;
-}
-
+/* Add section button styling */
 .add-gc button {
   display: block;
   width: 48%;
