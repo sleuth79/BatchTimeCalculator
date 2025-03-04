@@ -48,9 +48,9 @@
             <span class="result-value">{{ additionalRunsDuration }}</span>
           </p>
         </div>
-        <!-- Separator line if additional or delayed runs exist -->
-        <hr class="section-separator" v-if="timeDelaySectionExists" />
-        <div v-if="timeDelaySectionExists" class="time-delay-section">
+        <!-- Delayed Runs Section -->
+        <div v-if="delayedRunsExist" class="delayed-runs-section">
+          <h3>Delayed Runs</h3>
           <TimeDelayResult :timeDelayData="timeDelayResults" />
         </div>
       </div>
@@ -62,9 +62,7 @@
           </p>
           <p v-if="selectedGcData && selectedGcData.type === 'Energy'">
             15-Minute Wait:
-            <span class="result-value">
-              {{ wait15 !== null ? (wait15 ? 'Yes' : 'No') : '' }}
-            </span>
+            <span class="result-value">{{ wait15 !== null ? (wait15 ? 'Yes' : 'No') : '' }}</span>
           </p>
           <p>
             Final Position:
@@ -137,10 +135,6 @@ export default {
       return Number(tdr.totalDelayedRuns) > 0;
     });
 
-    const timeDelaySectionExists = computed(() => {
-      return additionalRunsExist.value || delayedRunsExist.value;
-    });
-
     const showRunTable = ref(false);
     const toggleRunTable = () => {
       showRunTable.value = !showRunTable.value;
@@ -148,14 +142,14 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
-    // Computed property to format the selected GC with runtime to 2 decimals
+    // Format the selected GC runtime with 2 decimals.
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
       const runtime = Number(gcStore.selectedGcData.runTime);
       return `${gcStore.selectedGcData.name} (Runtime: ${runtime.toFixed(2)})`;
     });
 
-    // Computed property to calculate total duration of additional runs (in human-readable format)
+    // Compute the total duration of additional runs in a human‑readable format.
     const additionalRunsDuration = computed(() => {
       if (
         timeDelayResults.value &&
@@ -164,13 +158,12 @@ export default {
         timeDelayResults.value.totalRunsSequential
       ) {
         const totalRunsSeq = timeDelayResults.value.totalRunsSequential;
-        // The runtime in minutes from the selected GC
+        // Assume the GC runtime (in minutes) is the duration of each run.
         const runtime = Number(selectedGcData.value.runTime);
-        // Each run takes runtime minutes, so total duration in seconds:
         const totalSeconds = totalRunsSeq * runtime * 60;
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
+        const seconds = Math.floor(totalSeconds % 60);
         let formatted = "";
         if (hours > 0) {
           formatted += hours + "h ";
@@ -208,7 +201,6 @@ export default {
       runData,
       additionalRunsExist,
       delayedRunsExist,
-      timeDelaySectionExists,
       additionalRunsDuration,
     };
   },
@@ -249,7 +241,8 @@ export default {
   color: #333;
 }
 
-.additional-runs-section {
+.additional-runs-section,
+.delayed-runs-section {
   margin: 20px 0;
   padding: 10px;
   border: 1px solid #ddd;
@@ -257,22 +250,12 @@ export default {
   background-color: #f9f9f9;
 }
 
-.additional-runs-section h3 {
+.additional-runs-section h3,
+.delayed-runs-section h3 {
   margin-top: 0;
   margin-bottom: 10px;
   font-size: 1.2rem;
   color: #333;
-}
-
-.time-delay-section {
-  margin-top: 0;
-  padding-top: 0 !important;
-}
-
-.section-separator {
-  border: none;
-  border-top: 1px solid #ccc;
-  margin: 10px 0;
 }
 
 .toggle-run-table-button {
