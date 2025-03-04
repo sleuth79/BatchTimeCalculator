@@ -176,7 +176,8 @@ export default {
   /* Drop shadow around the config box */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  height: 100%;
+  max-height: 100vh; /* Ensures the window doesn't exceed the viewport height */
+  overflow-y: auto; /* Adds vertical scrolling when content overflows */
   font-family: 'Aptos', sans-serif;
 }
 
