@@ -32,7 +32,6 @@
           <option value="Sulphur">Sulphur</option>
         </select>
       </div>
-      <!-- Change Name: now on one line with the input aligned to the right -->
       <div class="setting">
         <label for="newName">Change Name:</label>
         <input type="text" id="newName" v-model="newName" placeholder="New Name" />
@@ -245,29 +244,24 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-.update-section {
-  margin-bottom: 16px;
-}
-
-/* Ensure each setting is on one line */
+/* Use CSS Grid to align labels and inputs/selects */
 .setting {
-  margin-bottom: 8px;
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content 400px;
   align-items: center;
-  flex-wrap: nowrap;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .setting label {
-  /* Keep the label width auto so the full text fits */
   font-weight: bold;
   font-size: 0.9rem;
+  text-align: right;
 }
 
-/* Input and select boxes aligned to the right and fixed at 250px */
 .setting input,
 .setting select {
-  width: 250px;
-  margin-left: auto;
+  width: 400px;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
@@ -275,6 +269,7 @@ export default {
   border-radius: 4px;
 }
 
+/* Button Group remains unchanged */
 .button-group {
   display: flex;
   justify-content: space-between;
@@ -313,21 +308,22 @@ export default {
 }
 
 .add-gc .setting {
-  margin-bottom: 8px;
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content 400px;
   align-items: center;
-  flex-wrap: nowrap;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .add-gc .setting label {
   font-weight: bold;
   font-size: 0.9rem;
+  text-align: right;
 }
 
 .add-gc .setting input,
 .add-gc .setting select {
-  width: 250px;
-  margin-left: auto;
+  width: 400px;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
