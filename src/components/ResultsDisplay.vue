@@ -26,31 +26,9 @@
           :delayedRunsExist="delayedRunsExist"
           :additionalRunsExist="additionalRunsExist"
         />
-        <!-- Additional Runs Section -->
-        <div v-if="timeDelayResults.sequentialBatchActive" class="additional-runs-section">
-          <h3>Additional Runs</h3>
-          <p>
-            Final Position for Sequential Batch:
-            <span class="result-value">{{ timeDelayResults.sequentialFinalPosition }}</span> |
-            Total Runs (Including Controls):
-            <span class="result-value">{{ timeDelayResults.totalRunsSequential }}</span>
-          </p>
-          <p>
-            Additional Runs End Time:
-            <span class="result-value">{{ timeDelayResults.sequentialBatchEndTime }}</span>
-          </p>
-          <p>
-            Total Runs (Initial Batch + Additional Runs):
-            <span class="result-value">{{ timeDelayResults.overallTotalRuns }}</span>
-          </p>
-          <p v-if="additionalRunsDuration">
-            Total Duration of Additional Runs:
-            <span class="result-value">{{ additionalRunsDuration }}</span>
-          </p>
-        </div>
-        <!-- Delayed Runs Section -->
-        <div v-if="delayedRunsExist" class="delayed-runs-section">
-          <h3>Delayed Runs</h3>
+        <!-- Separator line if additional or delayed runs exist -->
+        <hr class="section-separator" v-if="timeDelaySectionExists" />
+        <div v-if="timeDelaySectionExists" class="time-delay-section">
           <TimeDelayResult :timeDelayData="timeDelayResults" />
         </div>
       </div>
@@ -124,15 +102,25 @@ export default {
 
     const additionalRunsExist = computed(() => {
       const tdr = timeDelayResults.value || {};
-      return (
-        Number(tdr.additionalRuns) > 0 ||
-        (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0)
-      );
+      return (Number(tdr.additionalRuns) > 0) ||
+             (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0);
     });
 
     const delayedRunsExist = computed(() => {
       const tdr = timeDelayResults.value || {};
       return Number(tdr.totalDelayedRuns) > 0;
+    });
+
+    const timeDelaySectionExists = computed(() => {
+      return additionalRunsExist.value || delayedRunsExist.value;
+    });
+
+    const shouldShowTimeDelay = computed(() => {
+      if (!results.value || !timeDelayResults.value || !selectedGcData.value) return false;
+      if (selectedMode.value === 'start-time') {
+        return batchStartTime.value && (results.value.startTimeFinalPosition || results.value.finalPosition);
+      }
+      return false;
     });
 
     const showRunTable = ref(false);
@@ -142,45 +130,17 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
-    // Format the selected GC runtime with 2 decimals.
+    // Computed property to format the selected GC with runtime to 2 decimals
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
       const runtime = Number(gcStore.selectedGcData.runTime);
       return `${gcStore.selectedGcData.name} (Runtime: ${runtime.toFixed(2)})`;
     });
 
-    // Compute the total duration of additional runs in a human‑readable format.
-    const additionalRunsDuration = computed(() => {
-      if (
-        timeDelayResults.value &&
-        timeDelayResults.value.sequentialBatchActive &&
-        selectedGcData.value &&
-        timeDelayResults.value.totalRunsSequential
-      ) {
-        const totalRunsSeq = timeDelayResults.value.totalRunsSequential;
-        // Assume the GC runtime (in minutes) is the duration of each run.
-        const runtime = Number(selectedGcData.value.runTime);
-        const totalSeconds = totalRunsSeq * runtime * 60;
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        let formatted = "";
-        if (hours > 0) {
-          formatted += hours + "h ";
-        }
-        formatted += minutes + "m";
-        if (seconds > 0) {
-          formatted += " " + seconds + "s";
-        }
-        return formatted.trim();
-      }
-      return "";
-    });
-
     watch(
       () => gcStore.selectedMode,
       (newMode) => {
-        if (newMode === "start-time") {
+        if (newMode === 'start-time') {
           showRunTable.value = false;
         }
       },
@@ -196,12 +156,13 @@ export default {
       batchStartTime,
       batchStartTimeAMPM,
       wait15,
+      shouldShowTimeDelay,
       showRunTable,
       toggleRunTable,
       runData,
       additionalRunsExist,
       delayedRunsExist,
-      additionalRunsDuration,
+      timeDelaySectionExists,
     };
   },
 };
@@ -241,21 +202,15 @@ export default {
   color: #333;
 }
 
-.additional-runs-section,
-.delayed-runs-section {
-  margin: 20px 0;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+.time-delay-section {
+  margin-top: 0;
+  padding-top: 0 !important;
 }
 
-.additional-runs-section h3,
-.delayed-runs-section h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  color: #333;
+.section-separator {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
 }
 
 .toggle-run-table-button {
