@@ -373,9 +373,19 @@ export default {
 
     const totalDelayedDurationFormatted = computed(() => {
       const totalDurationMinutes = totalPreruns.value * parseFloat(props.gcRuntime);
-      const hours = Math.floor(totalDurationMinutes / 60);
-      const minutes = Math.round(totalDurationMinutes - hours * 60);
-      return hours > 0 ? `${hours} h ${minutes} m` : `${minutes} minutes`;
+      const totalSeconds = Math.round(totalDurationMinutes * 60);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      let formatted = "";
+      if (hours > 0) {
+        formatted += `${hours}h `;
+      }
+      formatted += `${minutes}m`;
+      if (seconds > 0) {
+        formatted += ` ${seconds}s`;
+      }
+      return formatted.trim();
     });
 
     const hideInputs = computed(() => false);
