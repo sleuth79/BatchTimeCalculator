@@ -7,11 +7,7 @@
         <label for="selectedGC">Select GC:</label>
         <select id="selectedGC" v-model="selectedGC">
           <option disabled value="">-- Select GC --</option>
-          <option
-            v-for="([key, value]) in sortedEntries"
-            :key="key"
-            :value="key"
-          >
+          <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
             {{ value.name !== key ? value.name : key }}
           </option>
         </select>
@@ -36,14 +32,10 @@
           <option value="Sulphur">Sulphur</option>
         </select>
       </div>
+      <!-- Combined into one line and shortened input -->
       <div class="setting">
-        <label for="newName">Change Name:</label>
-        <input
-          type="text"
-          id="newName"
-          v-model="newName"
-          placeholder="New Name"
-        />
+        <label for="newName">Change Name:</label> 
+        <input type="text" id="newName" v-model="newName" placeholder="New Name" />
       </div>
       <div class="button-group">
         <button @click="updateSettings">Update GC</button>
@@ -237,18 +229,15 @@ export default {
 
 <style scoped>
 .settings-modification {
-  /* Uniform vertical margin and padding around the box */
   margin: 8px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
-  /* Optional: you can also add a subtle drop shadow to this box */
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Add a subtle drop shadow to all h3 headings to make them pop */
 .settings-modification h3 {
   margin-top: 0;
   margin-bottom: 12px;
@@ -272,9 +261,11 @@ export default {
   font-size: 0.9rem;
 }
 
+/* Shortened input/select boxes */
 .setting input,
 .setting select {
   flex: 1;
+  max-width: 150px;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
@@ -282,7 +273,6 @@ export default {
   border-radius: 4px;
 }
 
-/* Button Group for update and delete buttons */
 .button-group {
   display: flex;
   justify-content: space-between;
@@ -306,20 +296,14 @@ export default {
 }
 
 .button-group .delete-button {
-  padding: 6px 12px;
   background-color: #ee930a;
   color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
 }
 
 .button-group .delete-button:hover {
   background-color: #c08c2b;
 }
 
-/* Add GC Section */
 .add-gc {
   margin-top: 16px;
   padding-top: 8px;
@@ -341,6 +325,7 @@ export default {
 .add-gc .setting input,
 .add-gc .setting select {
   flex: 1;
+  max-width: 150px;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
