@@ -32,9 +32,9 @@
           <option value="Sulphur">Sulphur</option>
         </select>
       </div>
-      <!-- Combined into one line and shortened input -->
+      <!-- Change Name: now on one line with the input aligned to the right -->
       <div class="setting">
-        <label for="newName">Change Name:</label> 
+        <label for="newName">Change Name:</label>
         <input type="text" id="newName" v-model="newName" placeholder="New Name" />
       </div>
       <div class="button-group">
@@ -249,23 +249,25 @@ export default {
   margin-bottom: 16px;
 }
 
+/* Ensure each setting is on one line */
 .setting {
   margin-bottom: 8px;
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .setting label {
-  width: 90px;
+  /* Keep the label width auto so the full text fits */
   font-weight: bold;
   font-size: 0.9rem;
 }
 
-/* Shortened input/select boxes */
+/* Input and select boxes aligned to the right and fixed at 250px */
 .setting input,
 .setting select {
-  flex: 1;
-  max-width: 150px;
+  width: 250px;
+  margin-left: auto;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
@@ -314,18 +316,18 @@ export default {
   margin-bottom: 8px;
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .add-gc .setting label {
-  width: 90px;
   font-weight: bold;
   font-size: 0.9rem;
 }
 
 .add-gc .setting input,
 .add-gc .setting select {
-  flex: 1;
-  max-width: 150px;
+  width: 250px;
+  margin-left: auto;
   padding: 4px;
   font-size: 0.9rem;
   background-color: #fff;
