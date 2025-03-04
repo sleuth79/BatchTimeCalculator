@@ -126,11 +126,22 @@ export default {
 
     // Total delayed duration in milliseconds.
     const D = computed(() => totalDelayedRuns.value * runtimeSeconds.value * 1000);
+    // Updated computed property: Remove spaces between numbers and units and include seconds.
     const totalDelayedDurationFormatted = computed(() => {
-      const totalMinutes = Math.round(D.value / 60000);
-      const hrs = Math.floor(totalMinutes / 60);
-      const mins = totalMinutes % 60;
-      return hrs > 0 ? `${hrs} hr, ${mins} min` : `${mins} minutes`;
+      const totalSeconds = Math.round(D.value / 1000);
+      const hrs = Math.floor(totalSeconds / 3600);
+      const remainder = totalSeconds % 3600;
+      const mins = Math.floor(remainder / 60);
+      const secs = remainder % 60;
+      let formatted = "";
+      if (hrs > 0) {
+        formatted += `${hrs}h `;
+      }
+      formatted += `${mins}m`;
+      if (secs > 0) {
+        formatted += ` ${secs}s`;
+      }
+      return formatted.trim();
     });
 
     const targetDisplay = computed(() => {

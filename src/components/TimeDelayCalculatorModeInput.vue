@@ -28,11 +28,7 @@
             />
           </div>
         </div>
-        <!-- New line showing the formatted total duration of delayed runs -->
-        <p>
-          Total Duration of Delayed Runs:
-          <span class="result-value">{{ totalDelayedDurationFormatted }}</span>
-        </p>
+        <!-- Removed the Total Duration line from the input -->
       </div>
     </div>
   </div>
@@ -170,32 +166,13 @@ export default {
       return formatTimeWithAmPmAndSeconds(endTime);
     });
 
-    // --- New: Computed: Total Delayed Duration Formatted ---
-    const totalDelayedDurationFormatted = computed(() => {
-      // Convert totalDelayedMs from milliseconds to seconds.
-      const totalSeconds = Math.round(totalDelayedMs.value / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      let formatted = "";
-      if (hours > 0) {
-        formatted += `${hours}h `;
-      }
-      formatted += `${minutes}m`;
-      if (seconds > 0) {
-        formatted += ` ${seconds}s`;
-      }
-      return formatted.trim();
-    });
-
     // --- Emit Payload When Inputs Change ---
     watch([prebatchSelected, calibrationSelected, miscRuns], () => {
       const payload = {
         prerunsDescription: prerunsDescription.value,
         totalDelayedRuns: totalDelayedRuns.value,
         delayedRunsStartTime: delayedRunsStartTime.value,
-        delayedRunsEndTime: delayedRunsEndTime.value,
-        totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
+        delayedRunsEndTime: delayedRunsEndTime.value
       };
       emit('update-time-delay', payload);
     }, { deep: true });
@@ -205,8 +182,7 @@ export default {
         prerunsDescription: prerunsDescription.value,
         totalDelayedRuns: totalDelayedRuns.value,
         delayedRunsStartTime: delayedRunsStartTime.value,
-        delayedRunsEndTime: delayedRunsEndTime.value,
-        totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
+        delayedRunsEndTime: delayedRunsEndTime.value
       };
       emit('update-time-delay', initialPayload);
     });
@@ -221,8 +197,7 @@ export default {
       delayedRunsStartTime,
       delayedRunsEndTime,
       limitMiscRuns,
-      calibrationRuns,
-      totalDelayedDurationFormatted
+      calibrationRuns
     };
   },
 };
