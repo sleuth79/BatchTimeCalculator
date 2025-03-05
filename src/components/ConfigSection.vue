@@ -5,7 +5,7 @@
       Failed to load GC data. Please try again.
     </div>
     <div v-else class="config-container">
-      <!-- Scrollable content area -->
+      <!-- Scrollable main content -->
       <div class="scrollable-content">
         <mode-selector :selected-mode="selectedMode" @mode-changed="setSelectedMode" />
         <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
@@ -25,7 +25,7 @@
           @update-time-delay="handleUpdateTimeDelay"
         />
 
-        <!-- Render the appropriate Time Delay component for start-time mode.
+        <!-- Render the Time Delay component for start-time mode.
              Adding a dynamic key forces the component to re-mount when the mode changes. -->
         <TimeDelayStartModeInput
           v-if="selectedMode === 'start-time'"
@@ -38,7 +38,7 @@
         />
       </div>
 
-      <!-- Pinned box at the bottom -->
+      <!-- Pinned box that remains at the bottom -->
       <div class="other-batch-types-box">
         <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
         <p>Repeats: 14 runs</p>
@@ -127,53 +127,42 @@ export default {
 </script>
 
 <style scoped>
-.config-section {
-  background-color: #fff;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  /* Fix the height and prevent the outer container from scrolling */
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* 
+  Note: We leave the global .config-section styles (set in your global .css)
+  intact so that the overall window size remains as before.
+*/
 
-.config-section h1 {
-  font-size: 2.4rem;
-  margin-top: 0;
-  margin-bottom: 10px;
-  text-align: left;
-  color: #131313;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-/* Container wrapping scrollable content and pinned footer */
+/* Internal container for the flex layout */
 .config-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-/* Main content area that scrolls if necessary */
+/* The scrollable content area */
 .scrollable-content {
-  flex: 1;
+  flex-grow: 1;
   overflow-y: auto;
+  /* Add bottom margin to ensure content doesn't overlap the pinned box */
+  margin-bottom: 60px; /* Adjust this value based on the pinned box height */
 }
 
-/* Pinned box at the bottom remains in place */
+/* The pinned box for Total Runs remains fixed at the bottom of the container */
 .other-batch-types-box {
-  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background-color: #fff;
   border: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
-  background-color: #fff;
-  margin-top: 10px;
+  z-index: 1;
+}
+.other-batch-types-box p {
+  margin: 2px 0;
 }
 
+/* Optionally adjust any labels if needed */
 .config-section label {
   display: block;
   margin-top: 1px;
