@@ -2,7 +2,9 @@
   <div class="time-delay-input">
     <!-- Wrap all the main inputs in a content container -->
     <div class="time-delay-content">
-      <h3 class="main-heading">Additional Runs</h3>
+      <div class="heading-box">
+        <h3 class="main-heading">Additional Runs</h3>
+      </div>
       <!-- We no longer hide the inputs -->
       <div>
         <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
@@ -30,12 +32,11 @@
           </div>
         </div>
 
-        <!-- Separator line between Additional Runs and Delayed Runs -->
-        <hr v-if="!delayedMode" class="separator" />
-
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
-          <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+          <div class="heading-box">
+            <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+          </div>
           <div class="delayed-runs-inputs">
             <div
               class="box"
@@ -547,6 +548,16 @@ export default {
 
 .time-delay-content {
   flex-grow: 1;
+}
+
+/* New Heading Box for Additional and Delayed Runs */
+.heading-box {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 6px;
+  text-align: left;
+  background-color: #fff;
 }
 
 /* New Box for Total Runs For Other Batch Types, pushed to the bottom */
