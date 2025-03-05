@@ -131,7 +131,7 @@ export default {
 .config-section h1 {
   font-size: 2.4rem;
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   text-align: left;
   color: #131313;
   /* Adjusted subtle text shadow for a less intense drop shadow effect */

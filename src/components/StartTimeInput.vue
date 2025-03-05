@@ -1,308 +1,132 @@
 <template>
-  <div class="start-time-input">
-    <div v-if="!isLoading">
-      <!-- Batch Start Time Input -->
-      <div class="input-group">
-        <label for="batch-start-time">Batch Start Time:</label>
-        <div class="time-input">
-          <input
-            type="text"
-            id="batch-start-time"
-            v-model="localBatchStartTime"
-            placeholder="HH:mm:ss"
-            @input="formatTimeInput"
-          />
-          <div class="ampm-selector">
-            <div
-              class="ampm-box"
-              :class="{ selected: localBatchStartTimeAMPM === 'AM' }"
-              @click="setAmPm('AM')"
-            >
-              AM
-            </div>
-            <div
-              class="ampm-box"
-              :class="{ selected: localBatchStartTimeAMPM === 'PM' }"
-              @click="setAmPm('PM')"
-            >
-              PM
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 15-Minute Wait Input -->
-      <div class="input-group wait-input" v-if="showWaitInput">
-        <label>15-Minute Wait:</label>
-        <div class="wait-selector">
-          <div
-            class="wait-box"
-            :class="{ selected: localWait15 }"
-            @click="setWait15(true)"
-          >
-            Yes
-          </div>
-          <div
-            class="wait-box"
-            :class="{ selected: !localWait15 }"
-            @click="setWait15(false)"
-          >
-            No
-          </div>
-        </div>
-      </div>
-
-      <!-- Final Position Selector -->
-      <div class="input-group">
-        <label for="position-selector">Final Position:</label>
-        <!-- Bind finalPosition using v-model -->
-        <position-selector
-          id="position-selector"
-          :allowed-positions="allowedFinalPositions"
-          mode="start-time"
-          field="start-time"
-          v-model="finalPosition"
-        />
-        <div class="error-message">{{ startTimeFinalPositionError }}</div>
-      </div>
+  <div class="start-time-results">
+    <!-- Always display Start Time and Final Position headings -->
+    <p>
+      Start Time:
+      <span class="result-value">{{ displayBatchStartTime }}</span>
+      <span v-if="displayBatchStartTimeAMPM" class="result-value">&nbsp;{{ displayBatchStartTimeAMPM }}</span>
+    </p>
+    <p>
+      Final Position:
+      <span class="result-value">{{ displayFinalPosition }}</span>
+      <span v-if="displayTotalRuns">
+        &nbsp;| Total Runs (Including Controls):
+        <span class="result-value">{{ results.totalRuns }}</span>
+      </span>
+    </p>
+    <!-- Only render these fields if they have values -->
+    <p v-if="results.totalRunTime">
+      Total Run Time:
+      <span class="result-value">{{ results.totalRunTime }}</span>
+    </p>
+    <p v-if="results.batchEndTime">
+      Batch End Time:
+      <span class="result-value">{{ results.batchEndTime }}</span>
+    </p>
+    <p v-if="results.closestPositionBefore4PM">
+      Closest Position to 4:00 PM:
+      <span class="result-value">
+        <template v-if="isClosestPositionObject">
+          {{ results.closestPositionBefore4PM.position }}
+          <span v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime">
+            ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
+          </span>
+        </template>
+        <template v-else>
+          {{ results.closestPositionBefore4PM }}
+        </template>
+      </span>
+    </p>
+    <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
+    <div v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+      <hr class="time-gap-hr" />
+      <p>
+        Time Gap to 7:30 AM:
+        <span class="result-value">{{ results.timeGapTo730AM }}</span>
+      </p>
     </div>
-    <div v-else>Loading...</div>
   </div>
 </template>
 
 <script>
-import { computed, ref, watch, onMounted } from "vue";
-import { useGcStore } from "../store";
-import PositionSelector from "./PositionSelector.vue";
-
 export default {
-  name: "StartTimeInput",
-  components: { PositionSelector },
-  setup(_, { emit }) {
-    const gcStore = useGcStore();
-    const startTimeFinalPositionError = ref("");
-
-    const isLoading = computed(() => gcStore.isLoading);
-
-    const localBatchStartTime = computed({
-      get() {
-        return gcStore.startTime.batchStartTime || "";
-      },
-      set(val) {
-        gcStore.setBatchStartTime(val);
-      },
-    });
-
-    const localBatchStartTimeAMPM = computed({
-      get() {
-        return gcStore.startTime.batchStartTimeAMPM || "AM";
-      },
-      set(val) {
-        gcStore.setBatchStartTimeAMPM(val);
-      },
-    });
-
-    const localWait15 = computed({
-      get() {
-        return gcStore.startTime.wait15 || false;
-      },
-      set(val) {
-        gcStore.setWait15(val);
-      },
-    });
-
-    const showWaitInput = computed(() => {
-      const selectedGc = gcStore.selectedGc;
-      return selectedGc && gcStore.allGcData[selectedGc]?.type === "Energy";
-    });
-
-    const allowedFinalPositions = [
-      3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
-      24, 25, 26, 27, 28, 29, 30, 31, 32,
-    ];
-
-    // Reactive variable to hold the selected final position.
-    // When a position is clicked, if it’s the same as the current selection,
-    // it will be toggled off (set to null) by the PositionSelector.
-    const finalPosition = ref(null);
-
-    // When finalPosition changes, update the store and recalculate
-    watch(finalPosition, (newVal) => {
-      gcStore.startTime.finalPosition = newVal;
-      recalculateResults();
-    });
-
-    watch(
-      () => gcStore.selectedGc,
-      (newGc) => {
-        if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
-          localWait15.value = true;
-        } else if (newGc && gcStore.allGcData[newGc]?.type === "Sulphur") {
-          localWait15.value = false;
-        }
-        recalculateResults();
-      }
-    );
-
-    watch([localBatchStartTime, localBatchStartTimeAMPM], () => {
-      recalculateResults();
-    });
-
-    watch(localWait15, () => {
-      recalculateResults();
-    });
-
-    const formatTimeInput = () => {
-      let value = localBatchStartTime.value.replace(/\D/g, "");
-      if (value.length > 4) {
-        value =
-          value.slice(0, 2) +
-          ":" +
-          value.slice(2, 4) +
-          ":" +
-          value.slice(4, 6);
-      } else if (value.length > 2) {
-        value = value.slice(0, 2) + ":" + value.slice(2, 4);
-      }
-      localBatchStartTime.value = value.slice(0, 8);
-      if (localBatchStartTime.value.length === 8) {
-        validateTimeInput();
-      }
-    };
-
-    const validateTimeInput = () => {
-      const parts = localBatchStartTime.value.split(":").map(Number);
-      if (
-        parts.length !== 3 ||
-        isNaN(parts[0]) ||
-        isNaN(parts[1]) ||
-        isNaN(parts[2]) ||
-        parts[0] < 0 ||
-        parts[0] > 23 ||
-        parts[1] < 0 ||
-        parts[1] > 59 ||
-        parts[2] < 0 ||
-        parts[2] > 59
-      ) {
-        localBatchStartTime.value = "";
-        alert("Invalid time. Enter a valid time in HH:mm:ss format.");
-      }
-    };
-
-    const recalculateResults = () => {
-      gcStore.calculateStartTimeBatch();
-    };
-
-    const setAmPm = (value) => {
-      localBatchStartTimeAMPM.value = value;
-    };
-
-    const setWait15 = (val) => {
-      localWait15.value = val;
-      recalculateResults();
-    };
-
-    onMounted(() => {
-      if (!localBatchStartTimeAMPM.value) {
-        setAmPm("AM");
-      }
-    });
-
-    return {
-      localBatchStartTime,
-      localBatchStartTimeAMPM,
-      localWait15,
-      startTimeFinalPositionError,
-      isLoading,
-      formatTimeInput,
-      allowedFinalPositions,
-      recalculateResults,
-      showWaitInput,
-      setAmPm,
-      setWait15,
-      finalPosition, // v-model binding for final position
-    };
+  name: "StartTimeResults",
+  props: {
+    results: {
+      type: Object,
+      default: () => ({}),
+    },
+    startTime: {
+      type: Object,
+      default: () => ({}),
+    },
+    selectedGcData: {
+      type: Object,
+      default: null,
+    },
+    delayedRunsExist: {
+      type: Boolean,
+      default: false,
+    },
+    // Parent may be passing 0 or 1, so allow any type and coerce it.
+    additionalRunsExist: {
+      type: [Boolean, Number],
+      default: false,
+    },
+  },
+  computed: {
+    displayBatchStartTime() {
+      return this.results.batchStartTime || this.startTime.batchStartTime || "";
+    },
+    displayBatchStartTimeAMPM() {
+      const time = this.results.batchStartTime || this.startTime.batchStartTime;
+      return time ? (this.results.batchStartTimeAMPM || this.startTime.batchStartTimeAMPM || "AM") : "";
+    },
+    displayFinalPosition() {
+      return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
+    },
+    displayTotalRuns() {
+      return !!this.results.totalRuns;
+    },
+    additionalRunsExistBool() {
+      return Boolean(this.additionalRunsExist);
+    },
+    isClosestPositionObject() {
+      return (
+        this.results &&
+        this.results.closestPositionBefore4PM &&
+        typeof this.results.closestPositionBefore4PM === "object" &&
+        this.results.closestPositionBefore4PM.position !== undefined
+      );
+    },
   },
 };
 </script>
 
 <style scoped>
-.time-input input {
-  width: 90px;
+.start-time-results {
+  padding: 0;
 }
-
-.ampm-selector {
-  display: flex;
-  gap: 5px;
-  margin-left: 5px;
-}
-
-.ampm-box {
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-}
-
-.ampm-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-
-.ampm-box:hover {
-  background-color: #f0f0f0;
-}
-
-.input-group.wait-input {
-  display: flex;
-  align-items: center;
-}
-
-.wait-selector {
-  display: flex;
-  gap: 5px;
-  margin-left: 10px;
-}
-
-.wait-box {
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  border-radius: 4px;
-  background-color: #fff;
-}
-
-.wait-box:hover {
-  background-color: #f0f0f0;
-}
-
-.wait-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-
 .start-time-results p {
-  margin-bottom: 2px !important;
-  line-height: 1.2 !important;
-  font-size: 1rem !important;
+  margin-bottom: 0px;
+  font-size: 1rem;
+  line-height: 1.2;
   color: #333;
 }
-
 .result-value {
   font-weight: bold;
+  font-size: 1rem;
 }
-
-.input-group {
-  margin-bottom: 10px;
+/* Default hr style */
+hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 5px 0;
+  padding: 0;
 }
-
-/* Add a subtle drop shadow to all headings (labels in this case) */
-label {
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
+/* Style for the hr above the time gap */
+.time-gap-hr {
+  margin-top: 0;
+  margin-bottom: 5px;
 }
 </style>
