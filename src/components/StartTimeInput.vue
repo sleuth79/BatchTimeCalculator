@@ -229,19 +229,13 @@ export default {
 <style scoped>
 /* Container for the start time input and AM/PM selector */
 .time-input {
-  display: flex;
-  align-items: center;
-  justify-content: center;  /* centers the input horizontally */
-  padding: 10px;
-  border-radius: 6px;
-  background-color: #fff;  /* ensures contrast for the drop shadow */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  /* drop shadow around the box */
 }
 
 /* Style the input within the time-input container */
 .time-input input {
   width: 90px;
   text-align: center;  /* centers the text within the input */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  /* drop shadow on input */
 }
 
 /* AM/PM Selector */
