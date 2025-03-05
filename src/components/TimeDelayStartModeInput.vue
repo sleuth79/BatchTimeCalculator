@@ -65,12 +65,6 @@
         </div>
       </div>
     </div>
-    <!-- New Box positioned at the bottom -->
-    <div class="other-batch-types-box">
-      <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
-      <p>Repeats: 14 runs</p>
-      <p>Validations: 10 runs</p>
-    </div>
   </div>
 </template>
 
@@ -383,7 +377,7 @@ export default {
       const totalSeconds = Math.round(totalDurationMinutes * 60);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+      const seconds = totalSeconds % 3600;
       let formatted = "";
       if (hours > 0) {
         formatted += `${hours}h `;
@@ -559,18 +553,6 @@ export default {
   margin-bottom: 6px;
   width: 100%;
   text-align: left;
-}
-
-/* New Box for Total Runs For Other Batch Types, pinned to the bottom */
-.other-batch-types-box {
-  border: 1px solid #ccc;
-  padding: 5px;
-  /* no margin-top auto; instead, we ensure the overall container doesn't grow */
-  font-size: 0.85rem;
-  border-radius: 4px;
-}
-.other-batch-types-box p {
-  margin: 2px 0;
 }
 
 /* The rest of your styles */
