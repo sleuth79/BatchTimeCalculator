@@ -57,7 +57,7 @@ function computeTimeDelayRequired(batchEndTime, effectiveStartTime) {
   const target = get730Target(effectiveStartTime, batchEndTime);
   const diffMS = target - batchEndTime;
   const hours = Math.floor(diffMS / (1000 * 60 * 60));
-  return diffMS > 0 && hours > 0 ? `${hours} hours` : "No time delay required";
+  return diffMS > 0 && hours > 0 ? `${hours} hours` : "No Time Delay Required";
 }
 
 /**

@@ -321,7 +321,7 @@ export default {
         const diffHours = Math.floor(diffMS / (3600 * 1000));
         return `${diffHours} hours`;
       } else {
-        return "No time delay required";
+        return "No Time Delay Required";
       }
     });
 

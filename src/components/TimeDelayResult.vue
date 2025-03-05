@@ -73,7 +73,9 @@
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
-          <strong class="highlight-green">{{ timeDelayData.timeDelayRequired }}</strong>
+          <strong class="highlight-green">
+            {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
+          </strong>
         </p>
       </div>
     </div>

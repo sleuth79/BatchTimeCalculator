@@ -169,7 +169,7 @@ export default {
     });
     const formattedTimeDelayRequired = computed(() => {
       return computedDelayHours.value === 0
-        ? "No time delay required"
+        ? "No Time Delay Required"
         : `${computedDelayHours.value} hours`;
     });
     const adjustedEndTime = computed(() => {

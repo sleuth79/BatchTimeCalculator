@@ -89,7 +89,7 @@ export default {
 
     // --- Computed: Hide Inputs Based on GC Store Results ---
     const hideInputs = computed(() => {
-      return gcStore.results && gcStore.results.timeDelayRequired === "No time delay required";
+      return gcStore.results && gcStore.results.timeDelayRequired === "No Time Delay Required";
     });
 
     // --- New: Computed property for calibration runs ---
