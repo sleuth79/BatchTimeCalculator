@@ -535,25 +535,37 @@ export default {
   font-weight: bold;
 }
 
-/* Set up the config window (time-delay-input) as a flex container with min-height */
+/* Use a fixed height for the entire container so it never scrolls.
+   Adjust the height as needed to fit on your screen. */
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
   padding-top: 0;
   display: flex;
   flex-direction: column;
-  min-height: 400px; /* adjust as needed */
+  height: 400px; /* fixed height */
+  overflow: hidden; /* prevent scrolling */
 }
 
 .time-delay-content {
-  flex-grow: 1;
+  flex: 1 1 auto;
+  overflow: hidden; /* content will shrink if needed */
 }
 
-/* New Box for Total Runs For Other Batch Types, pushed to the bottom */
+/* Section header style with a darker background spanning the container */
+.section-header {
+  background-color: #d0d0d0; /* slightly darker shade */
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  width: 100%;
+  text-align: left;
+}
+
+/* New Box for Total Runs For Other Batch Types, pinned to the bottom */
 .other-batch-types-box {
   border: 1px solid #ccc;
   padding: 5px;
-  margin-top: auto; /* This pushes the box to the bottom */
+  /* no margin-top auto; instead, we ensure the overall container doesn't grow */
   font-size: 0.85rem;
   border-radius: 4px;
 }
