@@ -227,10 +227,24 @@ export default {
 </script>
 
 <style scoped>
-.time-input input {
-  width: 90px;
+/* Container for the start time input and AM/PM selector */
+.time-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;  /* centers the input horizontally */
+  padding: 10px;
+  border-radius: 6px;
+  background-color: #fff;  /* ensures contrast for the drop shadow */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  /* drop shadow around the box */
 }
 
+/* Style the input within the time-input container */
+.time-input input {
+  width: 90px;
+  text-align: center;  /* centers the text within the input */
+}
+
+/* AM/PM Selector */
 .ampm-selector {
   display: flex;
   gap: 5px;
@@ -255,6 +269,7 @@ export default {
   background-color: #f0f0f0;
 }
 
+/* Wait Input Group */
 .input-group.wait-input {
   display: flex;
   align-items: center;
@@ -286,6 +301,7 @@ export default {
   color: var(--text-highlight);
 }
 
+/* Additional styling for start time results and groups remains unchanged */
 .start-time-results p {
   margin-bottom: 2px !important;
   line-height: 1.2 !important;
@@ -301,7 +317,7 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Add a subtle drop shadow to all headings (labels in this case) */
+/* Global label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
 }
