@@ -8,7 +8,7 @@
         <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
         <div v-if="!delayedMode" class="sequential-batch-section">
           <label>
-            Final Position for Sequential Batch:
+            Final Position For Sequential Batch:
             <span style="font-size: 0.80em;">(if required)</span>
           </label>
           <position-selector
@@ -525,29 +525,27 @@ export default {
 </script>
 
 <style scoped>
-/* Unified Heading Styles for all headings */
+/* Unified Heading Styles for all headings - margin-bottom set to 6px */
 .main-heading,
 .batch-label,
 .delayed-runs-heading {
   font-size: 1.2rem !important;
   margin-top: 0.5rem !important;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-weight: bold;
 }
 
-/* Set up the config window (time-delay-input) as a flex container */
+/* Set up the config window (time-delay-input) as a flex container with min-height */
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
   padding-top: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 400px; /* adjust as needed */
 }
 
-/* Container for all main content */
 .time-delay-content {
-  /* This container will grow to fill available space */
   flex-grow: 1;
 }
 
