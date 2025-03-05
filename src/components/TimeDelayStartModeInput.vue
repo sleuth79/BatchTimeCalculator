@@ -1,72 +1,75 @@
 <template>
   <div class="time-delay-input">
-    <h3 class="main-heading">Additional Runs</h3>
-    <div>
-      <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
-      <div v-if="!delayedMode" class="sequential-batch-section">
-        <label>
-          Final Position for Sequential Batch:
-          <span style="font-size: 0.80em;">(if required)</span>
-        </label>
-        <position-selector
-          :allowed-positions="allowedPositionsForSequential"
-          mode="sequential"
-          field="sequential"
-          v-model="sequentialFinalPosition"
-        />
-        <!-- Additional Runs input -->
-        <div class="additional-runs-input">
-          <label>Misc Additional Runs:</label>
-          <input
-            type="number"
-            v-model="additionalRunsInput"
-            min="0"
-            max="99"
-            @input="limitAdditionalRuns"
+    <!-- Wrap all the main inputs in a content container -->
+    <div class="time-delay-content">
+      <h3 class="main-heading">Additional Runs</h3>
+      <!-- We no longer hide the inputs -->
+      <div>
+        <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
+        <div v-if="!delayedMode" class="sequential-batch-section">
+          <label>
+            Final Position for Sequential Batch:
+            <span style="font-size: 0.80em;">(if required)</span>
+          </label>
+          <position-selector
+            :allowed-positions="allowedPositionsForSequential"
+            mode="sequential"
+            field="sequential"
+            v-model="sequentialFinalPosition"
           />
-        </div>
-      </div>
-
-      <!-- Separator line between Additional Runs and Delayed Runs -->
-      <hr v-if="!delayedMode" class="separator" />
-
-      <!-- Delayed Runs Section -->
-      <div class="delayed-runs-section">
-        <h3 class="delayed-runs-heading">Delayed Runs:</h3>
-        <div class="delayed-runs-inputs">
-          <div
-            class="box"
-            :class="{ selected: prebatchSelected }"
-            @click="togglePrebatch"
-          >
-            Prebatch
-          </div>
-          <div
-            class="box"
-            :class="{ selected: calibrationSelected }"
-            @click="toggleCalibration"
-          >
-            Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
-          </div>
-          <div class="misc-runs">
-            <span class="misc-label">Misc Delayed Runs:</span>
+          <!-- Additional Runs input -->
+          <div class="additional-runs-input">
+            <label>Misc Additional Runs:</label>
             <input
               type="number"
-              v-model="miscRunsInput"
+              v-model="additionalRunsInput"
               min="0"
               max="99"
-              @input="limitMiscRuns"
+              @input="limitAdditionalRuns"
             />
           </div>
         </div>
-      </div>
 
-      <!-- New Box for Total Runs For Other Batch Types -->
-      <div class="other-batch-types-box">
-        <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
-        <p>Repeats: 14 runs</p>
-        <p>Validations: 10 runs</p>
+        <!-- Separator line between Additional Runs and Delayed Runs -->
+        <hr v-if="!delayedMode" class="separator" />
+
+        <!-- Delayed Runs Section -->
+        <div class="delayed-runs-section">
+          <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+          <div class="delayed-runs-inputs">
+            <div
+              class="box"
+              :class="{ selected: prebatchSelected }"
+              @click="togglePrebatch"
+            >
+              Prebatch
+            </div>
+            <div
+              class="box"
+              :class="{ selected: calibrationSelected }"
+              @click="toggleCalibration"
+            >
+              Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
+            </div>
+            <div class="misc-runs">
+              <span class="misc-label">Misc Delayed Runs:</span>
+              <input
+                type="number"
+                v-model="miscRunsInput"
+                min="0"
+                max="99"
+                @input="limitMiscRuns"
+              />
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+    <!-- New Box positioned at the bottom -->
+    <div class="other-batch-types-box">
+      <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
+      <p>Repeats: 14 runs</p>
+      <p>Validations: 10 runs</p>
     </div>
   </div>
 </template>
@@ -532,12 +535,35 @@ export default {
   font-weight: bold;
 }
 
-/* The rest of your styles */
+/* Set up the config window (time-delay-input) as a flex container */
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
+
+/* Container for all main content */
+.time-delay-content {
+  /* This container will grow to fill available space */
+  flex-grow: 1;
+}
+
+/* New Box for Total Runs For Other Batch Types, pushed to the bottom */
+.other-batch-types-box {
+  border: 1px solid #ccc;
+  padding: 5px;
+  margin-top: auto; /* This pushes the box to the bottom */
+  font-size: 0.85rem;
+  border-radius: 4px;
+}
+.other-batch-types-box p {
+  margin: 2px 0;
+}
+
+/* The rest of your styles */
 .info-message {
   color: #666;
   font-style: italic;
@@ -605,17 +631,5 @@ label {
 /* Add a subtle drop shadow to all headings (labels in this case) */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
-}
-
-/* New: Box for Total Runs For Other Batch Types */
-.other-batch-types-box {
-  border: 1px solid #ccc;
-  padding: 5px;
-  margin-top: 10px;
-  font-size: 0.85rem;
-  border-radius: 4px;
-}
-.other-batch-types-box p {
-  margin: 2px 0;
 }
 </style>
