@@ -5,7 +5,7 @@
       Failed to load GC data. Please try again.
     </div>
     <div v-else class="config-container">
-      <!-- Main content that scrolls if needed -->
+      <!-- Scrollable content area -->
       <div class="scrollable-content">
         <mode-selector :selected-mode="selectedMode" @mode-changed="setSelectedMode" />
         <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
@@ -38,7 +38,7 @@
         />
       </div>
 
-      <!-- Pinned box for Total Runs -->
+      <!-- Pinned box at the bottom -->
       <div class="other-batch-types-box">
         <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
         <p>Repeats: 14 runs</p>
@@ -134,9 +134,11 @@ export default {
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  /* Fix the height and prevent the outer container from scrolling */
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Adjust as needed */
+  overflow: hidden;
 }
 
 .config-section h1 {
@@ -155,25 +157,21 @@ export default {
   flex-direction: column;
 }
 
-/* Scrollable main content area */
+/* Main content area that scrolls if necessary */
 .scrollable-content {
   flex: 1;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
-/* Pinned box at the bottom */
+/* Pinned box at the bottom remains in place */
 .other-batch-types-box {
+  flex-shrink: 0;
   border: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
-  position: sticky;
-  bottom: 0;
   background-color: #fff;
-  z-index: 1;
-}
-.other-batch-types-box p {
-  margin: 2px 0;
+  margin-top: 10px;
 }
 
 .config-section label {
