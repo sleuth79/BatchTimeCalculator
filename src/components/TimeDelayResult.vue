@@ -19,6 +19,11 @@
           Additional Runs:
           <strong>{{ timeDelayData.additionalRuns }}</strong>
         </p>
+        <!-- Flip the order: Total Runs comes first -->
+        <p v-if="timeDelayData.totalRuns">
+          {{ totalRunsHeading }}:
+          <strong>{{ timeDelayData.totalRuns }}</strong>
+        </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
             Additional Runs End Time:
@@ -28,10 +33,6 @@
             Additional Runs End Time:
             <strong>{{ timeDelayData.additionalRunsEndTime }}</strong>
           </template>
-        </p>
-        <p v-if="timeDelayData.totalRuns">
-          {{ totalRunsHeading }}:
-          <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
       </div>
       <!-- Display time gap if additional runs exist and no delayed runs -->
