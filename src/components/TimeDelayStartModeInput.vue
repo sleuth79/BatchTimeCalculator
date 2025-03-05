@@ -2,7 +2,7 @@
   <div class="time-delay-input">
     <!-- Wrap all the main inputs in a content container -->
     <div class="time-delay-content">
-      <div class="heading-box">
+      <div class="section-header">
         <h3 class="main-heading">Additional Runs</h3>
       </div>
       <!-- We no longer hide the inputs -->
@@ -33,40 +33,38 @@
         </div>
 
         <!-- Delayed Runs Section -->
-        <div class="delayed-runs-section">
-          <div class="heading-box">
-            <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+        <div class="section-header">
+          <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+        </div>
+        <div class="delayed-runs-inputs">
+          <div
+            class="box"
+            :class="{ selected: prebatchSelected }"
+            @click="togglePrebatch"
+          >
+            Prebatch
           </div>
-          <div class="delayed-runs-inputs">
-            <div
-              class="box"
-              :class="{ selected: prebatchSelected }"
-              @click="togglePrebatch"
-            >
-              Prebatch
-            </div>
-            <div
-              class="box"
-              :class="{ selected: calibrationSelected }"
-              @click="toggleCalibration"
-            >
-              Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
-            </div>
-            <div class="misc-runs">
-              <span class="misc-label">Misc Delayed Runs:</span>
-              <input
-                type="number"
-                v-model="miscRunsInput"
-                min="0"
-                max="99"
-                @input="limitMiscRuns"
-              />
-            </div>
+          <div
+            class="box"
+            :class="{ selected: calibrationSelected }"
+            @click="toggleCalibration"
+          >
+            Calibration<span v-if="calibrationRuns !== ''"> ({{ calibrationRuns }})</span>
+          </div>
+          <div class="misc-runs">
+            <span class="misc-label">Misc Delayed Runs:</span>
+            <input
+              type="number"
+              v-model="miscRunsInput"
+              min="0"
+              max="99"
+              @input="limitMiscRuns"
+            />
           </div>
         </div>
       </div>
     </div>
-    <!-- New Box positioned at the bottom -->
+    <!-- New Box positioned at the bottom remains unchanged -->
     <div class="other-batch-types-box">
       <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
       <p>Repeats: 14 runs</p>
