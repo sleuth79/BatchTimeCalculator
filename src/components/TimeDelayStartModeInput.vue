@@ -2,10 +2,11 @@
   <div class="time-delay-input">
     <!-- Wrap all the main inputs in a content container -->
     <div class="time-delay-content">
+      <!-- Additional Runs Header -->
       <div class="section-header">
         <h3 class="main-heading">Additional Runs</h3>
       </div>
-      <!-- We no longer hide the inputs -->
+      <!-- Additional Runs Content -->
       <div>
         <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
         <div v-if="!delayedMode" class="sequential-batch-section">
@@ -32,10 +33,11 @@
           </div>
         </div>
 
-        <!-- Delayed Runs Section -->
+        <!-- Delayed Runs Header -->
         <div class="section-header">
-          <h3 class="delayed-runs-heading">Delayed Runs:</h3>
+          <h3 class="delayed-runs-heading">Delayed Runs</h3>
         </div>
+        <!-- Delayed Runs Content -->
         <div class="delayed-runs-inputs">
           <div
             class="box"
@@ -64,7 +66,7 @@
         </div>
       </div>
     </div>
-    <!-- New Box positioned at the bottom remains unchanged -->
+    <!-- New Box for Other Batch Types remains at the bottom -->
     <div class="other-batch-types-box">
       <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
       <p>Repeats: 14 runs</p>
@@ -534,6 +536,15 @@ export default {
   font-weight: bold;
 }
 
+/* Section header style with a darker background spanning the container */
+.section-header {
+  background-color: #d0d0d0; /* slightly darker shade */
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  width: 100%;
+  text-align: left;
+}
+
 /* Set up the config window (time-delay-input) as a flex container with min-height */
 .time-delay-input {
   border-top: 1px solid #ddd;
@@ -546,16 +557,6 @@ export default {
 
 .time-delay-content {
   flex-grow: 1;
-}
-
-/* New Heading Box for Additional and Delayed Runs */
-.heading-box {
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin-bottom: 6px;
-  text-align: left;
-  background-color: #fff;
 }
 
 /* New Box for Total Runs For Other Batch Types, pushed to the bottom */
