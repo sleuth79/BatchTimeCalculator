@@ -228,8 +228,6 @@ export default {
 
 <style scoped>
 /* Container for the start time input and AM/PM selector */
-.time-input {
-}
 
 /* Style the input within the time-input container */
 .time-input input {

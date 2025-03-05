@@ -91,8 +91,10 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
     };
   }
   
+  // Original batch start time (before any wait)
   const batchStartTimeDate = parseStartTime(batchStartTime, ampm);
   const wait15MS = wait15 ? 15 * 60 * 1000 : 0;
+  // Effective start time shifts by 15 minutes if wait15 is true.
   const effectiveStartTime = wait15 ? new Date(batchStartTimeDate.getTime() + wait15MS) : batchStartTimeDate;
   const finalPositionNum = Number(finalPosition);
   const totalRuns = finalPositionNum <= 15 ? finalPositionNum + 2 : finalPositionNum + 1;
@@ -100,10 +102,14 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const runtimeSeconds = Math.round(parseFloat(runtime) * 60);
   const totalRunTimeSeconds = totalRuns * runtimeSeconds;
   const totalRunTimeMS = totalRunTimeSeconds * 1000;
-  const totalRunTimeFormatted = formatDuration(totalRunTimeMS);
   
+  // Batch end time is computed from the effective start time.
   const batchEndTimeDate = new Date(effectiveStartTime.getTime() + totalRunTimeMS);
   const formattedBatchEndTime = formatTimeWithAmPmAndSeconds(batchEndTimeDate);
+  
+  // Calculate overall run time from original batch start to batch end time.
+  const overallRunTimeMS = batchEndTimeDate.getTime() - batchStartTimeDate.getTime();
+  const totalRunTimeFormatted = formatDuration(overallRunTimeMS);
   
   const workDayEnd = new Date(effectiveStartTime);
   workDayEnd.setHours(16, 0, 0, 0);
