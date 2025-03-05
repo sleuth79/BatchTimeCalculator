@@ -1,7 +1,6 @@
 <template>
   <div class="time-delay-input">
     <h3 class="main-heading">Additional Runs</h3>
-    <!-- We no longer hide the inputs -->
     <div>
       <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
       <div v-if="!delayedMode" class="sequential-batch-section">
@@ -60,6 +59,13 @@
             />
           </div>
         </div>
+      </div>
+
+      <!-- New Box for Total Runs For Other Batch Types -->
+      <div class="other-batch-types-box">
+        <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
+        <p>Repeats: 14 runs</p>
+        <p>Validations: 10 runs</p>
       </div>
     </div>
   </div>
@@ -244,7 +250,6 @@ export default {
     });
 
     // --- New: Computed property for calibration runs ---
-    // Only return a value if a GC is selected (gcType is truthy)
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -359,7 +364,6 @@ export default {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
       if (calibrationSelected.value) {
-        // Use unwrapped calibrationRuns value
         const cal = calibrationRuns.value;
         if (cal === "") {
           arr.push("Calibration");
@@ -543,7 +547,6 @@ export default {
   margin-bottom: 10px;
 }
 .additional-runs-input label {
-  /* Removed font-size so it inherits unified style */
   font-weight: bold;
   white-space: nowrap;
 }
@@ -602,5 +605,17 @@ label {
 /* Add a subtle drop shadow to all headings (labels in this case) */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* New: Box for Total Runs For Other Batch Types */
+.other-batch-types-box {
+  border: 1px solid #ccc;
+  padding: 5px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  border-radius: 4px;
+}
+.other-batch-types-box p {
+  margin: 2px 0;
 }
 </style>
