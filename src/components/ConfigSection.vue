@@ -124,7 +124,7 @@ export default {
   border: 1px solid #ddd;               /* Light border */
   border-radius: 8px;                   /* Rounded corners */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-  overflow-y: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 
