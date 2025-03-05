@@ -158,7 +158,7 @@ export default {
 /* Scrollable main content area */
 .scrollable-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 /* Pinned box at the bottom */
