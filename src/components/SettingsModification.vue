@@ -267,16 +267,17 @@ export default {
 
 <style scoped>
 .settings-modification {
-  margin: 8px 0;
+  margin: 5px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
-  background-color: #ffffff;
+  background-color: #f8f8f8;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 .settings-modification h3 {
-  margin-bottom: 12px;
+  margin-top: 0;
+  margin-bottom: 10px;
   font-size: 1rem;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
 }
