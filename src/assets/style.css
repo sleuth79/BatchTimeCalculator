@@ -823,17 +823,17 @@ label {
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Force the headings to touch the top border of their window containers */
+/* Force the headings to touch the top border for all window types */
 #app .config-section,
 #app .results-display,
-#app .another-window {  /* add any other window classes here */
+#app .config-window {
   padding-top: 0 !important;
 }
 
 #app .config-section > h1,
 #app .results-display > h2,
-#app .another-window > h1,  /* adjust as needed if another window uses h1 */
-#app .another-window > h2 {
+#app .config-window > h1,
+#app .config-window > h2 {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
