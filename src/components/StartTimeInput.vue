@@ -12,6 +12,7 @@
             placeholder="HH:mm:ss"
             @input="formatTimeInput"
           />
+          <div class="time-input-note">Enter 24 Hour Time</div>
         </div>
       </div>
 
@@ -190,10 +191,25 @@ export default {
 </script>
 
 <style scoped>
+.time-input {
+  display: flex;
+  align-items: center;
+}
+
 .time-input input {
   width: 90px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Styling for the 24-hour format note */
+.time-input-note {
+  border: 1px solid #ccc;
+  padding: 3px 5px;
+  font-size: 0.8rem;
+  margin-left: 10px;
+  background-color: #f9f9f9;
+  border-radius: 3px;
 }
 
 .input-group.wait-input {
