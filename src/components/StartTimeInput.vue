@@ -9,7 +9,7 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="HH:mm:ss"
+            placeholder="hh:mm:ss"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
