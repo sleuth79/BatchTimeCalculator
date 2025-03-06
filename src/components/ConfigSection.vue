@@ -125,7 +125,7 @@ export default {
 
 /* Remove extra space after the h1 title */
 .config-section h1 {
-  margin-bottom: 0;
+  margin-bottom: 5px;
 }
 
 /* Internal container for the flex layout */
