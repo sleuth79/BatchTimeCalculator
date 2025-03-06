@@ -207,6 +207,7 @@ export default {
   margin-left: 10px;
   font-size: 0.8rem;
   color: #555;
+  font-weight: bold;
 }
 
 .input-group.wait-input {
