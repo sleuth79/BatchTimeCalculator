@@ -12,22 +12,6 @@
             placeholder="HH:mm:ss"
             @input="formatTimeInput"
           />
-          <div class="ampm-selector">
-            <div
-              class="ampm-box"
-              :class="{ selected: localBatchStartTimeAMPM === 'AM' }"
-              @click="setAmPm('AM')"
-            >
-              AM
-            </div>
-            <div
-              class="ampm-box"
-              :class="{ selected: localBatchStartTimeAMPM === 'PM' }"
-              @click="setAmPm('PM')"
-            >
-              PM
-            </div>
-          </div>
         </div>
       </div>
 
@@ -71,34 +55,26 @@
 </template>
 
 <script>
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
 
 export default {
   name: "StartTimeInput",
   components: { PositionSelector },
-  setup(_, { emit }) {
+  setup() {
     const gcStore = useGcStore();
     const startTimeFinalPositionError = ref("");
 
     const isLoading = computed(() => gcStore.isLoading);
 
+    // Use the store's batchStartTime, assuming it's now stored as a 24-hour time string.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
       },
       set(val) {
         gcStore.setBatchStartTime(val);
-      },
-    });
-
-    const localBatchStartTimeAMPM = computed({
-      get() {
-        return gcStore.startTime.batchStartTimeAMPM || "AM";
-      },
-      set(val) {
-        gcStore.setBatchStartTimeAMPM(val);
       },
     });
 
@@ -121,12 +97,9 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Reactive variable to hold the selected final position.
-    // When a position is clicked, if it’s the same as the current selection,
-    // it will be toggled off (set to null) by the PositionSelector.
+    // Reactive variable for the final position.
     const finalPosition = ref(null);
 
-    // When finalPosition changes, update the store and recalculate
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
@@ -144,7 +117,7 @@ export default {
       }
     );
 
-    watch([localBatchStartTime, localBatchStartTimeAMPM], () => {
+    watch(localBatchStartTime, () => {
       recalculateResults();
     });
 
@@ -152,6 +125,7 @@ export default {
       recalculateResults();
     });
 
+    // Formats input to HH:mm:ss format.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
@@ -170,6 +144,7 @@ export default {
       }
     };
 
+    // Validates that the time is in a proper HH:mm:ss format.
     const validateTimeInput = () => {
       const parts = localBatchStartTime.value.split(":").map(Number);
       if (
@@ -193,24 +168,13 @@ export default {
       gcStore.calculateStartTimeBatch();
     };
 
-    const setAmPm = (value) => {
-      localBatchStartTimeAMPM.value = value;
-    };
-
     const setWait15 = (val) => {
       localWait15.value = val;
       recalculateResults();
     };
 
-    onMounted(() => {
-      if (!localBatchStartTimeAMPM.value) {
-        setAmPm("AM");
-      }
-    });
-
     return {
       localBatchStartTime,
-      localBatchStartTimeAMPM,
       localWait15,
       startTimeFinalPositionError,
       isLoading,
@@ -218,50 +182,20 @@ export default {
       allowedFinalPositions,
       recalculateResults,
       showWaitInput,
-      setAmPm,
       setWait15,
-      finalPosition, // v-model binding for final position
+      finalPosition,
     };
   },
 };
 </script>
 
 <style scoped>
-/* Container for the start time input and AM/PM selector */
-
-/* Style the input within the time-input container */
 .time-input input {
   width: 90px;
-  text-align: center;  /* centers the text within the input */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  /* drop shadow on input */
-}
-
-/* AM/PM Selector */
-.ampm-selector {
-  display: flex;
-  gap: 5px;
-  margin-left: 5px;
-}
-
-.ampm-box {
-  border: 1px solid #ccc;
-  padding: 5px 10px;
   text-align: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.ampm-box.selected {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-
-.ampm-box:hover {
-  background-color: #f0f0f0;
-}
-
-/* Wait Input Group */
 .input-group.wait-input {
   display: flex;
   align-items: center;
@@ -293,7 +227,6 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Additional styling for start time results and groups remains unchanged */
 .start-time-results p {
   margin-bottom: 2px !important;
   line-height: 1.2 !important;
@@ -309,7 +242,6 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Global label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
 }
