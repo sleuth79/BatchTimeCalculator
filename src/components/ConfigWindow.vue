@@ -126,7 +126,7 @@ export default {
 
     // Revert Configuration to Default Values
     const revertToDefaults = () => {
-      if (confirm("Revert all settings to defaults? This action cannot be undone.")) {
+      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. This action cannot be undone.")) {
         config.value = JSON.parse(JSON.stringify(defaultConfig));
         handleUpdateConfig(config.value);
       }
@@ -229,7 +229,7 @@ export default {
 .revert-section {
   margin-top: 14px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
