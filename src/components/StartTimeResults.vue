@@ -4,7 +4,6 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
-      <span v-if="displayBatchStartTimeAMPM" class="result-value">&nbsp;{{ displayBatchStartTimeAMPM }}</span>
     </p>
     <p>
       Final Position:
@@ -23,22 +22,26 @@
       Batch End Time:
       <span class="result-value">{{ results.batchEndTime }}</span>
     </p>
-    <p v-if="results.closestPositionBefore4PM">
+    <p v-if="results.closestPositionBefore4PM || closestPositionDisplay">
       Closest Position to 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
           {{ results.closestPositionBefore4PM.position }}
-          <span v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime">
+          <span
+            v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime"
+          >
             ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
           </span>
         </template>
         <template v-else>
-          {{ results.closestPositionBefore4PM }}
+          {{ closestPositionDisplay }}
         </template>
       </span>
     </p>
     <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
-    <div v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -78,10 +81,6 @@ export default {
     displayBatchStartTime() {
       return this.results.batchStartTime || this.startTime.batchStartTime || "";
     },
-    displayBatchStartTimeAMPM() {
-      const time = this.results.batchStartTime || this.startTime.batchStartTime;
-      return time ? (this.results.batchStartTimeAMPM || this.startTime.batchStartTimeAMPM || "AM") : "";
-    },
     displayFinalPosition() {
       return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
     },
@@ -98,6 +97,23 @@ export default {
         typeof this.results.closestPositionBefore4PM === "object" &&
         this.results.closestPositionBefore4PM.position !== undefined
       );
+    },
+    // New computed property that checks if the batch start time is after 4:00 PM.
+    closestPositionDisplay() {
+      const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
+      if (batchStart) {
+        // Expecting batchStart to be in HH:mm:ss (24-hour format)
+        const parts = batchStart.split(":");
+        if (parts.length === 3) {
+          const hour = parseInt(parts[0], 10);
+          if (hour >= 16) {
+            // Batch started at or after 16:00:00 (4:00 PM)
+            return "This Batch Started After 4:00 PM";
+          }
+        }
+      }
+      // Otherwise, return whatever the results object provides (e.g. "No Sample Position Ended Before 4:00 PM")
+      return this.results.closestPositionBefore4PM;
     },
   },
 };
@@ -117,16 +133,15 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* Default hr style */
+/* Update hr style to add more space */
 hr {
   border: none;
   border-top: 1px solid #ccc;
-  margin: 5px 0;
+  margin: 10px 0;
   padding: 0;
 }
-/* Style for the hr above the time gap */
 .time-gap-hr {
-  margin-top: 0;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 </style>
