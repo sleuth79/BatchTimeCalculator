@@ -7,7 +7,7 @@
       </p>
     </div>
     <!-- Main Input Section -->
-    <div v-else>
+    <div v-else class="tdc-content">
       <div class="delayed-runs-section">
         <label class="delayed-runs-heading">Delayed Runs:</label>
         <div class="delayed-runs-inputs">
@@ -30,6 +30,12 @@
         </div>
         <!-- Removed the Total Duration line from the input -->
       </div>
+    </div>
+    <!-- Pinned box that remains at the bottom -->
+    <div class="other-batch-types-box">
+      <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
+      <p>Repeats: 14 runs</p>
+      <p>Validations: 10 runs</p>
     </div>
   </div>
 </template>
@@ -92,7 +98,7 @@ export default {
       return gcStore.results && gcStore.results.timeDelayRequired === "No Time Delay Required";
     });
 
-    // --- New: Computed property for calibration runs ---
+    // --- Computed: Calibration Runs ---
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -208,12 +214,28 @@ export default {
   border-top: 1px solid #ddd;
   padding-top: 10px;
   margin-top: 0;
+  position: relative; /* Ensures sticky positioning works */
 }
 
-.main-heading {
-  font-size: 1.6rem;
-  margin-top: 0.5rem;
-  margin-bottom: 10px;
+/* Main content area for inputs */
+.tdc-content {
+  /* If needed, add any styling here for the main scrollable content */
+}
+
+/* Pinned box for "Total Runs For Other Batch Types" */
+.other-batch-types-box {
+  position: sticky;
+  bottom: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 5px;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.other-batch-types-box p {
+  margin: 2px 0;
 }
 
 .info-message {
