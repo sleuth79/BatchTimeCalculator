@@ -1,5 +1,15 @@
 <template>
   <div class="start-time-results">
+    <!-- New heading placed at the very top -->
+    <p class="section-heading initial-batch-heading"><strong>Initial Batch</strong></p>
+    
+    <!-- (If your Selected GC info is rendered inside this component, it would follow here.)
+         For example:
+         <p class="selected-gc">
+           Selected GC: <span class="result-value">{{ selectedGcDisplay }}</span>
+         </p>
+         If Selected GC is rendered elsewhere, this heading will still appear at the top of this component. -->
+
     <!-- Always display Start Time and Final Position headings -->
     <p>
       Start Time:
@@ -71,7 +81,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    // Parent may be passing 0 or 1, so allow any type and coerce it.
     additionalRunsExist: {
       type: [Boolean, Number],
       default: false,
@@ -129,11 +138,20 @@ export default {
   line-height: 1.2;
   color: #333;
 }
+.section-heading {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #333;
+}
+.initial-batch-heading {
+  /* If you need extra space or styling specific to the Initial Batch heading, adjust here */
+  margin-bottom: 10px;
+}
 .result-value {
   font-weight: bold;
   font-size: 1rem;
 }
-/* Update hr style to add more space */
 hr {
   border: none;
   border-top: 1px solid #ccc;
