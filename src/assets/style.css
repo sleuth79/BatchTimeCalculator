@@ -827,7 +827,7 @@ label {
 #app .config-section,
 #app .results-display,
 #app .config-window {
-  padding-top: 5px !important;
+  padding-top: 7px !important;
 }
 
 /* Ensure the headings don't have extra margin */
