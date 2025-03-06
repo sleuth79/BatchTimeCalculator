@@ -128,8 +128,8 @@ export default {
 
 <style scoped>
 /* 
-  Note: We leave the global .config-section styles (set in your global .css)
-  intact so that the overall window size remains as before.
+  We're keeping the overall global .config-section styles unchanged.
+  The background color will be inherited.
 */
 
 /* Internal container for the flex layout */
@@ -147,11 +147,12 @@ export default {
   margin-bottom: 60px; /* Adjust this value based on the pinned box height */
 }
 
-/* The pinned box for Total Runs remains fixed at the bottom of the container */
+/* The pinned box for Total Runs remains fixed at the bottom */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
-  background-color: #fff;
+  /* Use the inherited background so it matches the config section */
+  background-color: inherit;
   border: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
