@@ -159,7 +159,7 @@ export default {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
       if (parts.length !== 3) {
-        timeInputError.value = "Invalid format. Enter time as HH:mm:ss.";
+        timeInputError.value = "Invalid format. Enter time as HH:mm:ss, such as 09:30:00.";
         return;
       }
       const [hour, minute, second] = parts.map(Number);
