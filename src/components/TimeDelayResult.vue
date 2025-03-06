@@ -1,149 +1,170 @@
 <template>
-  <div class="start-time-results">
-    <p class="section-heading"><strong>Initial Batch</strong></p>
-    <!-- Always display Start Time and Final Position headings -->
-    <p>
-      Start Time:
-      <span class="result-value">{{ displayBatchStartTime }}</span>
-    </p>
-    <p>
-      Final Position:
-      <span class="result-value">{{ displayFinalPosition }}</span>
-      <span v-if="displayTotalRuns">
-        &nbsp;| Total Runs (Including Controls):
-        <span class="result-value">{{ results.totalRuns }}</span>
-      </span>
-    </p>
-    <!-- Only render these fields if they have values -->
-    <p v-if="results.totalRunTime">
-      Total Run Time:
-      <span class="result-value">{{ results.totalRunTime }}</span>
-    </p>
-    <p v-if="results.batchEndTime">
-      Batch End Time:
-      <span class="result-value">{{ results.batchEndTime }}</span>
-    </p>
-    <p v-if="results.closestPositionBefore4PM || closestPositionDisplay">
-      Closest Position to 4:00 PM:
-      <span class="result-value">
-        <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }}
-          <span
-            v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime"
-          >
-            ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
+  <!-- Only display results if resultsComplete is true -->
+  <div class="time-delay-result" v-if="resultsComplete">
+    <!-- Additional Runs Section -->
+    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime">
+      <p class="section-heading"><strong>Additional Runs</strong></p>
+      <div v-if="timeDelayData.sequentialBatchActive">
+        <p>
+          Final Position for Sequential Batch:
+          <strong>{{ timeDelayData.sequentialFinalPosition }}</strong>
+          <span v-if="sequentialBatchRuns !== null">
+            &nbsp;| Total Runs (Including Controls):
+            <strong>{{ sequentialBatchRuns }}</strong>
           </span>
-        </template>
-        <template v-else>
-          {{ closestPositionDisplay }}
-        </template>
-      </span>
-    </p>
-    <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
-    <div
-      v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
-      <hr class="time-gap-hr" />
-      <p>
-        Time Gap to 7:30 AM:
-        <span class="result-value">{{ results.timeGapTo730AM }}</span>
-      </p>
+        </p>
+      </div>
+      <div>
+        <p v-if="Number(timeDelayData.additionalRuns) > 0">
+          Additional Runs:
+          <strong>{{ timeDelayData.additionalRuns }}</strong>
+        </p>
+        <!-- Flip the order: Total Runs comes first -->
+        <p v-if="timeDelayData.totalRuns">
+          {{ totalRunsHeading }}:
+          <strong>{{ timeDelayData.totalRuns }}</strong>
+        </p>
+        <p>
+          <template v-if="timeDelayData.sequentialBatchActive">
+            Additional Runs End Time:
+            <strong>{{ timeDelayData.sequentialBatchEndTime }}</strong>
+          </template>
+          <template v-else>
+            Additional Runs End Time:
+            <strong>{{ timeDelayData.additionalRunsEndTime }}</strong>
+          </template>
+        </p>
+      </div>
+      <!-- Display time gap if additional runs exist and no delayed runs -->
+      <div v-if="timeDelayData.timeGapTo730AM && !hasDelayedRuns">
+        <hr class="time-gap-hr" />
+        <p>
+          Time Gap to 7:30 AM:
+          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
+        </p>
+      </div>
+    </div>
+    
+    <!-- Delayed Runs Section: only display if valid delayed runs exist -->
+    <div v-if="hasDelayedRuns">
+      <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
+      <p class="section-heading"><strong>Delayed Runs</strong></p>
+      <div>
+        <p v-if="timeDelayData.timeGapTo730AM">
+          Time Gap to 7:30 AM:
+          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
+        </p>
+        <p>
+          Delayed Runs:
+          <strong>{{ timeDelayData.prerunsDescription }}</strong>
+        </p>
+        <p>
+          Total Number of Delayed Runs:
+          <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
+        </p>
+        <p>
+          Total Duration of Delayed Runs:
+          <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
+        </p>
+        <!-- Combined heading for delayed runs start and end time -->
+        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
+          Delayed Runs Time:
+          <strong>{{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}</strong>
+        </p>
+        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
+          Time Delay Required:
+          <strong class="highlight-green">
+            {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
+          </strong>
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { computed } from 'vue';
+import { useGcStore } from '../store';
+
 export default {
-  name: "StartTimeResults",
+  name: 'TimeDelayResult',
   props: {
-    results: {
+    timeDelayData: {
       type: Object,
-      default: () => ({}),
-    },
-    startTime: {
-      type: Object,
-      default: () => ({}),
-    },
-    selectedGcData: {
-      type: Object,
-      default: null,
-    },
-    delayedRunsExist: {
-      type: Boolean,
-      default: false,
-    },
-    additionalRunsExist: {
-      type: [Boolean, Number],
-      default: false,
+      required: true,
     },
   },
+  setup() {
+    const gcStore = useGcStore();
+    return {};
+  },
   computed: {
-    displayBatchStartTime() {
-      return this.results.batchStartTime || this.startTime.batchStartTime || "";
+    // Only show results if sequentialBatchEndTime is non-empty.
+    resultsComplete() {
+      return this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '';
     },
-    displayFinalPosition() {
-      return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
-    },
-    displayTotalRuns() {
-      return !!this.results.totalRuns;
-    },
-    additionalRunsExistBool() {
-      return Boolean(this.additionalRunsExist);
-    },
-    isClosestPositionObject() {
-      return (
-        this.results &&
-        this.results.closestPositionBefore4PM &&
-        typeof this.results.closestPositionBefore4PM === "object" &&
-        this.results.closestPositionBefore4PM.position !== undefined
-      );
-    },
-    closestPositionDisplay() {
-      const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
-      if (batchStart) {
-        // Expecting batchStart in HH:mm:ss (24-hour format)
-        const parts = batchStart.split(":");
-        if (parts.length === 3) {
-          const hour = parseInt(parts[0], 10);
-          if (hour >= 16) {
-            return "This Batch Started After 4:00 PM";
-          }
-        }
+    sequentialBatchRuns() {
+      if (this.timeDelayData.sequentialFinalPosition !== null) {
+        const seqPos = Number(this.timeDelayData.sequentialFinalPosition);
+        return seqPos <= 15 ? seqPos + 2 : seqPos + 1;
       }
-      return this.results.closestPositionBefore4PM;
+      return null;
+    },
+    totalRunsHeading() {
+      return "Total Runs (Initial Batch + Additional Runs)";
+    },
+    hasDelayedRuns() {
+      const description = this.timeDelayData.prerunsDescription;
+      const totalDelayed = Number(this.timeDelayData.totalDelayedRuns);
+      return (
+        (description && description.trim() !== '' && description !== 'None' && description !== 'Delayed Runs') ||
+        (totalDelayed > 0)
+      );
     },
   },
 };
 </script>
 
 <style scoped>
-.start-time-results {
+.time-delay-result {
+  margin: 0;
   padding: 0;
 }
-.start-time-results p {
-  margin-bottom: 0px;
-  font-size: 1rem;
-  line-height: 1.2;
-  color: #333;
-}
+
 .section-heading {
   margin: 0 0 5px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
-.result-value {
-  font-weight: bold;
-  font-size: 1rem;
+
+.time-delay-result p {
+  margin-bottom: 2px !important;
+  line-height: 1.2 !important;
+  font-size: 1rem !important;
+  color: #333;
 }
+
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 10px 0;
   padding: 0;
 }
+
+.highlight-green {
+  color: var(--highlight-color);
+}
+
 .time-gap-hr {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  border-top: 1px solid #ccc;
+}
+</style>
+
+<style>
+#timeDelayOverride .explanation {
+  font-size: 0.9rem !important;
+  color: #57ca48 !important;
+  margin-top: 10px !important;
 }
 </style>
