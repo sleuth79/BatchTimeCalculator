@@ -118,17 +118,21 @@ export default {
 </script>
 
 <style scoped>
+/* Remove any top margin from the overall window */
 .config-section {
   background-color: #fff;
-  padding: 5px 10px 10px 10px; /* Reduced top padding from 10px to 5px */
+  /* Set top padding to 0 to eliminate extra space at the top */
+  padding: 0 10px 10px 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  margin-top: 0; /* Ensure no margin on top */
 }
 
 .config-section h1 {
-  margin-top: 0;   /* Remove any default top margin */
+  /* Remove any margin from the h1 itself */
+  margin-top: 0 !important;
   margin-bottom: 5px;
 }
 
