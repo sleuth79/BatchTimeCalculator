@@ -1,15 +1,6 @@
 <template>
   <div class="start-time-results">
-    <!-- Initial Batch heading appears once at the very top -->
-    <p class="section-heading initial-batch-heading"><strong>Initial Batch</strong></p>
-    
-    <!-- If Selected GC is to be shown within this component, you can include it here. 
-         Otherwise, remove this block if Selected GC info is rendered elsewhere. -->
-    <p v-if="selectedGcDisplay" class="selected-gc">
-      Selected GC: <span class="result-value">{{ selectedGcDisplay }}</span>
-    </p>
-    
-    <!-- Always display Start Time and Final Position details -->
+    <!-- Always display Start Time and Final Position headings -->
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
@@ -22,6 +13,7 @@
         <span class="result-value">{{ results.totalRuns }}</span>
       </span>
     </p>
+    <!-- Only render these fields if they have values -->
     <p v-if="results.totalRunTime">
       Total Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
@@ -35,7 +27,9 @@
       <span class="result-value">
         <template v-if="isClosestPositionObject">
           {{ results.closestPositionBefore4PM.position }}
-          <span v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime">
+          <span
+            v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime"
+          >
             ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
           </span>
         </template>
@@ -44,8 +38,10 @@
         </template>
       </span>
     </p>
-    <!-- Separator line for time gap (with extra spacing) -->
-    <div v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+    <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
+    <div
+      v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -67,7 +63,6 @@ export default {
       type: Object,
       default: () => ({}),
     },
-    // If Selected GC info should be displayed here, pass it via this prop.
     selectedGcData: {
       type: Object,
       default: null,
@@ -76,6 +71,7 @@ export default {
       type: Boolean,
       default: false,
     },
+    // Parent may be passing 0 or 1, so allow any type and coerce it.
     additionalRunsExist: {
       type: [Boolean, Number],
       default: false,
@@ -94,10 +90,6 @@ export default {
     additionalRunsExistBool() {
       return Boolean(this.additionalRunsExist);
     },
-    // If you need to display Selected GC info from selectedGcData, for example:
-    selectedGcDisplay() {
-      return this.selectedGcData && this.selectedGcData.name ? this.selectedGcData.name : "";
-    },
     isClosestPositionObject() {
       return (
         this.results &&
@@ -106,7 +98,7 @@ export default {
         this.results.closestPositionBefore4PM.position !== undefined
       );
     },
-    // Checks if the batch start time indicates a batch started after 4:00 PM.
+    // New computed property that checks if the batch start time is after 4:00 PM.
     closestPositionDisplay() {
       const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
       if (batchStart) {
@@ -115,10 +107,12 @@ export default {
         if (parts.length === 3) {
           const hour = parseInt(parts[0], 10);
           if (hour >= 16) {
+            // Batch started at or after 16:00:00 (4:00 PM)
             return "This Batch Started After 4:00 PM";
           }
         }
       }
+      // Otherwise, return whatever the results object provides (e.g. "No Sample Position Ended Before 4:00 PM")
       return this.results.closestPositionBefore4PM;
     },
   },
@@ -130,21 +124,10 @@ export default {
   padding: 0;
 }
 .start-time-results p {
-  margin-bottom: 0;
+  margin-bottom: 0px;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
-}
-/* Heading style for sections */
-.section-heading {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-  line-height: 1.2;
-  color: #333;
-}
-/* Extra bottom margin for the Initial Batch heading */
-.initial-batch-heading {
-  margin-bottom: 10px;
 }
 .result-value {
   font-weight: bold;
@@ -153,12 +136,11 @@ export default {
 hr {
   border: none;
   border-top: 1px solid #ccc;
-  margin: 10px 0;
+  margin: 5px 0;
   padding: 0;
 }
-/* Adjust spacing for the separator line */
 .time-gap-hr {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 5px;
 }
 </style>
