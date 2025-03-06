@@ -11,8 +11,14 @@
             v-model="localBatchStartTime"
             placeholder="HH:mm:ss"
             @input="formatTimeInput"
+            @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time</span>
+          <span class="time-input-note">
+            Enter 24 Hour Time
+            <span v-if="timeInputError" class="error-message">
+              - {{ timeInputError }}
+            </span>
+          </span>
         </div>
       </div>
 
@@ -40,7 +46,6 @@
       <!-- Final Position Selector -->
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
-        <!-- Bind finalPosition using v-model -->
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
@@ -65,6 +70,7 @@ export default {
   components: { PositionSelector },
   setup() {
     const gcStore = useGcStore();
+    const timeInputError = ref("");
     const startTimeFinalPositionError = ref("");
 
     const isLoading = computed(() => gcStore.isLoading);
@@ -140,28 +146,32 @@ export default {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
       localBatchStartTime.value = value.slice(0, 8);
-      if (localBatchStartTime.value.length === 8) {
-        validateTimeInput();
-      }
+      // Clear any previous error as the user types
+      timeInputError.value = "";
     };
 
     // Validates that the time is in a proper HH:mm:ss format.
     const validateTimeInput = () => {
-      const parts = localBatchStartTime.value.split(":").map(Number);
+      const timeString = localBatchStartTime.value;
+      const parts = timeString.split(":");
+      if (parts.length !== 3) {
+        timeInputError.value = "Invalid format. Enter time as HH:mm:ss.";
+        return;
+      }
+      const [hour, minute, second] = parts.map(Number);
       if (
-        parts.length !== 3 ||
-        isNaN(parts[0]) ||
-        isNaN(parts[1]) ||
-        isNaN(parts[2]) ||
-        parts[0] < 0 ||
-        parts[0] > 23 ||
-        parts[1] < 0 ||
-        parts[1] > 59 ||
-        parts[2] < 0 ||
-        parts[2] > 59
+        isNaN(hour) ||
+        isNaN(minute) ||
+        isNaN(second) ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59 ||
+        second < 0 ||
+        second > 59
       ) {
         localBatchStartTime.value = "";
-        alert("Invalid time. Enter a valid time in HH:mm:ss format.");
+        timeInputError.value = "Invalid time. Enter time as HH:mm:ss.";
       }
     };
 
@@ -178,6 +188,7 @@ export default {
       localBatchStartTime,
       localWait15,
       startTimeFinalPositionError,
+      timeInputError,
       isLoading,
       formatTimeInput,
       allowedFinalPositions,
@@ -202,12 +213,17 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Styling for the inline note text */
 .time-input-note {
   margin-left: 10px;
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+  margin-left: 5px;
 }
 
 .input-group.wait-input {
