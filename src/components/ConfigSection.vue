@@ -87,27 +87,14 @@ export default {
     };
 
     // Compute properties for the Time Delay component props.
-    const batch1EndTime = computed(() => {
-      return gcStore.startTime.batchEndTime || new Date();
-    });
-
-    const primaryFinalPosition = computed(() => {
-      return gcStore.startTime.finalPosition !== null
-        ? gcStore.startTime.finalPosition
-        : 0;
-    });
-
-    const gcRuntime = computed(() => {
-      return (gcStore.selectedGc &&
+    const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
+    const primaryFinalPosition = computed(() => (gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0));
+    const gcRuntime = computed(() => (gcStore.selectedGc &&
               gcStore.allGcData[gcStore.selectedGc] &&
               gcStore.allGcData[gcStore.selectedGc].runTime)
         ? gcStore.allGcData[gcStore.selectedGc].runTime
-        : 18.91;
-    });
-
-    const gcType = computed(() => {
-      return gcStore.selectedGcData ? gcStore.selectedGcData.type : '';
-    });
+        : 18.91);
+    const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
     return {
       loadError,
@@ -127,10 +114,15 @@ export default {
 </script>
 
 <style scoped>
-/* 
-  We're keeping the overall global .config-section styles unchanged.
-  The background color will be inherited.
-*/
+/* Override the global .config-section background color */
+.config-section {
+  background-color: #fff; /* White background as originally desired */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
 
 /* Internal container for the flex layout */
 .config-container {
@@ -143,16 +135,14 @@ export default {
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
-  /* Add bottom margin to ensure content doesn't overlap the pinned box */
-  margin-bottom: 60px; /* Adjust this value based on the pinned box height */
+  margin-bottom: 60px; /* Ensure content doesn't overlap the pinned box */
 }
 
-/* The pinned box for Total Runs remains fixed at the bottom */
+/* The pinned box remains fixed at the bottom */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
-  /* Use the inherited background so it matches the config section */
-  background-color: inherit;
+  background-color: #fff; /* Matching the original white background */
   border: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
@@ -163,7 +153,7 @@ export default {
   margin: 2px 0;
 }
 
-/* Optionally adjust any labels if needed */
+/* Optional adjustments for labels */
 .config-section label {
   display: block;
   margin-top: 1px;
