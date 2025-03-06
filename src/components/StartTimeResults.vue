@@ -34,9 +34,7 @@
           </span>
         </template>
         <template v-else>
-          {{ results.closestPositionBefore4PM === "This Batch Started After 4:00 PM"
-            ? "No Sample Position Ended Before 4:00 PM"
-            : results.closestPositionBefore4PM }}
+          {{ results.closestPositionBefore4PM }}
         </template>
       </span>
     </p>
