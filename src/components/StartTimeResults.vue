@@ -4,6 +4,7 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
+      <span v-if="displayBatchStartTimeAMPM" class="result-value">&nbsp;{{ displayBatchStartTimeAMPM }}</span>
     </p>
     <p>
       Final Position:
@@ -27,23 +28,17 @@
       <span class="result-value">
         <template v-if="isClosestPositionObject">
           {{ results.closestPositionBefore4PM.position }}
-          <span
-            v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime"
-          >
+          <span v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime">
             ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
           </span>
         </template>
         <template v-else>
-          {{ results.closestPositionBefore4PM === "This Batch Started After 4:00 PM"
-            ? "No Sample Position Ended Before 4:00 PM"
-            : results.closestPositionBefore4PM }}
+          {{ results.closestPositionBefore4PM }}
         </template>
       </span>
     </p>
     <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
-    <div
-      v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <div v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -83,6 +78,10 @@ export default {
     displayBatchStartTime() {
       return this.results.batchStartTime || this.startTime.batchStartTime || "";
     },
+    displayBatchStartTimeAMPM() {
+      const time = this.results.batchStartTime || this.startTime.batchStartTime;
+      return time ? (this.results.batchStartTimeAMPM || this.startTime.batchStartTimeAMPM || "AM") : "";
+    },
     displayFinalPosition() {
       return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
     },
@@ -118,12 +117,14 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
+/* Default hr style */
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 5px 0;
   padding: 0;
 }
+/* Style for the hr above the time gap */
 .time-gap-hr {
   margin-top: 0;
   margin-bottom: 5px;
