@@ -75,7 +75,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Use the store's batchStartTime, assuming it's now stored as a 24-hour time string.
+    // Use the store's batchStartTime, assuming it's stored as a 24-hour time string.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -146,8 +146,12 @@ export default {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
       localBatchStartTime.value = value.slice(0, 8);
-      // Clear any previous error as the user types
+      // Clear previous error as user types
       timeInputError.value = "";
+      // If user has typed at least 7 characters (almost complete), validate the input
+      if (localBatchStartTime.value.length >= 7) {
+        validateTimeInput();
+      }
     };
 
     // Validates that the time is in a proper HH:mm:ss format.
