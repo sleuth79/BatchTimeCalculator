@@ -823,17 +823,17 @@ label {
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Force the headings to touch the top border for all window types */
+/* Add a 5px top gap inside all windows */
 #app .config-section,
 #app .results-display,
 #app .config-window {
-  padding-top: 0 !important;
+  padding-top: 5px !important;
 }
 
+/* Ensure the headings don't have extra margin */
 #app .config-section > h1,
 #app .results-display > h2,
 #app .config-window > h1,
 #app .config-window > h2 {
   margin-top: 0 !important;
-  padding-top: 0 !important;
 }
