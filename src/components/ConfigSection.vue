@@ -88,12 +88,16 @@ export default {
 
     // Compute properties for the Time Delay component props.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
-    const primaryFinalPosition = computed(() => (gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0));
-    const gcRuntime = computed(() => (gcStore.selectedGc &&
-              gcStore.allGcData[gcStore.selectedGc] &&
-              gcStore.allGcData[gcStore.selectedGc].runTime)
+    const primaryFinalPosition = computed(() =>
+      gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
+    );
+    const gcRuntime = computed(() =>
+      gcStore.selectedGc &&
+      gcStore.allGcData[gcStore.selectedGc] &&
+      gcStore.allGcData[gcStore.selectedGc].runTime
         ? gcStore.allGcData[gcStore.selectedGc].runTime
-        : 18.91);
+        : 18.91
+    );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
     return {
@@ -116,15 +120,15 @@ export default {
 <style scoped>
 .config-section {
   background-color: #fff;
-  padding: 10px;
+  padding: 5px 10px 10px 10px; /* Reduced top padding from 10px to 5px */
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
 }
 
-/* Remove extra space after the h1 title */
 .config-section h1 {
+  margin-top: 0;   /* Remove any default top margin */
   margin-bottom: 5px;
 }
 
