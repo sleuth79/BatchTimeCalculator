@@ -175,7 +175,7 @@ export default {
         second > 59
       ) {
         localBatchStartTime.value = "";
-        timeInputError.value = "Invalid time. Enter time as HH:mm:ss.";
+        timeInputError.value = "Invalid time. Enter time as HH:mm:ss, such as 09:30:00.";
       }
     };
 
