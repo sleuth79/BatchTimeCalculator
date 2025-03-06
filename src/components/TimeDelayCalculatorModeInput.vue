@@ -28,14 +28,8 @@
             />
           </div>
         </div>
-        <!-- Removed the Total Duration line from the input -->
+        <!-- Removed duplicate pinned box markup here -->
       </div>
-    </div>
-    <!-- Pinned box that remains at the bottom -->
-    <div class="other-batch-types-box">
-      <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
-      <p>Repeats: 14 runs</p>
-      <p>Validations: 10 runs</p>
     </div>
   </div>
 </template>
@@ -219,25 +213,13 @@ export default {
 
 /* Main content area for inputs */
 .tdc-content {
-  /* If needed, add any styling here for the main scrollable content */
+  /* Add styling if needed */
 }
 
-/* Pinned box for "Total Runs For Other Batch Types" */
-.other-batch-types-box {
-  position: sticky;
-  bottom: 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 5px;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  z-index: 1;
-}
+/* Pinned box is removed from here to avoid duplication */
+/* If you need it pinned in this mode, ensure it's only rendered once (either here or in the parent) */
 
-.other-batch-types-box p {
-  margin: 2px 0;
-}
-
+/* Other styles remain unchanged */
 .info-message {
   color: #666;
   font-style: italic;
