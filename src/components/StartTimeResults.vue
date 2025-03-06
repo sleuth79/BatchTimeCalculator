@@ -22,7 +22,7 @@
       Batch End Time:
       <span class="result-value">{{ results.batchEndTime }}</span>
     </p>
-    <p v-if="results.closestPositionBefore4PM">
+    <p v-if="results.closestPositionBefore4PM || closestPositionDisplay">
       Closest Position to 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
@@ -34,7 +34,7 @@
           </span>
         </template>
         <template v-else>
-          {{ results.closestPositionBefore4PM }}
+          {{ closestPositionDisplay }}
         </template>
       </span>
     </p>
@@ -97,6 +97,23 @@ export default {
         typeof this.results.closestPositionBefore4PM === "object" &&
         this.results.closestPositionBefore4PM.position !== undefined
       );
+    },
+    // New computed property that checks if the batch start time is after 4:00 PM.
+    closestPositionDisplay() {
+      const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
+      if (batchStart) {
+        // Expecting batchStart to be in HH:mm:ss (24-hour format)
+        const parts = batchStart.split(":");
+        if (parts.length === 3) {
+          const hour = parseInt(parts[0], 10);
+          if (hour >= 16) {
+            // Batch started at or after 16:00:00 (4:00 PM)
+            return "This Batch Started After 4:00 PM";
+          }
+        }
+      }
+      // Otherwise, return whatever the results object provides (e.g. "No Sample Position Ended Before 4:00 PM")
+      return this.results.closestPositionBefore4PM;
     },
   },
 };
