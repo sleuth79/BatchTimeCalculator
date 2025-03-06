@@ -206,7 +206,7 @@ export default {
 .time-input-note {
   margin-left: 10px;
   font-size: 0.8rem;
-  color: #555;
+  color: #181818;
   font-weight: bold;
 }
 
