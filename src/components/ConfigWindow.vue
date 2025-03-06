@@ -126,7 +126,7 @@ export default {
 
     // Revert Configuration to Default Values
     const revertToDefaults = () => {
-      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. This action cannot be undone.")) {
+      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. Suggest you record the GC run time down before doing this. This action cannot be undone.")) {
         config.value = JSON.parse(JSON.stringify(defaultConfig));
         handleUpdateConfig(config.value);
       }

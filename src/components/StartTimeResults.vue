@@ -133,14 +133,15 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
+/* Update hr style to add more space */
 hr {
   border: none;
   border-top: 1px solid #ccc;
-  margin: 5px 0;
+  margin: 10px 0;
   padding: 0;
 }
 .time-gap-hr {
-  margin-top: 0;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 </style>
