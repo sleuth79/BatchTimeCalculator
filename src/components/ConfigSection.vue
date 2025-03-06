@@ -114,14 +114,18 @@ export default {
 </script>
 
 <style scoped>
-/* Override the global .config-section background color */
 .config-section {
-  background-color: #fff; /* White background as originally desired */
+  background-color: #fff;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+}
+
+/* Remove extra space after the h1 title */
+.config-section h1 {
+  margin-bottom: 0;
 }
 
 /* Internal container for the flex layout */
