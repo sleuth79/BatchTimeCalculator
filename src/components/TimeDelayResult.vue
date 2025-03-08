@@ -106,7 +106,10 @@ export default {
   computed: {
     // Only show results if sequentialBatchEndTime is non-empty.
     resultsComplete() {
-      return this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '';
+      return (
+        this.timeDelayData.sequentialBatchEndTime &&
+        this.timeDelayData.sequentialBatchEndTime !== ''
+      );
     },
     sequentialBatchRuns() {
       if (this.timeDelayData.sequentialFinalPosition !== null) {
@@ -122,7 +125,10 @@ export default {
       const description = this.timeDelayData.prerunsDescription;
       const totalDelayed = Number(this.timeDelayData.totalDelayedRuns);
       return (
-        (description && description.trim() !== '' && description !== 'None' && description !== 'Delayed Runs') ||
+        (description &&
+          description.trim() !== '' &&
+          description !== 'None' &&
+          description !== 'Delayed Runs') ||
         (totalDelayed > 0)
       );
     },
@@ -132,11 +138,38 @@ export default {
       tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toLocaleDateString();
     },
-    // Computed property for the Delayed Runs Date (assumed to be one day after Additional Runs End Date)
+    // Computed property for the Delayed Runs Date.
+    // If the Additional Runs End Time is after 7:30 AM, delayed runs wrap to the next day.
     delayedRunsDate() {
-      const dayAfterTomorrow = new Date();
-      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-      return dayAfterTomorrow.toLocaleDateString();
+      const additionalEnd = this.timeDelayData.additionalRunsEndTime;
+      if (!additionalEnd) {
+        return this.additionalRunsEndDate;
+      }
+      // Expect additionalEnd in format "hh:mm:ss AM/PM" (e.g. "02:59:44 AM" or "08:34:44 AM")
+      let parts = additionalEnd.split(" ");
+      if (parts.length < 2) {
+        return this.additionalRunsEndDate;
+      }
+      let timePart = parts[0]; // e.g. "02:59:44"
+      let ampm = parts[1];     // e.g. "AM"
+      let [hour, minute] = timePart.split(":").map(Number);
+      // Convert to 24-hour time.
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // Compare with 07:30:00 (i.e. 7:30 AM)
+      if (hour > 7 || (hour === 7 && minute >= 30)) {
+        // If the additional runs end time is after 7:30 AM,
+        // delayed runs wrap to the next day relative to the additional runs end date.
+        const dayAfter = new Date();
+        dayAfter.setDate(dayAfter.getDate() + 2);
+        return dayAfter.toLocaleDateString();
+      } else {
+        return this.additionalRunsEndDate;
+      }
     },
   },
 };
