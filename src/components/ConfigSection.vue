@@ -7,29 +7,15 @@
     <div v-else class="config-container">
       <!-- Scrollable main content -->
       <div class="scrollable-content">
-        <mode-selector :selected-mode="selectedMode" @mode-changed="setSelectedMode" />
+        <!-- GC Selector remains -->
         <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
 
-        <!-- Render input components based on the selected mode -->
+        <!-- Always render start-time input components (i.e. start-time mode is assumed) -->
         <start-time-input
-          v-if="selectedMode === 'start-time'"
           :selected-gc="selectedGc"
           @update-results="handleUpdateResults"
         />
-        <time-delay-calculator-mode-input
-          v-else-if="selectedMode === 'delay-calculator'"
-          :batch1EndTime="batch1EndTime"
-          :primaryFinalPosition="primaryFinalPosition"
-          :gcRuntime="gcRuntime"
-          :gcType="gcType"
-          @update-time-delay="handleUpdateTimeDelay"
-        />
-
-        <!-- Render the Time Delay component for start-time mode.
-             Adding a dynamic key forces the component to re-mount when the mode changes. -->
         <TimeDelayStartModeInput
-          v-if="selectedMode === 'start-time'"
-          :key="selectedMode"
           :batch1EndTime="batch1EndTime"
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
@@ -51,20 +37,16 @@
 <script>
 import { computed, onMounted } from 'vue';
 import { useGcStore } from '../store';
-import ModeSelector from './ModeSelector.vue';
 import GcSelector from './GcSelector.vue';
 import StartTimeInput from './StartTimeInput.vue';
 import TimeDelayStartModeInput from './TimeDelayStartModeInput.vue';
-import TimeDelayCalculatorModeInput from './TimeDelayCalculatorModeInput.vue';
 
 export default {
   name: 'ConfigSection',
   components: {
-    ModeSelector,
     GcSelector,
     StartTimeInput,
     TimeDelayStartModeInput,
-    TimeDelayCalculatorModeInput,
   },
   emits: ['update-results'],
   setup(props, { emit }) {
@@ -102,8 +84,6 @@ export default {
 
     return {
       loadError,
-      selectedMode: computed(() => gcStore.selectedMode),
-      setSelectedMode: gcStore.setSelectedMode,
       selectedGc: computed(() => gcStore.selectedGc),
       setSelectedGc: gcStore.setSelectedGc,
       handleUpdateResults,
@@ -121,17 +101,15 @@ export default {
 /* Remove any top margin from the overall window */
 .config-section {
   background-color: #fff;
-  /* Set top padding to 0 to eliminate extra space at the top */
   padding: 0 10px 10px 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  margin-top: 0; /* Ensure no margin on top */
+  margin-top: 0;
 }
 
 .config-section h1 {
-  /* Remove any margin from the h1 itself */
   margin-top: 0 !important;
   margin-bottom: 5px;
 }
@@ -147,14 +125,14 @@ export default {
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
-  margin-bottom: 60px; /* Ensure content doesn't overlap the pinned box */
+  margin-bottom: 60px;
 }
 
 /* The pinned box remains fixed at the bottom */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
-  background-color: #fff; /* Matching the original white background */
+  background-color: #fff;
   border: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
@@ -163,13 +141,5 @@ export default {
 }
 .other-batch-types-box p {
   margin: 2px 0;
-}
-
-/* Optional adjustments for labels */
-.config-section label {
-  display: block;
-  margin-top: 1px;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 </style>
