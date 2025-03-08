@@ -111,14 +111,13 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const overallRunTimeMS = batchEndTimeDate.getTime() - batchStartTimeDate.getTime();
   const totalRunTimeFormatted = formatDuration(overallRunTimeMS);
   
-  const workDayEnd = new Date(effectiveStartTime);
+  // Set workDayEnd based on the ORIGINAL batch start time.
+  const workDayEnd = new Date(batchStartTimeDate);
   workDayEnd.setHours(16, 0, 0, 0);
   
   let closestPositionBefore4PM;
-  if (effectiveStartTime >= workDayEnd) {
+  if (batchStartTimeDate >= workDayEnd) {
     closestPositionBefore4PM = "This Batch Started After 4:00 PM";
-  } else if (batchEndTimeDate < workDayEnd) {
-    closestPositionBefore4PM = "This Batch Ends Before 4:00 PM";
   } else {
     let candidate = null, candidateStartTime = null, candidateEndTime = null;
     for (let i = 4; i <= totalRuns; i++) {
