@@ -28,10 +28,12 @@
           <template v-if="timeDelayData.sequentialBatchActive">
             Additional Runs End Time:
             <strong>{{ timeDelayData.sequentialBatchEndTime }}</strong>
+            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
           </template>
           <template v-else>
             Additional Runs End Time:
             <strong>{{ timeDelayData.additionalRunsEndTime }}</strong>
+            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
           </template>
         </p>
       </div>
@@ -121,6 +123,12 @@ export default {
         (totalDelayed > 0)
       );
     },
+    // Computed property for the additional runs end date (assumed to be next day)
+    additionalRunsEndDate() {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toLocaleDateString();
+    },
   },
 };
 </script>
@@ -158,6 +166,12 @@ hr {
 
 .time-gap-hr {
   border-top: 1px solid #ccc;
+}
+
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
 }
 </style>
 
