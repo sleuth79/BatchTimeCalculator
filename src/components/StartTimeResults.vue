@@ -82,15 +82,19 @@ export default {
     currentDate() {
       return new Date().toLocaleDateString();
     },
-    // Checks multiple possible keys for start time.
+    // Returns the stored start time if available; otherwise, returns the current time.
     displayBatchStartTime() {
-      return (
+      const storedTime =
         this.results.batchStartTime ||
         this.results.startTime ||
         this.startTime.batchStartTime ||
         this.startTime.startTime ||
-        ""
-      );
+        "";
+      if (storedTime === "") {
+        // If no start time is provided, assume only a GC and delayed runs are selected.
+        return new Date().toLocaleTimeString();
+      }
+      return storedTime;
     },
     displayFinalPosition() {
       return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
@@ -141,7 +145,6 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* The current date is styled in bold and enclosed in brackets */
 .result-date {
   font-weight: bold;
   font-size: 1rem;
