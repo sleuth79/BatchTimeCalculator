@@ -53,6 +53,8 @@
 </template>
 
 <script>
+import { computed, watch } from "vue";
+
 export default {
   name: "StartTimeResults",
   props: {
@@ -82,7 +84,7 @@ export default {
     currentDate() {
       return new Date().toLocaleDateString();
     },
-    // Returns the stored start time if available; otherwise, returns the current time in 24-hour format.
+    // Returns the stored start time if available; if not—and a final position exists—returns the current time in 24‑hour format.
     displayBatchStartTime() {
       const storedTime =
         this.results.batchStartTime ||
@@ -90,12 +92,12 @@ export default {
         this.startTime.batchStartTime ||
         this.startTime.startTime ||
         "";
-      if (storedTime === "") {
-        // No start time provided, return current time in 24-hour format.
+      if (storedTime === "" && this.startTime.finalPosition) {
+        // No start time provided but final position exists, so use current time in 24‑hour format.
         return new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
           hour12: false,
         });
       }
@@ -131,6 +133,27 @@ export default {
         }
       }
       return this.results.closestPositionBefore4PM;
+    },
+  },
+  watch: {
+    // When a final position is selected but no start time exists, update the store with the current time.
+    "startTime.finalPosition": {
+      handler(newVal) {
+        if (newVal && !this.startTime.batchStartTime && !this.results.batchStartTime) {
+          // Call a method on the store to set the batch start time to the current time in 24-hour format.
+          // We assume that a method "setBatchStartTime" is available on the store.
+          this.$emit("update-results", {
+            ...this.results,
+            batchStartTime: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            }),
+          });
+        }
+      },
+      immediate: true,
     },
   },
 };
