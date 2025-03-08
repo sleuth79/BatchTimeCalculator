@@ -233,7 +233,7 @@ export default {
       if (updatedConfig[this.selectedGC]) {
         delete updatedConfig[this.selectedGC];
         this.$emit("update-config", updatedConfig);
-        alert("GC deleting");
+        alert("Deleting GC");
         this.selectedGC = "";
       } else {
         alert("Selected GC not found in configuration.");
@@ -255,7 +255,7 @@ export default {
         type: this.newGCType,
       };
       this.$emit("update-config", updatedConfig);
-      alert("New GC adding");
+      alert("Adding New GC");
       this.newGCId = "";
       this.newGCRunTimeInput = "";
       this.newGCRunTime = null;

@@ -14,7 +14,7 @@
             @blur="validateTimeInput"
           />
           <span class="time-input-note">
-            Enter 24 Hour Time
+            Enter 24 Hour Time (IE. 09:30:00)
             <span v-if="timeInputError" class="error-message">
               - {{ timeInputError }}
             </span>

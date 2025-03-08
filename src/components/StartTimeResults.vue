@@ -4,6 +4,7 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
+      - <span class="result-date">{{ currentDate }}</span>
     </p>
     <p>
       Final Position:
@@ -78,6 +79,11 @@ export default {
     },
   },
   computed: {
+    // New computed property for the current date
+    currentDate() {
+      // Formats the current date as MM/DD/YYYY (adjust formatting as needed)
+      return new Date().toLocaleDateString();
+    },
     displayBatchStartTime() {
       return this.results.batchStartTime || this.startTime.batchStartTime || "";
     },
@@ -133,6 +139,13 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
+/* You can style the new date span as needed */
+.result-date {
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-left: 5px;
+}
+
 /* Update hr style to add more space */
 hr {
   border: none;
