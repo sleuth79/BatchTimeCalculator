@@ -54,12 +54,12 @@ export default {
 
     // Default Configuration (if file is missing)
     const defaultConfig = {
-      "2024": { "name": "2024", "runTime": 25.50, "type": "Energy" },
-      "1708": { "name": "1708", "runTime": 18.91, "type": "Energy" },
-      "2181": { "name": "2181", "runTime": 30.93, "type": "Energy" },
-      "1772": { "name": "1772", "runTime": 15.47, "type": "Sulphur" },
-      "1709": { "name": "1709", "runTime": 15.88, "type": "Sulphur" },
-      "2180": { "name": "2180", "runTime": 15.00, "type": "Sulphur" }
+      "2024": { "name": "2024", "runTime": 24.88, "type": "Energy" },
+      "1708": { "name": "1708", "runTime": 19.04, "type": "Energy" },
+      "2181": { "name": "2181", "runTime": 30.43, "type": "Energy" },
+      "1772": { "name": "1772", "runTime": 15.67, "type": "Sulphur" },
+      "1709": { "name": "1709", "runTime": 14.30, "type": "Sulphur" },
+      "2180": { "name": "2180", "runTime": 18.37, "type": "Sulphur" }
     };
 
     // Determine API endpoint (local vs Netlify function)
@@ -126,7 +126,7 @@ export default {
 
     // Revert Configuration to Default Values
     const revertToDefaults = () => {
-      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. Suggest you record the GC run time down before doing this. This action cannot be undone.")) {
+      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. Suggest you record the current GC run times down before doing this. This action cannot be undone.")) {
         config.value = JSON.parse(JSON.stringify(defaultConfig));
         handleUpdateConfig(config.value);
       }

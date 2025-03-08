@@ -216,7 +216,7 @@ export default {
           name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
         };
         this.$emit("update-config", updatedConfig);
-        alert("GC updated locally. (Persist via backend API)");
+        alert("Config Updating");
       } else {
         alert("Selected GC not found in configuration.");
       }
