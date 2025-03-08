@@ -13,6 +13,7 @@
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
+          <span class="result-date"> ({{ currentDate }})</span>
           <span class="time-input-note">
             Enter 24 Hour Time (ie. 09:30:00)
             <span v-if="timeInputError" class="error-message">
@@ -188,6 +189,11 @@ export default {
       recalculateResults();
     };
 
+    // Computed property for the current date (formatted as MM/DD/YYYY)
+    const currentDate = computed(() => {
+      return new Date().toLocaleDateString();
+    });
+
     return {
       localBatchStartTime,
       localWait15,
@@ -200,6 +206,7 @@ export default {
       showWaitInput,
       setWait15,
       finalPosition,
+      currentDate,
     };
   },
 };
@@ -215,6 +222,12 @@ export default {
   width: 90px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
 }
 
 .time-input-note {

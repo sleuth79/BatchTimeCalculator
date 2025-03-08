@@ -4,8 +4,7 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
-      <span class="result-date" v-if="displayBatchStartTime">{{ currentDate }}</span>
-      <span class="result-date" v-else>{{ currentDate }}</span>
+      <span class="result-date"> ({{ currentDate }})</span>
     </p>
     <p>
       Final Position:
@@ -146,14 +145,12 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* Updated the date style to be bold without any preceding dash */
+/* The date is now styled in bold and is enclosed in brackets */
 .result-date {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
 }
-
-/* Update hr style to add more space */
 hr {
   border: none;
   border-top: 1px solid #ccc;
