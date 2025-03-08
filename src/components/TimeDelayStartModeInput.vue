@@ -37,9 +37,9 @@
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
           <div class="delayed-runs-inputs">
-            <!-- Only show the Prebatch button if gcType is NOT 'Energy' -->
+            <!-- Prebatch button is only shown if GC type is not Energy -->
             <div
-              v-if="gcType !== 'Energy'"
+              v-if="!isEnergy"
               class="box"
               :class="{ selected: prebatchSelected }"
               @click="togglePrebatch"
@@ -83,7 +83,7 @@ export default {
     batch1EndTime: { type: [Date, String], required: true },
     primaryFinalPosition: { type: Number, required: true },
     gcRuntime: { type: Number, required: true },
-    gcType: { type: String, required: true } // GC type (e.g., "Energy" or "Sulphur")
+    gcType: { type: String, required: true }  // e.g., "Energy" or "Sulphur"
   },
   emits: ['update-time-delay'],
   setup(props, { emit }) {
@@ -95,6 +95,11 @@ export default {
     const prebatchSelected = ref(false);
     const calibrationSelected = ref(false);
     const miscRuns = ref(0);
+
+    // Computed property to check if the selected GC is Energy (case-insensitive)
+    const isEnergy = computed(() => {
+      return props.gcType && props.gcType.toLowerCase() === 'energy';
+    });
 
     // Reset local inputs when the store signals a reset
     watch(
@@ -515,7 +520,8 @@ export default {
       limitAdditionalRuns,
       limitMiscRuns,
       calibrationRuns,
-      gcType: props.gcType
+      gcType: props.gcType,
+      isEnergy
     };
   },
 };
