@@ -4,7 +4,8 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
-      <span class="result-date">{{ currentDate }}</span>
+      <span class="result-date" v-if="displayBatchStartTime">{{ currentDate }}</span>
+      <span class="result-date" v-else>{{ currentDate }}</span>
     </p>
     <p>
       Final Position:
@@ -83,8 +84,15 @@ export default {
     currentDate() {
       return new Date().toLocaleDateString();
     },
+    // Updated computed property to check multiple possible keys for start time.
     displayBatchStartTime() {
-      return this.results.batchStartTime || this.startTime.batchStartTime || "";
+      return (
+        this.results.batchStartTime ||
+        this.results.startTime ||
+        this.startTime.batchStartTime ||
+        this.startTime.startTime ||
+        ""
+      );
     },
     displayFinalPosition() {
       return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
@@ -138,7 +146,7 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* Updated the date style to be bold without any dash preceding it */
+/* Updated the date style to be bold without any preceding dash */
 .result-date {
   font-weight: bold;
   font-size: 1rem;
