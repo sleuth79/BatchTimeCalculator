@@ -36,12 +36,16 @@
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
-          <!-- New caveat note in small print -->
+          <!-- Caveat note in small print -->
           <p class="caveat">
-            If no batches are currently running, select a GC and select delayed runs to calculate the time delay based on the current time of day.
+            If no batches are currently running, select a GC and select delayed runs to just calculate the time delay based on the current time of day.
+          </p>
+          <!-- Display the current time if delayed mode is active -->
+          <p class="current-time" v-if="delayedMode">
+            Current Time: {{ currentTimeString }}
           </p>
           <div class="delayed-runs-inputs">
-            <!-- Prebatch button is only shown if GC type is NOT Energy -->
+            <!-- Prebatch button is only shown if GC type is not Energy -->
             <div
               v-if="!isEnergy"
               class="box"
@@ -104,6 +108,13 @@ export default {
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
+
+    // New: currentTime is updated every second.
+    const currentTime = ref(new Date());
+    setInterval(() => {
+      currentTime.value = new Date();
+    }, 1000);
+    const currentTimeString = computed(() => currentTime.value.toLocaleTimeString());
 
     // Reset local inputs when the store signals a reset
     watch(
@@ -525,7 +536,8 @@ export default {
       limitMiscRuns,
       calibrationRuns,
       gcType: props.gcType,
-      isEnergy
+      isEnergy,
+      currentTimeString
     };
   },
 };
@@ -573,6 +585,13 @@ export default {
   font-size: 0.75rem;
   color: #666;
   margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* Style for displaying the current time under the caveat note */
+.current-time {
+  font-size: 0.75rem;
+  color: #666;
   margin-bottom: 8px;
 }
 
