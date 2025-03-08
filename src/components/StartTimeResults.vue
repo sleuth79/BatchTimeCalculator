@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { computed, watch } from "vue";
+import { ref, computed } from "vue";
 
 export default {
   name: "StartTimeResults",
@@ -79,22 +79,26 @@ export default {
       default: false,
     },
   },
-  computed: {
-    // Returns the current date formatted as MM/DD/YYYY.
-    currentDate() {
-      return new Date().toLocaleDateString();
-    },
-    // Returns the stored start time if available; if not—and a final position exists—returns the current time in 24‑hour format.
-    displayBatchStartTime() {
+  setup(props) {
+    // A reactive property that updates every second
+    const currentTime = ref(new Date());
+    setInterval(() => {
+      currentTime.value = new Date();
+    }, 1000);
+
+    // Current date as MM/DD/YYYY
+    const currentDate = computed(() => new Date().toLocaleDateString());
+
+    // If no start time is provided, use the current time in 24-hour format.
+    const displayBatchStartTime = computed(() => {
       const storedTime =
-        this.results.batchStartTime ||
-        this.results.startTime ||
-        this.startTime.batchStartTime ||
-        this.startTime.startTime ||
+        props.results.batchStartTime ||
+        props.results.startTime ||
+        props.startTime.batchStartTime ||
+        props.startTime.startTime ||
         "";
-      if (storedTime === "" && this.startTime.finalPosition) {
-        // No start time provided but final position exists, so use current time in 24‑hour format.
-        return new Date().toLocaleTimeString([], {
+      if (storedTime === "") {
+        return currentTime.value.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
@@ -102,27 +106,28 @@ export default {
         });
       }
       return storedTime;
-    },
-    displayFinalPosition() {
-      return this.results.startTimeFinalPosition || this.startTime.finalPosition || "";
-    },
-    displayTotalRuns() {
-      return !!this.results.totalRuns;
-    },
-    additionalRunsExistBool() {
-      return Boolean(this.additionalRunsExist);
-    },
-    isClosestPositionObject() {
+    });
+
+    const displayFinalPosition = computed(() => {
+      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
+    });
+
+    const displayTotalRuns = computed(() => !!props.results.totalRuns);
+
+    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
+
+    const isClosestPositionObject = computed(() => {
       return (
-        this.results &&
-        this.results.closestPositionBefore4PM &&
-        typeof this.results.closestPositionBefore4PM === "object" &&
-        this.results.closestPositionBefore4PM.position !== undefined
+        props.results &&
+        props.results.closestPositionBefore4PM &&
+        typeof props.results.closestPositionBefore4PM === "object" &&
+        props.results.closestPositionBefore4PM.position !== undefined
       );
-    },
+    });
+
     // Checks if the batch start time is after 4:00 PM.
-    closestPositionDisplay() {
-      const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
+    const closestPositionDisplay = computed(() => {
+      const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
         const parts = batchStart.split(":");
         if (parts.length === 3) {
@@ -132,29 +137,18 @@ export default {
           }
         }
       }
-      return this.results.closestPositionBefore4PM;
-    },
-  },
-  watch: {
-    // When a final position is selected but no start time exists, update the store with the current time.
-    "startTime.finalPosition": {
-      handler(newVal) {
-        if (newVal && !this.startTime.batchStartTime && !this.results.batchStartTime) {
-          // Call a method on the store to set the batch start time to the current time in 24-hour format.
-          // We assume that a method "setBatchStartTime" is available on the store.
-          this.$emit("update-results", {
-            ...this.results,
-            batchStartTime: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: false,
-            }),
-          });
-        }
-      },
-      immediate: true,
-    },
+      return props.results.closestPositionBefore4PM;
+    });
+
+    return {
+      currentDate,
+      displayBatchStartTime,
+      displayFinalPosition,
+      displayTotalRuns,
+      additionalRunsExistBool,
+      isClosestPositionObject,
+      closestPositionDisplay,
+    };
   },
 };
 </script>
