@@ -1,32 +1,32 @@
 {
   "1708": {
     "name": "1708",
-    "runTime": 18.91,
+    "runTime": 19.04,
     "type": "Energy"
   },
   "1709": {
     "name": "1709",
-    "runTime": 15.88,
+    "runTime": 14.30,
     "type": "Sulphur"
   },
   "1772": {
     "name": "1772",
-    "runTime": 15.47,
+    "runTime": 15.67,
     "type": "Sulphur"
   },
   "2024": {
     "name": "2024",
-    "runTime": 25.5,
+    "runTime": 24.88,
     "type": "Energy"
   },
   "2180": {
     "name": "2180",
-    "runTime": 15,
+    "runTime": 18.37,
     "type": "Sulphur"
   },
   "2181": {
     "name": "2181",
-    "runTime": 30.93,
+    "runTime": 30.43,
     "type": "Energy"
   }
 }
