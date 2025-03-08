@@ -36,8 +36,12 @@
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
+          <!-- New caveat note in small print -->
+          <p class="caveat">
+            If no batches are currently running, select a GC and select delayed runs to calculate the time delay based on the current time of day.
+          </p>
           <div class="delayed-runs-inputs">
-            <!-- Prebatch button is only shown if GC type is not Energy -->
+            <!-- Prebatch button is only shown if GC type is NOT Energy -->
             <div
               v-if="!isEnergy"
               class="box"
@@ -562,6 +566,14 @@ export default {
   margin-bottom: 6px;
   width: 100%;
   text-align: left;
+}
+
+/* The caveat note in small print under the delayed runs heading */
+.caveat {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 /* The rest of your styles */
