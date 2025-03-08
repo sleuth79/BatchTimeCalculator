@@ -98,6 +98,11 @@ export default {
       type: Object,
       required: true,
     },
+    // Optionally, if you have the batch date (e.g. from the results), pass it as a prop:
+    startTimeDate: {
+      type: String,
+      default: '', // Expected format that new Date() can parse, e.g. "3/7/2025"
+    },
   },
   setup() {
     const gcStore = useGcStore();
@@ -132,29 +137,36 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Instead of returning a string date, we return a Date object for the Additional Runs End Date.
-    additionalRunsEndDateObj() {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      return tomorrow;
+    // Use the provided startTimeDate prop if available; otherwise, fall back to the current date.
+    baseDateForRuns() {
+      if (this.startTimeDate) {
+        const d = new Date(this.startTimeDate);
+        // Ensure the time is at midnight.
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
     },
-    // Return the Additional Runs End Date as a locale date string.
+    // Compute the Additional Runs End Date as one day after the base date.
     additionalRunsEndDate() {
-      return this.additionalRunsEndDateObj.toLocaleDateString();
+      const base = new Date(this.baseDateForRuns());
+      base.setDate(base.getDate() + 1);
+      return base.toLocaleDateString();
     },
-    // Computed property for the Delayed Runs Date.
-    // It uses the additionalRunsEndDateObj as the base and adds one extra day if
-    // the Additional Runs End Time (assumed in "hh:mm:ss AM/PM" format) is after 7:30 AM.
+    // Compute the Delayed Runs Date based on the Additional Runs End Date.
+    // If the Additional Runs End Time (in "hh:mm:ss AM/PM" format) is after 7:30 AM, add one extra day.
     delayedRunsDate() {
-      const base = new Date(this.additionalRunsEndDateObj);
+      // Start with the additional runs end date as a Date object.
+      const base = new Date(this.baseDateForRuns());
+      base.setDate(base.getDate() + 1); // This is the Additional Runs End Date.
       const additionalEnd = this.timeDelayData.additionalRunsEndTime;
       if (additionalEnd) {
-        // Expect additionalEnd in format "hh:mm:ss AM/PM", e.g., "01:00:12 PM"
         const parts = additionalEnd.split(" ");
         if (parts.length >= 2) {
-          const timePart = parts[0]; // e.g., "01:00:12"
-          const ampm = parts[1];     // e.g., "PM"
+          const timePart = parts[0]; // e.g., "01:00:12" or "08:26:12"
+          const ampm = parts[1];     // e.g., "PM" or "AM"
           let [hour, minute] = timePart.split(":").map(Number);
           if (ampm.toUpperCase() === "PM" && hour < 12) {
             hour += 12;
@@ -162,7 +174,7 @@ export default {
           if (ampm.toUpperCase() === "AM" && hour === 12) {
             hour = 0;
           }
-          // If the Additional Runs End Time is after 7:30 AM, add one extra day.
+          // If the Additional Runs End Time is after 7:30 AM, then delayed runs wrap to the next day.
           if (hour > 7 || (hour === 7 && minute >= 30)) {
             base.setDate(base.getDate() + 1);
           }
