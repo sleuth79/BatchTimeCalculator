@@ -37,7 +37,9 @@
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
           <div class="delayed-runs-inputs">
+            <!-- Only show the Prebatch button if gcType is NOT 'Energy' -->
             <div
+              v-if="gcType !== 'Energy'"
               class="box"
               :class="{ selected: prebatchSelected }"
               @click="togglePrebatch"
@@ -81,7 +83,7 @@ export default {
     batch1EndTime: { type: [Date, String], required: true },
     primaryFinalPosition: { type: Number, required: true },
     gcRuntime: { type: Number, required: true },
-    gcType: { type: String, required: true },
+    gcType: { type: String, required: true } // GC type (e.g., "Energy" or "Sulphur")
   },
   emits: ['update-time-delay'],
   setup(props, { emit }) {
@@ -513,6 +515,7 @@ export default {
       limitAdditionalRuns,
       limitMiscRuns,
       calibrationRuns,
+      gcType: props.gcType
     };
   },
 };
