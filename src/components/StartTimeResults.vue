@@ -4,7 +4,7 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
-      - <span class="result-date">{{ currentDate }}</span>
+      <span class="result-date">{{ currentDate }}</span>
     </p>
     <p>
       Final Position:
@@ -79,9 +79,8 @@ export default {
     },
   },
   computed: {
-    // New computed property for the current date
+    // Computed property for the current date (formatted as MM/DD/YYYY)
     currentDate() {
-      // Formats the current date as MM/DD/YYYY (adjust formatting as needed)
       return new Date().toLocaleDateString();
     },
     displayBatchStartTime() {
@@ -104,7 +103,7 @@ export default {
         this.results.closestPositionBefore4PM.position !== undefined
       );
     },
-    // New computed property that checks if the batch start time is after 4:00 PM.
+    // Computed property to check if the batch start time is after 4:00 PM.
     closestPositionDisplay() {
       const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
       if (batchStart) {
@@ -118,7 +117,7 @@ export default {
           }
         }
       }
-      // Otherwise, return whatever the results object provides (e.g. "No Sample Position Ended Before 4:00 PM")
+      // Otherwise, return whatever the results object provides
       return this.results.closestPositionBefore4PM;
     },
   },
@@ -139,10 +138,10 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* You can style the new date span as needed */
+/* Updated the date style to be bold without any dash preceding it */
 .result-date {
-  font-style: italic;
-  font-size: 0.9rem;
+  font-weight: bold;
+  font-size: 1rem;
   margin-left: 5px;
 }
 
