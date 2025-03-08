@@ -68,10 +68,13 @@
           Total Duration of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
         </p>
-        <!-- Combined heading for delayed runs start and end time -->
+        <!-- Combined heading for delayed runs start and end time with date -->
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
-          <strong>{{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}</strong>
+          <strong>
+            {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
+          </strong>
+          <span class="result-date"> ({{ delayedRunsDate }})</span>
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
@@ -123,8 +126,14 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Computed property for the additional runs end date (assumed to be next day)
+    // Computed property for the Additional Runs End Date (assumed to be the next day)
     additionalRunsEndDate() {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toLocaleDateString();
+    },
+    // Computed property for the Delayed Runs Date (assumed to be the same as Additional Runs End Date)
+    delayedRunsDate() {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toLocaleDateString();

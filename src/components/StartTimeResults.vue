@@ -72,18 +72,17 @@ export default {
       type: Boolean,
       default: false,
     },
-    // Parent may be passing 0 or 1, so allow any type and coerce it.
     additionalRunsExist: {
       type: [Boolean, Number],
       default: false,
     },
   },
   computed: {
-    // Computed property for the current date (formatted as MM/DD/YYYY)
+    // Returns the current date formatted as MM/DD/YYYY.
     currentDate() {
       return new Date().toLocaleDateString();
     },
-    // Updated computed property to check multiple possible keys for start time.
+    // Checks multiple possible keys for start time.
     displayBatchStartTime() {
       return (
         this.results.batchStartTime ||
@@ -110,21 +109,18 @@ export default {
         this.results.closestPositionBefore4PM.position !== undefined
       );
     },
-    // Computed property to check if the batch start time is after 4:00 PM.
+    // Checks if the batch start time is after 4:00 PM.
     closestPositionDisplay() {
       const batchStart = this.results.batchStartTime || this.startTime.batchStartTime;
       if (batchStart) {
-        // Expecting batchStart to be in HH:mm:ss (24-hour format)
         const parts = batchStart.split(":");
         if (parts.length === 3) {
           const hour = parseInt(parts[0], 10);
           if (hour >= 16) {
-            // Batch started at or after 16:00:00 (4:00 PM)
             return "This Batch Started After 4:00 PM";
           }
         }
       }
-      // Otherwise, return whatever the results object provides
       return this.results.closestPositionBefore4PM;
     },
   },
@@ -136,7 +132,7 @@ export default {
   padding: 0;
 }
 .start-time-results p {
-  margin-bottom: 0px;
+  margin-bottom: 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
@@ -145,7 +141,7 @@ export default {
   font-weight: bold;
   font-size: 1rem;
 }
-/* The date is now styled in bold and is enclosed in brackets */
+/* The current date is styled in bold and enclosed in brackets */
 .result-date {
   font-weight: bold;
   font-size: 1rem;
