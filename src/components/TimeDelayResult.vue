@@ -139,37 +139,31 @@ export default {
       return tomorrow.toLocaleDateString();
     },
     // Computed property for the Delayed Runs Date.
-    // If the Additional Runs End Time is after 7:30 AM, delayed runs wrap to the next day.
+    // Based on the additional runs end date, add one extra day if the additional runs end time is after 7:30 AM.
     delayedRunsDate() {
+      // Start with the date from additionalRunsEndDate as a Date object.
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() + 1); // This is the additional runs date.
       const additionalEnd = this.timeDelayData.additionalRunsEndTime;
-      if (!additionalEnd) {
-        return this.additionalRunsEndDate;
+      if (additionalEnd) {
+        const parts = additionalEnd.split(" ");
+        if (parts.length >= 2) {
+          const timePart = parts[0]; // e.g. "01:11:12"
+          const ampm = parts[1];
+          let [hour, minute] = timePart.split(":").map(Number);
+          if (ampm.toUpperCase() === "PM" && hour < 12) {
+            hour += 12;
+          }
+          if (ampm.toUpperCase() === "AM" && hour === 12) {
+            hour = 0;
+          }
+          // If the additional runs end time is after 7:30 AM, then delayed runs wrap to the next day.
+          if (hour > 7 || (hour === 7 && minute >= 30)) {
+            baseDate.setDate(baseDate.getDate() + 1);
+          }
+        }
       }
-      // Expect additionalEnd in format "hh:mm:ss AM/PM" (e.g. "02:59:44 AM" or "08:34:44 AM")
-      let parts = additionalEnd.split(" ");
-      if (parts.length < 2) {
-        return this.additionalRunsEndDate;
-      }
-      let timePart = parts[0]; // e.g. "02:59:44"
-      let ampm = parts[1];     // e.g. "AM"
-      let [hour, minute] = timePart.split(":").map(Number);
-      // Convert to 24-hour time.
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      // Compare with 07:30:00 (i.e. 7:30 AM)
-      if (hour > 7 || (hour === 7 && minute >= 30)) {
-        // If the additional runs end time is after 7:30 AM,
-        // delayed runs wrap to the next day relative to the additional runs end date.
-        const dayAfter = new Date();
-        dayAfter.setDate(dayAfter.getDate() + 2);
-        return dayAfter.toLocaleDateString();
-      } else {
-        return this.additionalRunsEndDate;
-      }
+      return baseDate.toLocaleDateString();
     },
   },
 };
