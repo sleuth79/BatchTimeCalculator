@@ -132,11 +132,11 @@ export default {
       tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toLocaleDateString();
     },
-    // Computed property for the Delayed Runs Date (assumed to be the same as Additional Runs End Date)
+    // Computed property for the Delayed Runs Date (assumed to be one day after Additional Runs End Date)
     delayedRunsDate() {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toLocaleDateString();
+      const dayAfterTomorrow = new Date();
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+      return dayAfterTomorrow.toLocaleDateString();
     },
   },
 };
