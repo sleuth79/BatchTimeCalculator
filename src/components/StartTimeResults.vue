@@ -82,7 +82,7 @@ export default {
     currentDate() {
       return new Date().toLocaleDateString();
     },
-    // Returns the stored start time if available; otherwise, returns the current time.
+    // Returns the stored start time if available; otherwise, returns the current time in 24-hour format.
     displayBatchStartTime() {
       const storedTime =
         this.results.batchStartTime ||
@@ -91,8 +91,13 @@ export default {
         this.startTime.startTime ||
         "";
       if (storedTime === "") {
-        // If no start time is provided, assume only a GC and delayed runs are selected.
-        return new Date().toLocaleTimeString();
+        // No start time provided, return current time in 24-hour format.
+        return new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        });
       }
       return storedTime;
     },
