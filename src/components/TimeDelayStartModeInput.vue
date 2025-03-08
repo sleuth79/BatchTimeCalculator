@@ -377,7 +377,7 @@ export default {
       const totalSeconds = Math.round(totalDurationMinutes * 60);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 3600;
+      const seconds = totalSeconds % 60;
       let formatted = "";
       if (hours > 0) {
         formatted += `${hours}h `;

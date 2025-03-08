@@ -211,11 +211,6 @@ export default {
   position: relative; /* Ensures sticky positioning works */
 }
 
-/* Main content area for inputs */
-.tdc-content {
-  /* Add styling if needed */
-}
-
 /* Pinned box is removed from here to avoid duplication */
 /* If you need it pinned in this mode, ensure it's only rendered once (either here or in the parent) */
 
