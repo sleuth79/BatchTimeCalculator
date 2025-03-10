@@ -56,7 +56,7 @@ export default {
     TimeDelayStartModeInput,
   },
   emits: ['update-results'],
-  setup(props, { emit }) {
+  setup() {
     const gcStore = useGcStore();
     const loadError = computed(() => gcStore.error);
 
@@ -89,12 +89,15 @@ export default {
     );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // New method to reset inputs
+    // Updated reset function that uses the store's reset actions based on the current mode.
     const resetInputs = () => {
+      if (gcStore.selectedMode === 'start-time') {
+        gcStore.resetStartTime();
+      } else if (gcStore.selectedMode === 'delay-calculator') {
+        gcStore.resetDelayCalculator();
+      }
+      // Optionally, reset the GC selector as well:
       gcStore.setSelectedGc(null);
-      gcStore.results = null;
-      gcStore.timeDelayResults = null;
-      gcStore.startTime = {};
     };
 
     return {
