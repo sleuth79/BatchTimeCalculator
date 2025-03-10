@@ -75,7 +75,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Compute properties for the Time Delay component props.
+    // Compute properties for Time Delay component props.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -89,14 +89,14 @@ export default {
     );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Updated reset function that uses the store's reset actions based on the current mode.
+    // Reset function that triggers the store's reset actions based on the current mode.
     const resetInputs = () => {
       if (gcStore.selectedMode === 'start-time') {
         gcStore.resetStartTime();
       } else if (gcStore.selectedMode === 'delay-calculator') {
         gcStore.resetDelayCalculator();
       }
-      // Optionally, reset the GC selector as well:
+      // Optionally, reset the GC selector:
       gcStore.setSelectedGc(null);
     };
 
