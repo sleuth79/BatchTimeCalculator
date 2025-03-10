@@ -148,17 +148,29 @@ export default {
 /* Sticky Reset Button Container above the pinned box */
 .reset-button-container {
   position: sticky;
-  bottom: 60px; /* Adjust this value if your pinned box height changes */
-  text-align: center;
+  bottom: 70px; /* Raised a bit higher to avoid overlapping the pinned box */
+  text-align: left; /* Align the button to the left */
   z-index: 2;
   background-color: #fff;
   padding: 5px 0;
+  margin-left: 10px; /* Optional left margin for spacing */
 }
 
-/* Make the button size to its content */
+/* Style for the reset button to match the look of your other buttons */
 .reset-button-container button {
-  width: auto;
+  display: inline-block;
+  border: 1px solid #ccc;
   padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  width: auto;
+}
+.reset-button-container button:hover {
+  background-color: #f0f0f0;
 }
 
 /* Pinned box that remains at the bottom */
