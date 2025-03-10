@@ -24,7 +24,7 @@
         />
       </div>
 
-      <!-- Reset Inputs Button as a sticky element above the pinned box -->
+      <!-- Reset Inputs Button, absolutely positioned above the pinned box and pinned to the left -->
       <div class="reset-button-container">
         <button @click="resetInputs">Reset Inputs</button>
       </div>
@@ -115,7 +115,7 @@ export default {
 </script>
 
 <style scoped>
-/* Remove any top margin from the overall window */
+/* Overall component styling */
 .config-section {
   background-color: #fff;
   padding: 0 10px 10px 10px;
@@ -131,54 +131,50 @@ export default {
   margin-bottom: 5px;
 }
 
-/* Internal container for the flex layout */
+/* Flex container */
 .config-container {
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
-/* The scrollable content area */
+/* Scrollable content */
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
   margin-bottom: 60px;
 }
 
-/* Sticky Reset Button Container above the pinned box */
+/* Reset button container: absolutely positioned, pinned to the left and raised */
 .reset-button-container {
-  position: sticky;
-  bottom: 70px; /* Raised a bit higher to avoid overlapping the pinned box */
-  text-align: left; /* Align the button to the left */
+  position: absolute;
+  left: 10px;
+  bottom: 80px; /* Adjust this value to raise or lower the button */
   z-index: 2;
-  background-color: #fff;
-  padding: 5px 0;
-  margin-left: 10px; /* Optional left margin for spacing */
 }
 
-/* Style for the reset button to match the look of your other buttons */
+/* Reset button style: smaller font, less padding, green background */
 .reset-button-container button {
-  display: inline-block;
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  font-size: 14px;
+  border: 1px solid #28a745;
+  padding: 3px 8px;
+  font-size: 12px;
   border-radius: 4px;
-  background-color: #fff;
+  background-color: #28a745;
+  color: #fff;
   cursor: pointer;
-  text-align: center;
-  user-select: none;
   width: auto;
 }
 .reset-button-container button:hover {
-  background-color: #f0f0f0;
+  background-color: #218838;
 }
 
-/* Pinned box that remains at the bottom */
+/* Pinned box styling */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
   background-color: #fff;
   border: 1px solid #ccc;
+  border-top: 1px solid #ccc; /* Ensure the top line is visible */
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
