@@ -24,7 +24,7 @@
         />
       </div>
 
-      <!-- Reset Inputs Button, absolutely positioned above the pinned box and pinned to the left -->
+      <!-- Reset Inputs Button, absolutely positioned above the pinned box -->
       <div class="reset-button-container">
         <button @click="resetInputs">Reset Inputs</button>
       </div>
@@ -89,12 +89,9 @@ export default {
 
     // New method to reset inputs
     const resetInputs = () => {
-      // Reset the GC selector
       gcStore.setSelectedGc(null);
-      // Clear the results
       gcStore.results = null;
       gcStore.timeDelayResults = null;
-      // Reset additional input values if needed (e.g., startTime)
       gcStore.startTime = {};
     };
 
@@ -145,36 +142,39 @@ export default {
   margin-bottom: 60px;
 }
 
-/* Reset button container: absolutely positioned, pinned to the left and raised */
+/* Reset button container, absolutely positioned and pinned to the left.
+   Adjusted bottom value to raise the button above the pinned box. */
 .reset-button-container {
   position: absolute;
   left: 10px;
-  bottom: 80px; /* Adjust this value to raise or lower the button */
+  bottom: 90px; /* Increase to raise the button further */
   z-index: 2;
 }
 
-/* Reset button style: smaller font, less padding, green background */
+/* Reset button styling to match global CSS and GC selector height */
 .reset-button-container button {
-  border: 1px solid #28a745;
-  padding: 3px 8px;
-  font-size: 12px;
+  border: 1px solid #ccc;
+  padding: 0 8px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 0.85rem;
   border-radius: 4px;
-  background-color: #28a745;
-  color: #fff;
+  background-color: var(--highlight-color);
+  color: var(--text-highlight);
   cursor: pointer;
   width: auto;
 }
 .reset-button-container button:hover {
-  background-color: #218838;
+  background-color: var(--highlight-color-hover, #218838);
 }
 
-/* Pinned box styling */
+/* Pinned box styling with a visible top border */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
   background-color: #fff;
   border: 1px solid #ccc;
-  border-top: 1px solid #ccc; /* Ensure the top line is visible */
+  border-top: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
