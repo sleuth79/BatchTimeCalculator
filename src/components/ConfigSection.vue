@@ -24,6 +24,11 @@
         />
       </div>
 
+      <!-- Reset Inputs Button -->
+      <div class="reset-button-container">
+        <button @click="resetInputs">Reset Inputs</button>
+      </div>
+
       <!-- Pinned box that remains at the bottom -->
       <div class="other-batch-types-box">
         <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
@@ -82,6 +87,17 @@ export default {
     );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
+    // New method to reset inputs
+    const resetInputs = () => {
+      // Reset the GC selector
+      gcStore.setSelectedGc(null);
+      // Clear the results
+      gcStore.results = null;
+      gcStore.timeDelayResults = null;
+      // Reset additional input values if needed (e.g., startTime)
+      gcStore.startTime = {};
+    };
+
     return {
       loadError,
       selectedGc: computed(() => gcStore.selectedGc),
@@ -92,6 +108,7 @@ export default {
       gcRuntime,
       gcType,
       handleUpdateTimeDelay,
+      resetInputs, // expose the new reset method
     };
   },
 };
@@ -128,7 +145,13 @@ export default {
   margin-bottom: 60px;
 }
 
-/* The pinned box remains fixed at the bottom */
+/* Style for the Reset Inputs button container */
+.reset-button-container {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Pinned box that remains at the bottom */
 .other-batch-types-box {
   position: sticky;
   bottom: 0;
