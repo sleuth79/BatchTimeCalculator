@@ -24,7 +24,7 @@
         />
       </div>
 
-      <!-- Reset Inputs Button -->
+      <!-- Reset Inputs Button as a sticky element above the pinned box -->
       <div class="reset-button-container">
         <button @click="resetInputs">Reset Inputs</button>
       </div>
@@ -108,7 +108,7 @@ export default {
       gcRuntime,
       gcType,
       handleUpdateTimeDelay,
-      resetInputs, // expose the new reset method
+      resetInputs,
     };
   },
 };
@@ -145,10 +145,20 @@ export default {
   margin-bottom: 60px;
 }
 
-/* Style for the Reset Inputs button container */
+/* Sticky Reset Button Container above the pinned box */
 .reset-button-container {
-  margin-bottom: 10px;
+  position: sticky;
+  bottom: 60px; /* Adjust this value if your pinned box height changes */
   text-align: center;
+  z-index: 2;
+  background-color: #fff;
+  padding: 5px 0;
+}
+
+/* Make the button size to its content */
+.reset-button-container button {
+  width: auto;
+  padding: 5px 10px;
 }
 
 /* Pinned box that remains at the bottom */
