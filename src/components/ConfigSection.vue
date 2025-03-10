@@ -24,16 +24,18 @@
         />
       </div>
 
-      <!-- Reset Inputs Button, absolutely positioned above the pinned box -->
-      <div class="reset-button-container">
-        <button @click="resetInputs">Reset Inputs</button>
-      </div>
-
-      <!-- Pinned box that remains at the bottom -->
-      <div class="other-batch-types-box">
-        <p class="other-batch-heading"><strong>Total Runs For Other Batch Types:</strong></p>
-        <p>Repeats: 14 runs</p>
-        <p>Validations: 10 runs</p>
+      <!-- Sticky container for the reset button and the pinned box -->
+      <div class="sticky-bottom-container">
+        <div class="reset-button-container">
+          <button @click="resetInputs">Reset Inputs</button>
+        </div>
+        <div class="other-batch-types-box">
+          <p class="other-batch-heading">
+            <strong>Total Runs For Other Batch Types:</strong>
+          </p>
+          <p>Repeats: 14 runs</p>
+          <p>Validations: 10 runs</p>
+        </div>
       </div>
     </div>
   </div>
@@ -112,7 +114,7 @@ export default {
 </script>
 
 <style scoped>
-/* Overall component styling */
+/* Overall container styling */
 .config-section {
   background-color: #fff;
   padding: 0 10px 10px 10px;
@@ -128,30 +130,32 @@ export default {
   margin-bottom: 5px;
 }
 
-/* Flex container */
 .config-container {
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
-/* Scrollable content */
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
   margin-bottom: 60px;
 }
 
-/* Reset button container, absolutely positioned and pinned to the left.
-   Adjusted bottom value to raise the button above the pinned box. */
-.reset-button-container {
-  position: absolute;
-  left: 10px;
-  bottom: 90px; /* Increase to raise the button further */
-  z-index: 2;
+/* Sticky container for the reset button and the pinned box */
+.sticky-bottom-container {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Reset button styling to match global CSS and GC selector height */
+/* Reset button container: no extra left margin */
+.reset-button-container {
+  padding-bottom: 2px; /* small spacing between button and pinned box */
+}
+
+/* Reset button styled to match the GC selector boxes */
 .reset-button-container button {
   border: 1px solid #ccc;
   padding: 0 8px;
@@ -168,13 +172,11 @@ export default {
   background-color: var(--highlight-color-hover, #218838);
 }
 
-/* Pinned box styling with a visible top border */
+/* Pinned box styling with visible top border */
 .other-batch-types-box {
-  position: sticky;
-  bottom: 0;
   background-color: #fff;
   border: 1px solid #ccc;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #ccc; /* ensures the top line is visible */
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
