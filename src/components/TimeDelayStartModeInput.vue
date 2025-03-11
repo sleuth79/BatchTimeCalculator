@@ -109,14 +109,14 @@ export default {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
 
-    // Current time updated every second.
+    // New: currentTime is updated every second.
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
     }, 1000);
     const currentTimeString = computed(() => currentTime.value.toLocaleTimeString());
 
-    // Reset local inputs when store signals reset.
+    // Reset local inputs when the store signals a reset
     watch(
       () => gcStore.startTimeResetCounter,
       () => {
@@ -128,6 +128,7 @@ export default {
       }
     );
 
+    // Also watch selectedMode for resets
     watch(
       () => gcStore.selectedMode,
       (newMode) => {
@@ -141,7 +142,7 @@ export default {
       }
     );
 
-    // Computed setters for capping inputs to 99.
+    // Computed setters for capping inputs to 99
     const additionalRunsInput = computed({
       get() {
         return additionalRuns.value === null ? '' : additionalRuns.value;
@@ -151,6 +152,7 @@ export default {
         additionalRuns.value = isNaN(num) ? null : (num > 99 ? 99 : num);
       },
     });
+
     const miscRunsInput = computed({
       get() {
         return miscRuns.value === 0 ? '' : miscRuns.value;
@@ -161,7 +163,7 @@ export default {
       },
     });
 
-    // Input limiting handlers.
+    // Input limiting handlers
     const limitAdditionalRuns = (e) => {
       const value = e.target.value.toString();
       if (value.length > 2) {
@@ -170,6 +172,7 @@ export default {
         additionalRunsInput.value = parseInt(truncated, 10);
       }
     };
+
     const limitMiscRuns = (e) => {
       const value = e.target.value.toString();
       if (value.length > 2) {
@@ -179,11 +182,12 @@ export default {
       }
     };
 
-    // Toggle functions.
+    // Toggle functions
     const togglePrebatch = () => {
       prebatchSelected.value = !prebatchSelected.value;
       if (prebatchSelected.value) calibrationSelected.value = false;
     };
+
     const toggleCalibration = () => {
       calibrationSelected.value = !calibrationSelected.value;
       if (calibrationSelected.value) prebatchSelected.value = false;
@@ -213,9 +217,11 @@ export default {
       }
       return new Date();
     });
+
     const runtimeSeconds = computed(() =>
       Math.round(parseFloat(props.gcRuntime) * 60)
     );
+
     const totalSequentialRuns = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const seqPos = Number(sequentialFinalPosition.value);
@@ -225,6 +231,7 @@ export default {
       }
       return 0;
     });
+
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
@@ -241,6 +248,7 @@ export default {
       }
       return batch1End.value;
     });
+
     const sequentialBatchEndTime = computed(() => {
       if (
         sequentialFinalPosition.value &&
@@ -252,12 +260,14 @@ export default {
       }
       return '';
     });
+
     const additionalRunsEndTime = computed(() => {
       if (additionalRuns.value) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
       }
       return '';
     });
+
     // --- New: Computed property for calibration runs ---
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
@@ -265,6 +275,8 @@ export default {
       }
       return props.gcType === 'Energy' ? 8 : 9;
     });
+
+    // Update totalPreruns to use calibrationRuns
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
@@ -272,10 +284,12 @@ export default {
       total += miscRuns.value || 0;
       return total;
     });
+
     const finalEndTime = computed(() => {
       const secs = totalPreruns.value * runtimeSeconds.value;
       return new Date(baseEndTime.value.getTime() + secs * 1000);
     });
+
     const delayedRunSelected = computed(() => {
       return (
         prebatchSelected.value ||
@@ -283,6 +297,7 @@ export default {
         miscRuns.value > 0
       );
     });
+
     const totalRuns = computed(() => {
       const initialPos = Number(props.primaryFinalPosition) || 0;
       let effectiveInitial = 0;
@@ -297,6 +312,7 @@ export default {
       const additional = Number(additionalRuns.value) || 0;
       return effectiveInitial + effectiveSequential + additional;
     });
+
     const targetTime = computed(() => {
       const base = baseEndTime.value;
       const t = new Date(base);
@@ -306,6 +322,7 @@ export default {
       }
       return t;
     });
+
     const timeGapTo730AM = computed(() => {
       const baseT = baseEndTime.value;
       const target = targetTime.value;
@@ -319,6 +336,7 @@ export default {
         return "0 hours, 0 minutes";
       }
     });
+
     const timeDelayRequiredLocal = computed(() => {
       const F = finalEndTime.value;
       const target = targetTime.value;
@@ -330,28 +348,27 @@ export default {
         return "No Time Delay Required";
       }
     });
+
     const computedDelayHours = computed(() => {
       const parts = timeDelayRequiredLocal.value.split(" ");
       const hours = Number(parts[0]);
       return isNaN(hours) ? 0 : hours;
     });
 
-    // Combined delayed runs time display: uses only the end date.
+    // Instead of separate delayedRunsStartTime and delayedRunsEndTime, combine them:
     const delayedRunsTimeDisplay = computed(() => {
       if (!delayedRunSelected.value) return "";
-      const delayHours = computedDelayHours.value;
-      // Start time for delayed runs: baseEndTime + delay hours.
+      // Calculate start time for delayed runs.
       const startDate = new Date(
-        baseEndTime.value.getTime() + delayHours * 3600 * 1000
+        baseEndTime.value.getTime() + computedDelayHours.value * 3600 * 1000
       );
-      // End time for delayed runs: finalEndTime + delay hours.
+      // The delayed runs end time is adjustedFinalEndTime.
       const endDate = new Date(
-        finalEndTime.value.getTime() + delayHours * 3600 * 1000
+        finalEndTime.value.getTime() + computedDelayHours.value * 3600 * 1000
       );
-      const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-      const startTimeStr = startDate.toLocaleTimeString([], options);
-      const endTimeStr = endDate.toLocaleTimeString([], options);
-      // Use only the end date's date for display.
+      const startTimeStr = formatTimeWithAmPmAndSeconds(startDate);
+      const endTimeStr = formatTimeWithAmPmAndSeconds(endDate);
+      // Use only the end date for display.
       const dateStr = endDate.toLocaleDateString();
       return `${startTimeStr} to ${endTimeStr} (${dateStr})`;
     });
