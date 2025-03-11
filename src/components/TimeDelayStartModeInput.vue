@@ -27,8 +27,8 @@
               max="99"
               @input="limitAdditionalRuns"
             />
-            <p class="caveat">
-              If no batches are currently running, select a GC and select additional runs to calculate the run time based on the current time of day.
+            <p class="caveat additional-runs-caveat">
+              If no batches are currently running, select a GC and input additional runs to calculate the run time based on the current time of day.
             </p>
           </div>
         </div>
@@ -593,6 +593,14 @@ export default {
   color: #666;
   margin-top: 4px;
   margin-bottom: 8px;
+}
+
+/* Additional caveat text for additional runs - one notch smaller */
+.additional-runs-caveat {
+  font-size: 0.65rem;
+  color: #666;
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 /* Style for displaying the current time under the caveat note */
