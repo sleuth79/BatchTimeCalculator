@@ -215,6 +215,7 @@ export default {
 
 .time-input input {
   width: 90px;
+  height: 36px; /* Added fixed height */
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
