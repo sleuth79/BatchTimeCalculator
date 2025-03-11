@@ -616,11 +616,14 @@ export default {
 }
 
 .additional-runs-input label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-weight: bold;
   white-space: nowrap;
+  height: 36px;      /* match the input height */
+  line-height: 36px; /* force vertical centering */
+  margin: 0;         /* remove any default margin */
 }
 
 /* Updated: Apply drop shadow and fixed height to inputs */
