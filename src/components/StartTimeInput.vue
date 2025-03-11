@@ -22,24 +22,11 @@
         </div>
       </div>
 
-      <!-- 15-Minute Wait Input -->
+      <!-- 15-Minute Wait Toggle -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
-        <div class="wait-selector">
-          <div
-            class="wait-box"
-            :class="{ selected: localWait15 }"
-            @click="setWait15(true)"
-          >
-            Yes
-          </div>
-          <div
-            class="wait-box"
-            :class="{ selected: !localWait15 }"
-            @click="setWait15(false)"
-          >
-            No
-          </div>
+        <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
+          <span>{{ localWait15 ? 'On' : 'Off' }}</span>
         </div>
       </div>
 
@@ -215,7 +202,7 @@ export default {
 
 .time-input input {
   width: 90px;
-  height: 36px; /* Added fixed height */
+  height: 36px; /* Fixed height */
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -238,28 +225,23 @@ export default {
   align-items: center;
 }
 
-.wait-selector {
-  display: flex;
-  gap: 5px;
+.wait-toggle {
   margin-left: 10px;
-}
-
-.wait-box {
+  width: 60px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #ccc;
-  padding: 5px 10px;
-  text-align: center;
+  border-radius: 4px;
+  background-color: #fff;
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  border-radius: 4px;
-  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.wait-box:hover {
-  background-color: #f0f0f0;
-}
-
-.wait-box.selected {
+.wait-toggle.on {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
 }
