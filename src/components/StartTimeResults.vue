@@ -20,7 +20,12 @@
     </p>
     <p v-if="results.batchEndTime">
       Batch End Time:
-      <span class="result-value">{{ displayBatchEndTime }}</span>
+      <span 
+        class="result-value" 
+        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
+      >
+        {{ displayBatchEndTime }}
+      </span>
     </p>
     <!-- Updated condition: show closest position only if a final position exists -->
     <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
@@ -132,26 +137,23 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
-    // New computed property for Batch End Time with date adjustment.
+    // Computed property for Batch End Time with date adjustment.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
       // Get the batch end time string as provided (e.g. "05:43:06 AM")
       const batchEndStr = props.results.batchEndTime;
-
       // Use displayBatchStartTime (assumed to be in "HH:mm:ss" 24-hour format)
       const startStr = displayBatchStartTime.value;
       if (!startStr) {
         // If no start time is available, fallback to current date.
         return `${batchEndStr} (${currentDate.value})`;
       }
-
       // Parse start time (assume "HH:mm:ss")
       const startParts = startStr.split(":");
       if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
       const startSecond = parseInt(startParts[2], 10);
-
       // Create a Date object for the start time using today's date.
       const today = new Date();
       const startDate = new Date(
@@ -162,10 +164,7 @@ export default {
         startMinute,
         startSecond
       );
-
-      // Now, create a Date object for the batch end time.
-      // We'll combine the date from startDate with the batch end time string.
-      // Note: batchEndStr is expected in "hh:mm:ss AM/PM" format.
+      // Create a Date object for the batch end time by combining the date from startDate with the batch end time.
       const endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) {
         // If parsing fails, fallback.
@@ -181,6 +180,37 @@ export default {
       return `${batchEndStr} (${endDateString})`;
     });
 
+    // New computed property: highlight batch end time if it's after 7:30 AM.
+    const initialBatchEndTimeAfter730 = computed(() => {
+      if (!props.results.batchEndTime) return false;
+      const batchEndStr = props.results.batchEndTime; // e.g., "05:43:06 AM"
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) return false;
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return false;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      const endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      if (isNaN(endDateCandidate.getTime())) return false;
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      const hour = endDateCandidate.getHours();
+      const minute = endDateCandidate.getMinutes();
+      // Return true if time is after 7:30 AM.
+      return hour > 7 || (hour === 7 && minute >= 30);
+    });
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -190,6 +220,7 @@ export default {
       isClosestPositionObject,
       closestPositionDisplay,
       displayBatchEndTime,
+      initialBatchEndTimeAfter730,
     };
   },
 };
@@ -223,5 +254,9 @@ hr {
 .time-gap-hr {
   margin-top: 10px;
   margin-bottom: 10px;
+}
+/* New style for highlighting in orange */
+.highlight-orange {
+  color: orange;
 }
 </style>
