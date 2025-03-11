@@ -85,10 +85,10 @@ export default {
       currentTime.value = new Date();
     }, 1000);
 
-    // Current date as MM/DD/YYYY (not displayed here anymore)
+    // Current date as MM/DD/YYYY (not used for display in this component now)
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // If no start time is provided, use the current time in 24-hour format.
+    // If no start time is provided, return an empty string.
     const displayBatchStartTime = computed(() => {
       const storedTime =
         props.results.batchStartTime ||
@@ -96,14 +96,6 @@ export default {
         props.startTime.batchStartTime ||
         props.startTime.startTime ||
         "";
-      if (storedTime === "") {
-        return currentTime.value.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        });
-      }
       return storedTime;
     });
 
