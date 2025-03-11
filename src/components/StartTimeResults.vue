@@ -22,7 +22,8 @@
       Batch End Time:
       <span class="result-value">{{ displayBatchEndTime }}</span>
     </p>
-    <p v-if="results.closestPositionBefore4PM || closestPositionDisplay">
+    <!-- Updated condition: show closest position only if a final position exists -->
+    <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">

@@ -552,7 +552,7 @@ export default {
 .main-heading,
 .batch-label,
 .delayed-runs-heading {
-  font-size: 1.2rem !important;
+  font-size: 1.3rem !important;
   margin-top: 0.5rem !important;
   margin-bottom: 6px;
   font-weight: bold;
