@@ -26,7 +26,7 @@
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
         <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
-          <span>{{ localWait15 ? 'On' : 'Off' }}</span>
+          <span>{{ localWait15 ? 'Yes' : 'No' }}</span>
         </div>
       </div>
 
