@@ -57,14 +57,14 @@
     </template>
 
     <!-- Toggle Button for Run Table -->
-    <template v-if="results && results.runs && results.runs.length > 0">
+    <template v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
       <button class="toggle-run-table-button" @click="toggleRunTable">
         {{ showRunTable ? "Hide Run Table" : "View Run Table" }}
       </button>
     </template>
     
     <!-- Run Table -->
-    <div v-if="showRunTable && results && results.runs && results.runs.length > 0">
+    <div v-if="showRunTable && ((results && results.runs && results.runs.length > 0) || delayedRunsExist)">
       <RunTable :runs="runData" />
     </div>
   </div>

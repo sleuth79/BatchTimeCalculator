@@ -84,9 +84,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Run Table Button -->
-  <button class="run-table-button" v-if="canShowRunTableButton">See Run Table</button>
 </template>
 
 <script>
@@ -106,7 +103,7 @@ export default {
     return {};
   },
   computed: {
-    // Show results if either sequentialBatchEndTime or delayedRunsEndTime is provided.
+    // Updated: show results if either sequentialBatchEndTime or delayedRunsEndTime is non-empty.
     resultsComplete() {
       return (
         (this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '') ||
@@ -144,7 +141,8 @@ export default {
     additionalRunsEndDate() {
       return this.additionalRunsEndDateObj.toLocaleDateString();
     },
-    // (Optional) This computed property is still here for reference.
+    // (Optional) This computed property is still here for reference,
+    // but note that we no longer use it in the delayed runs section.
     delayedRunsDate() {
       const base = new Date(this.additionalRunsEndDateObj);
       const additionalEnd = this.timeDelayData.additionalRunsEndTime;
@@ -152,8 +150,8 @@ export default {
         // Expect additionalEnd in format "hh:mm:ss AM/PM", e.g., "01:00:12 PM"
         const parts = additionalEnd.split(" ");
         if (parts.length >= 2) {
-          const timePart = parts[0];
-          const ampm = parts[1];
+          const timePart = parts[0]; // e.g., "01:00:12"
+          const ampm = parts[1];     // e.g., "PM"
           let [hour, minute] = timePart.split(":").map(Number);
           if (ampm.toUpperCase() === "PM" && hour < 12) {
             hour += 12;
@@ -169,15 +167,6 @@ export default {
       }
       return base.toLocaleDateString();
     },
-    // New computed property to control the visibility of the run table button.
-    canShowRunTableButton() {
-      // In a delayed-run–only scenario, even if start time and final position are blank,
-      // we want to show the button as long as delayedRunsEndTime exists.
-      return (
-        this.timeDelayData.delayedRunsEndTime &&
-        this.timeDelayData.delayedRunsEndTime !== ''
-      );
-    }
   },
 };
 </script>
@@ -221,13 +210,6 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
-}
-
-.run-table-button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  font-size: 1rem;
-  cursor: pointer;
 }
 </style>
 
