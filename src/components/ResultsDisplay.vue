@@ -1,6 +1,12 @@
 <template>
   <div class="results-display">
-    <h2 class="results-heading">Results</h2>
+    <!-- Header with Results title on the left and current time/date on the right -->
+    <div class="results-header">
+      <h2 class="results-heading">Results</h2>
+      <div class="current-date-time">
+        {{ currentTimeString }} ({{ currentDate }})
+      </div>
+    </div>
     <!-- Always show Mode and Selected GC -->
     <p>
       Selected GC:
@@ -137,6 +143,24 @@ export default {
       return `${gcStore.selectedGcData.name} (Runtime: ${runtime.toFixed(2)})`;
     });
 
+    // Create a reactive current time that updates every second.
+    const currentTime = ref(new Date());
+    setInterval(() => {
+      currentTime.value = new Date();
+    }, 1000);
+
+    // Format current time (24-hour format)
+    const currentTimeString = computed(() =>
+      currentTime.value.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+    );
+    // Format current date as MM/DD/YYYY
+    const currentDate = computed(() => new Date().toLocaleDateString());
+
     watch(
       () => gcStore.selectedMode,
       (newMode) => {
@@ -163,6 +187,8 @@ export default {
       additionalRunsExist,
       delayedRunsExist,
       timeDelaySectionExists,
+      currentTimeString,
+      currentDate,
     };
   },
 };
@@ -178,11 +204,23 @@ export default {
   box-sizing: border-box;
 }
 
+/* Header container with flex layout */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .results-heading {
   font-size: 2.1rem;
-  margin-top: 0;
-  margin-bottom: 20px;
+  margin: 0;
   color: #333;
+}
+
+.current-date-time {
+  font-size: 1rem;
+  color: #333;
+  font-weight: bold;
 }
 
 .result-value {

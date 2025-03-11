@@ -612,7 +612,7 @@ export default {
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 .separator {
   border: none;
