@@ -355,22 +355,27 @@ export default {
       return isNaN(hours) ? 0 : hours;
     });
 
-    // Instead of separate delayedRunsStartTime and delayedRunsEndTime, combine them:
-    const delayedRunsTimeDisplay = computed(() => {
-      if (!delayedRunSelected.value) return "";
-      // Calculate start time for delayed runs.
-      const startDate = new Date(
+    const delayedRunsStartTimeComputed = computed(() => {
+      if (!delayedRunSelected.value) return '';
+      const start = new Date(
         baseEndTime.value.getTime() + computedDelayHours.value * 3600 * 1000
       );
-      // The delayed runs end time is adjustedFinalEndTime.
-      const endDate = new Date(
+      return formatTimeWithAmPmAndSeconds(start);
+    });
+
+    const adjustedFinalEndTime = computed(() => {
+      return new Date(
         finalEndTime.value.getTime() + computedDelayHours.value * 3600 * 1000
       );
-      const startTimeStr = formatTimeWithAmPmAndSeconds(startDate);
-      const endTimeStr = formatTimeWithAmPmAndSeconds(endDate);
-      // Use only the end date for display.
-      const dateStr = endDate.toLocaleDateString();
-      return `${startTimeStr} to ${endTimeStr} (${dateStr})`;
+    });
+
+    const delayedRunsEndTimeComputed = computed(() => {
+     if (!delayedRunSelected.value) return "";
+     // adjustedFinalEndTime already adds the computed delay hours (using your target logic)
+      const endDate = adjustedFinalEndTime.value;
+      const timeStr = formatTimeWithAmPmAndSeconds(endDate); // e.g., "06:40:42 AM"
+      const dateStr = endDate.toLocaleDateString();           // e.g., "3/12/2025"
+     return `${timeStr} (${dateStr})`;
     });
 
     const overallEndTimeFormatted = computed(() => {
@@ -440,7 +445,8 @@ export default {
             totalRuns: totalRuns.value,
             timeDelayRequired: timeDelayRequiredLocal.value,
             timeGapTo730AM: timeGapTo730AM.value,
-            delayedRunsTimeDisplay: "",
+            delayedRunsStartTime: '',
+            delayedRunsEndTime: '',
             totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
           };
           emit('update-time-delay', fallbackPayload);
@@ -457,7 +463,8 @@ export default {
           totalRuns: totalRuns.value,
           timeDelayRequired: timeDelayRequiredLocal.value,
           timeGapTo730AM: timeGapTo730AM.value,
-          delayedRunsTimeDisplay: delayedRunsTimeDisplay.value,
+          delayedRunsStartTime: delayedRunsStartTimeComputed.value,
+          delayedRunsEndTime: delayedRunSelected.value ? delayedRunsEndTimeComputed.value : '',
           totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
         };
         emit('update-time-delay', payload);
@@ -482,7 +489,8 @@ export default {
           totalRuns: totalRuns.value,
           timeDelayRequired: '',
           timeGapTo730AM: '',
-          delayedRunsTimeDisplay: "",
+          delayedRunsStartTime: '',
+          delayedRunsEndTime: '',
           totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
         };
         emit('update-time-delay', emptyPayload);
@@ -498,7 +506,8 @@ export default {
           totalRuns: totalRuns.value,
           timeDelayRequired: timeDelayRequiredLocal.value,
           timeGapTo730AM: timeGapTo730AM.value,
-          delayedRunsTimeDisplay: delayedRunsTimeDisplay.value,
+          delayedRunsStartTime: delayedRunsStartTimeComputed.value,
+          delayedRunsEndTime: delayedRunSelected.value ? delayedRunsEndTimeComputed.value : '',
           totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
         };
         emit('update-time-delay', initialPayload);
