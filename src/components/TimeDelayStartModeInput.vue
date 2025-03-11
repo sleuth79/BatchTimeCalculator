@@ -370,8 +370,12 @@ export default {
     });
 
     const delayedRunsEndTimeComputed = computed(() => {
-      if (!delayedRunSelected.value) return "";
-      return formatTimeWithAmPmAndSeconds(adjustedFinalEndTime.value);
+     if (!delayedRunSelected.value) return "";
+     // adjustedFinalEndTime already adds the computed delay hours (using your target logic)
+      const endDate = adjustedFinalEndTime.value;
+      const timeStr = formatTimeWithAmPmAndSeconds(endDate); // e.g., "06:40:42 AM"
+      const dateStr = endDate.toLocaleDateString();           // e.g., "3/12/2025"
+     return `${timeStr} (${dateStr})`;
     });
 
     const overallEndTimeFormatted = computed(() => {
