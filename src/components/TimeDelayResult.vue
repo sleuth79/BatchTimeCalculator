@@ -68,10 +68,13 @@
           Total Duration of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
         </p>
-        <!-- Combined delayed runs time using a single date -->
-        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0 && delayedRunsTimeCombined">
+        <!-- Combined heading for delayed runs start and end time with date -->
+        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
-          <strong>{{ delayedRunsTimeCombined }}</strong>
+          <strong>
+            {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
+          </strong>
+          <span class="result-date"> ({{ delayedRunsDate }})</span>
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
@@ -101,7 +104,7 @@ export default {
     return {};
   },
   computed: {
-    // Show results only if sequentialBatchEndTime is non-empty.
+    // Only show results if sequentialBatchEndTime is non-empty.
     resultsComplete() {
       return (
         this.timeDelayData.sequentialBatchEndTime &&
@@ -129,19 +132,20 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Compute a date object for Additional Runs End Date from payload.
-    // (This example assumes Additional Runs End Date is provided as a base date.)
+    // Instead of returning a string date, we return a Date object for the Additional Runs End Date.
     additionalRunsEndDateObj() {
-      // If you already have a date field in payload, use it; otherwise, assume tomorrow.
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
       return tomorrow;
     },
+    // Return the Additional Runs End Date as a locale date string.
     additionalRunsEndDate() {
       return this.additionalRunsEndDateObj.toLocaleDateString();
     },
-    // Compute a delayed runs date based on additionalRunsEndTime.
+    // Computed property for the Delayed Runs Date.
+    // It uses the additionalRunsEndDateObj as the base and adds one extra day if
+    // the Additional Runs End Time (assumed in "hh:mm:ss AM/PM" format) is after 7:30 AM.
     delayedRunsDate() {
       const base = new Date(this.additionalRunsEndDateObj);
       const additionalEnd = this.timeDelayData.additionalRunsEndTime;
@@ -166,13 +170,6 @@ export default {
       }
       return base.toLocaleDateString();
     },
-    // Combined delayed runs time: uses delayedRunsStartTime and delayedRunsEndTime from payload,
-    // and uses delayedRunsDate as the single date to show.
-    delayedRunsTimeCombined() {
-      if (!this.timeDelayData.delayedRunsStartTime || !this.timeDelayData.delayedRunsEndTime)
-        return "";
-      return `${this.timeDelayData.delayedRunsStartTime} to ${this.timeDelayData.delayedRunsEndTime} (${this.delayedRunsDate})`;
-    },
   },
 };
 </script>
@@ -182,33 +179,47 @@ export default {
   margin: 0;
   padding: 0;
 }
+
 .section-heading {
   margin: 0 0 5px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
+
 .time-delay-result p {
   margin-bottom: 2px !important;
   line-height: 1.2 !important;
   font-size: 1rem !important;
   color: #333;
 }
+
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 10px 0;
   padding: 0;
 }
+
 .highlight-green {
   color: var(--highlight-color);
 }
+
 .time-gap-hr {
   border-top: 1px solid #ccc;
 }
+
 .result-date {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
+}
+</style>
+
+<style>
+#timeDelayOverride .explanation {
+  font-size: 0.9rem !important;
+  color: #57ca48 !important;
+  margin-top: 10px !important;
 }
 </style>
