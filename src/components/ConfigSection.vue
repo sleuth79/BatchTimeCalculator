@@ -27,7 +27,7 @@
       <!-- Sticky container for the reset button and the pinned box -->
       <div class="sticky-bottom-container">
         <div class="reset-button-container">
-          <button @click="resetInputs">Reset Inputs</button>
+          <button @click="resetInputs">Reset All Inputs</button>
         </div>
         <div class="other-batch-types-box">
           <p class="other-batch-heading">

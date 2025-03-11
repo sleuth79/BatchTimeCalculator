@@ -103,11 +103,11 @@ export default {
     return {};
   },
   computed: {
-    // Only show results if sequentialBatchEndTime is non-empty.
+    // Updated: show results if either sequentialBatchEndTime or delayedRunsEndTime is non-empty.
     resultsComplete() {
       return (
-        this.timeDelayData.sequentialBatchEndTime &&
-        this.timeDelayData.sequentialBatchEndTime !== ''
+        (this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '') ||
+        (this.timeDelayData.delayedRunsEndTime && this.timeDelayData.delayedRunsEndTime !== '')
       );
     },
     sequentialBatchRuns() {
