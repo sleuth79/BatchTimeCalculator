@@ -24,11 +24,6 @@
           {{ totalRunsHeading }}:
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
-        <!-- New heading and computed value for the duration -->
-        <p v-if="timeDelayData.additionalRuns || timeDelayData.sequentialBatchActive">
-          <strong>Duration of Additional Runs:</strong>
-          <span>{{ additionalRunsDuration }}</span>
-        </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
             Additional Runs End Time:
@@ -147,23 +142,6 @@ export default {
     },
     additionalRunsEndDate() {
       return this.additionalRunsEndDateObj.toLocaleDateString();
-    },
-    // New computed property for the duration of additional runs.
-    // If a sequential batch is active, duration = (sequentialBatchRuns + additionalRuns) * gcRuntime.
-    // Otherwise, duration = additionalRuns * gcRuntime.
-    // We assume gcRuntime is passed in timeDelayData in minutes.
-    additionalRunsDuration() {
-      const additional = Number(this.timeDelayData.additionalRuns) || 0;
-      let baseRuns = 0;
-      if (this.timeDelayData.sequentialBatchActive) {
-        baseRuns = this.sequentialBatchRuns || 0;
-      }
-      const totalRuns = baseRuns + additional;
-      const gcRuntime = Number(this.timeDelayData.gcRuntime) || 0;
-      const durationMinutes = totalRuns * gcRuntime;
-      const hours = Math.floor(durationMinutes / 60);
-      const minutes = Math.round(durationMinutes % 60);
-      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     },
     // New computed property to check if the batch end time is after 7:30 AM.
     batchEndTimeAfter730() {
