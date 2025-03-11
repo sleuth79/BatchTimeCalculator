@@ -1,100 +1,122 @@
 <template>
-  <!-- Only display results if resultsComplete is true -->
-  <div class="time-delay-result" v-if="resultsComplete">
-    <!-- Additional Runs Section -->
-    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime">
-      <p class="section-heading"><strong>Additional Runs</strong></p>
-      <div v-if="timeDelayData.sequentialBatchActive">
-        <p>
-          Final Position for Sequential Batch:
-          <strong>{{ timeDelayData.sequentialFinalPosition }}</strong>
-          <span v-if="sequentialBatchRuns !== null">
-            &nbsp;| Total Runs (Including Controls):
-            <strong>{{ sequentialBatchRuns }}</strong>
-          </span>
-        </p>
+  <div class="time-delay-result">
+    <!-- Always show top heading -->
+    <p class="section-heading"><strong>Results</strong></p>
+
+    <!-- Show these lines as soon as we have data (no condition) -->
+    <p>
+      {{ timeDelayData.resultTime }} ({{ timeDelayData.resultDate }})
+    </p>
+    <p>
+      Selected GC: {{ timeDelayData.selectedGC }} (Runtime: {{ timeDelayData.selectedGcRuntime }})
+    </p>
+    <p>
+      Start Time:
+      <strong>{{ timeDelayData.startTime }}</strong>
+    </p>
+    <p>
+      Final Position:
+      <strong>{{ timeDelayData.finalPosition }}</strong>
+    </p>
+
+    <!-- Main sections that display only if results are actually complete -->
+    <div v-if="resultsComplete">
+      <!-- Additional Runs Section -->
+      <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime">
+        <p class="section-heading"><strong>Additional Runs</strong></p>
+
+        <!-- Show final position for sequential batch if relevant -->
+        <div v-if="timeDelayData.sequentialBatchActive">
+          <p>
+            Final Position for Sequential Batch:
+            <strong>{{ timeDelayData.sequentialFinalPosition }}</strong>
+            <span v-if="sequentialBatchRuns !== null">
+              &nbsp;| Total Runs (Including Controls):
+              <strong>{{ sequentialBatchRuns }}</strong>
+            </span>
+          </p>
+        </div>
+
+        <div>
+          <p v-if="Number(timeDelayData.additionalRuns) > 0">
+            Additional Runs:
+            <strong>{{ timeDelayData.additionalRuns }}</strong>
+          </p>
+
+          <!-- Flip the order: Total Runs first -->
+          <p v-if="timeDelayData.totalRuns">
+            {{ totalRunsHeading }}:
+            <strong>{{ timeDelayData.totalRuns }}</strong>
+          </p>
+
+          <p>
+            <template v-if="timeDelayData.sequentialBatchActive">
+              Additional Runs End Time:
+              <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+                {{ timeDelayData.sequentialBatchEndTime }}
+              </strong>
+              <span class="result-date"> ({{ additionalRunsEndDate }})</span>
+            </template>
+            <template v-else>
+              Additional Runs End Time:
+              <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+                {{ timeDelayData.additionalRunsEndTime }}
+              </strong>
+              <span class="result-date"> ({{ additionalRunsEndDate }})</span>
+            </template>
+          </p>
+
+          <!-- New: Duration of Additional Runs (only if > 0 and runtime set) -->
+          <p v-if="additionalRunsTotalDurationFormatted">
+            Duration of Additional Runs:
+            <strong>{{ additionalRunsTotalDurationFormatted }}</strong>
+          </p>
+        </div>
+
+        <!-- Time gap if no delayed runs exist -->
+        <div v-if="timeDelayData.timeGapTo730AM && !hasDelayedRuns">
+          <hr class="time-gap-hr" />
+          <p>
+            Time Gap to 7:30 AM:
+            <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
+          </p>
+        </div>
       </div>
 
-      <div>
-        <p v-if="Number(timeDelayData.additionalRuns) > 0">
-          Additional Runs:
-          <strong>{{ timeDelayData.additionalRuns }}</strong>
-        </p>
-
-        <!-- Flip the order: Total Runs comes first -->
-        <p v-if="timeDelayData.totalRuns">
-          {{ totalRunsHeading }}:
-          <strong>{{ timeDelayData.totalRuns }}</strong>
-        </p>
-
-        <p>
-          <template v-if="timeDelayData.sequentialBatchActive">
-            Additional Runs End Time:
-            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
-              {{ timeDelayData.sequentialBatchEndTime }}
+      <!-- Delayed Runs Section -->
+      <div v-if="hasDelayedRuns">
+        <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
+        <p class="section-heading"><strong>Delayed Runs</strong></p>
+        <div>
+          <p v-if="timeDelayData.timeGapTo730AM">
+            Time Gap to 7:30 AM:
+            <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
+          </p>
+          <p>
+            Delayed Runs:
+            <strong>{{ timeDelayData.prerunsDescription }}</strong>
+          </p>
+          <p>
+            Total Number of Delayed Runs:
+            <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
+          </p>
+          <p>
+            Total Duration of Delayed Runs:
+            <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
+          </p>
+          <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
+            Delayed Runs Time:
+            <strong>
+              {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
             </strong>
-            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
-          </template>
-          <template v-else>
-            Additional Runs End Time:
-            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
-              {{ timeDelayData.additionalRunsEndTime }}
+          </p>
+          <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
+            Time Delay Required:
+            <strong class="highlight-green">
+              {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
             </strong>
-            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
-          </template>
-        </p>
-
-        <!-- New section: Duration of Additional Runs -->
-        <p v-if="additionalRunsTotalDurationFormatted">
-          Duration of Additional Runs:
-          <strong>{{ additionalRunsTotalDurationFormatted }}</strong>
-        </p>
-      </div>
-
-      <!-- Display time gap if additional runs exist and no delayed runs -->
-      <div v-if="timeDelayData.timeGapTo730AM && !hasDelayedRuns">
-        <hr class="time-gap-hr" />
-        <p>
-          Time Gap to 7:30 AM:
-          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
-        </p>
-      </div>
-    </div>
-
-    <!-- Delayed Runs Section: only display if valid delayed runs exist -->
-    <div v-if="hasDelayedRuns">
-      <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
-      <p class="section-heading"><strong>Delayed Runs</strong></p>
-      <div>
-        <p v-if="timeDelayData.timeGapTo730AM">
-          Time Gap to 7:30 AM:
-          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
-        </p>
-        <p>
-          Delayed Runs:
-          <strong>{{ timeDelayData.prerunsDescription }}</strong>
-        </p>
-        <p>
-          Total Number of Delayed Runs:
-          <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
-        </p>
-        <p>
-          Total Duration of Delayed Runs:
-          <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
-        </p>
-        <!-- Use the delayedRunsEndTime as provided in the payload (which already includes the date) -->
-        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
-          Delayed Runs Time:
-          <strong>
-            {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
-          </strong>
-        </p>
-        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
-          Time Delay Required:
-          <strong class="highlight-green">
-            {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
-          </strong>
-        </p>
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -113,10 +135,12 @@ export default {
     },
   },
   setup() {
+    // If you need store logic:
     const gcStore = useGcStore();
     return {};
   },
   computed: {
+    // Used to decide if we show the detailed sections
     resultsComplete() {
       return (
         (this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '') ||
@@ -127,14 +151,14 @@ export default {
     sequentialBatchRuns() {
       if (this.timeDelayData.sequentialFinalPosition !== null) {
         const seqPos = Number(this.timeDelayData.sequentialFinalPosition);
-        // If final position <= 15, assume +2 for controls, else +1
+        // If final position <= 15, we typically add +2 for control runs, else +1
         return seqPos <= 15 ? seqPos + 2 : seqPos + 1;
       }
       return null;
     },
 
     totalRunsHeading() {
-      return "Total Runs (Initial Batch + Additional Runs)";
+      return 'Total Runs (Initial Batch + Additional Runs)';
     },
 
     hasDelayedRuns() {
@@ -150,8 +174,7 @@ export default {
     },
 
     additionalRunsEndDateObj() {
-      // Demo: always shows "tomorrow" as the date.
-      // Adjust or remove if you already handle the date logic differently.
+      // Example: just sets tomorrow’s date. Modify as needed.
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
@@ -162,7 +185,7 @@ export default {
       return this.additionalRunsEndDateObj.toLocaleDateString();
     },
 
-    // Check if the batch end time is after 7:30 AM.
+    // Checks if the final runs end time is after 7:30 AM
     batchEndTimeAfter730() {
       let timeString = '';
       if (this.timeDelayData.sequentialBatchActive) {
@@ -171,35 +194,37 @@ export default {
         timeString = this.timeDelayData.additionalRunsEndTime;
       }
       if (!timeString) return false;
-      // Expecting format like "hh:mm:ss AM/PM"
-      const parts = timeString.split(" ");
+
+      // Expect "hh:mm:ss AM/PM"
+      const parts = timeString.split(' ');
       if (parts.length < 2) return false;
 
       const timePart = parts[0]; // e.g., "01:00:12"
       const ampm = parts[1];     // e.g., "PM"
-      const timeParts = timePart.split(":");
+      const timeParts = timePart.split(':');
       if (timeParts.length < 2) return false;
 
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
 
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
+      // Convert to 24-hour:
+      if (ampm.toUpperCase() === 'PM' && hour < 12) {
         hour += 12;
       }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
+      if (ampm.toUpperCase() === 'AM' && hour === 12) {
         hour = 0;
       }
-      // Compare to 7:30 in 24-hour format.
+
+      // Compare to 07:30 in 24-hour
       return hour > 7 || (hour === 7 && minute >= 30);
     },
 
-    // New computed property to calculate the total duration of additional runs
+    // The new computed property to calculate the duration of additional runs
     additionalRunsTotalDurationFormatted() {
-      // Make sure 'additionalRuns' and 'selectedGcRuntime' exist in timeDelayData
       const runs = Number(this.timeDelayData.additionalRuns);
       const runtime = Number(this.timeDelayData.selectedGcRuntime);
       if (runs > 0 && runtime > 0) {
-        const totalMinutes = runs * runtime;
+        const totalMinutes = runs * runtime; // e.g. 5 runs * 19.04 min each
         const hours = Math.floor(totalMinutes / 60);
         const minutes = Math.round(totalMinutes % 60);
         return `${hours}h ${minutes}m`;
@@ -258,6 +283,7 @@ hr {
 </style>
 
 <style>
+/* Example only if you have this override section */
 #timeDelayOverride .explanation {
   font-size: 0.9rem !important;
   color: #57ca48 !important;
