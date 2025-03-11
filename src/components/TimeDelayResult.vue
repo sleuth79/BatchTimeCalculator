@@ -27,12 +27,16 @@
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
             Additional Runs End Time:
-            <strong>{{ timeDelayData.sequentialBatchEndTime }}</strong>
+            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+              {{ timeDelayData.sequentialBatchEndTime }}
+            </strong>
             <span class="result-date"> ({{ additionalRunsEndDate }})</span>
           </template>
           <template v-else>
             Additional Runs End Time:
-            <strong>{{ timeDelayData.additionalRunsEndTime }}</strong>
+            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+              {{ timeDelayData.additionalRunsEndTime }}
+            </strong>
             <span class="result-date"> ({{ additionalRunsEndDate }})</span>
           </template>
         </p>
@@ -103,7 +107,6 @@ export default {
     return {};
   },
   computed: {
-    // Updated: show results if either sequentialBatchEndTime or delayedRunsEndTime is non-empty.
     resultsComplete() {
       return (
         (this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '') ||
@@ -131,7 +134,6 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Return a computed date for Additional Runs End Date.
     additionalRunsEndDateObj() {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -141,31 +143,32 @@ export default {
     additionalRunsEndDate() {
       return this.additionalRunsEndDateObj.toLocaleDateString();
     },
-    // (Optional) This computed property is still here for reference,
-    // but note that we no longer use it in the delayed runs section.
-    delayedRunsDate() {
-      const base = new Date(this.additionalRunsEndDateObj);
-      const additionalEnd = this.timeDelayData.additionalRunsEndTime;
-      if (additionalEnd) {
-        // Expect additionalEnd in format "hh:mm:ss AM/PM", e.g., "01:00:12 PM"
-        const parts = additionalEnd.split(" ");
-        if (parts.length >= 2) {
-          const timePart = parts[0]; // e.g., "01:00:12"
-          const ampm = parts[1];     // e.g., "PM"
-          let [hour, minute] = timePart.split(":").map(Number);
-          if (ampm.toUpperCase() === "PM" && hour < 12) {
-            hour += 12;
-          }
-          if (ampm.toUpperCase() === "AM" && hour === 12) {
-            hour = 0;
-          }
-          // Add one extra day if the Additional Runs End Time is after 7:30 AM.
-          if (hour > 7 || (hour === 7 && minute >= 30)) {
-            base.setDate(base.getDate() + 1);
-          }
-        }
+    // New computed property to check if the batch end time is after 7:30 AM.
+    batchEndTimeAfter730() {
+      let timeString = '';
+      if (this.timeDelayData.sequentialBatchActive) {
+        timeString = this.timeDelayData.sequentialBatchEndTime;
+      } else {
+        timeString = this.timeDelayData.additionalRunsEndTime;
       }
-      return base.toLocaleDateString();
+      if (!timeString) return false;
+      // Expecting a format like "hh:mm:ss AM/PM"
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0]; // e.g., "01:00:12"
+      const ampm = parts[1];     // e.g., "PM"
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return false;
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // Compare to 7:30 in 24-hour format.
+      return hour > 7 || (hour === 7 && minute >= 30);
     },
   },
 };
@@ -200,6 +203,11 @@ hr {
 
 .highlight-green {
   color: var(--highlight-color);
+}
+
+/* New style for highlighting the batch end time in orange */
+.highlight-orange {
+  color: orange;
 }
 
 .time-gap-hr {
