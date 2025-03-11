@@ -620,10 +620,11 @@ export default {
   white-space: nowrap;
 }
 
-/* Updated: Apply drop shadow to inputs similar to start time input */
+/* Updated: Apply drop shadow and fixed height to inputs */
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
+  height: 36px; /* Added fixed height to ensure consistency */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 .separator {
