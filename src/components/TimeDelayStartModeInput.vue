@@ -39,10 +39,6 @@
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
-          <!-- Caveat note in small print -->
-          <p class="caveat">
-            If no batches are currently running, select a GC and select delayed runs to calculate the time delay required based on the current time of day.
-          </p>
           <!-- Display the current time if delayed mode is active -->
           <p class="current-time" v-if="delayedMode">
             Current Time: {{ currentTimeString }}
@@ -75,6 +71,10 @@
               />
             </div>
           </div>
+          <!-- Informational Text moved below the input selectors -->
+          <p class="caveat">
+            If no batches are currently running, select a GC and select delayed runs to calculate the time delay required based on the current time of day.
+          </p>
         </div>
       </div>
     </div>
