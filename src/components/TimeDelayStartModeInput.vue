@@ -27,6 +27,9 @@
               max="99"
               @input="limitAdditionalRuns"
             />
+            <p class="caveat">
+              If no batches are currently running, select a GC and select additional runs to calculate the run time based on the current time of day.
+            </p>
           </div>
         </div>
 
@@ -403,7 +406,7 @@ export default {
       const totalSeconds = Math.round(totalDurationMinutes * 60);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+      const seconds = totalSeconds % 3600 % 60;
       let formatted = "";
       if (hours > 0) {
         formatted += `${hours}h `;
