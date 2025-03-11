@@ -228,7 +228,7 @@ export default {
 .wait-toggle {
   margin-left: 10px;
   width: 60px;
-  height: 36px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
