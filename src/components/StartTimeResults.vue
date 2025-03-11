@@ -164,10 +164,9 @@ export default {
         startMinute,
         startSecond
       );
-      // Create a Date object for the batch end time by combining the date from startDate with the batch end time.
-      const endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      // Create a Date object for the batch end time using the start date.
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) {
-        // If parsing fails, fallback.
         return `${batchEndStr} (${currentDate.value})`;
       }
       // If the parsed batch end time is earlier than or equal to the start time,
@@ -180,12 +179,14 @@ export default {
       return `${batchEndStr} (${endDateString})`;
     });
 
-    // New computed property: highlight batch end time if it's after 7:30 AM.
+    // New computed property: highlight batch end time if it's on the next day
+    // and if its time-of-day is after 7:30 AM.
     const initialBatchEndTimeAfter730 = computed(() => {
       if (!props.results.batchEndTime) return false;
-      const batchEndStr = props.results.batchEndTime; // e.g., "05:43:06 AM"
+      const batchEndStr = props.results.batchEndTime; // e.g., "08:43:06 PM"
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
+      // Parse start time ("HH:mm:ss") to create a Date for today.
       const startParts = startStr.split(":");
       if (startParts.length < 3) return false;
       const startHour = parseInt(startParts[0], 10);
@@ -200,15 +201,20 @@ export default {
         startMinute,
         startSecond
       );
-      const endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      // Parse the batch end time using the start date.
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) return false;
+      // If the parsed end time is earlier than or equal to the start time,
+      // assume the batch end is on the next day.
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
       }
-      const hour = endDateCandidate.getHours();
-      const minute = endDateCandidate.getMinutes();
-      // Return true if time is after 7:30 AM.
-      return hour > 7 || (hour === 7 && minute >= 30);
+      // Only highlight if the end time falls on a different day than the start time.
+      if (endDateCandidate.getDate() === startDate.getDate()) return false;
+      // Check if the time-of-day is after 7:30 AM.
+      const endHour = endDateCandidate.getHours();
+      const endMinute = endDateCandidate.getMinutes();
+      return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
     return {
@@ -255,7 +261,7 @@ hr {
   margin-top: 10px;
   margin-bottom: 10px;
 }
-/* New style for highlighting in orange */
+/* Highlight orange if batch end time is after 7:30 AM on the next day */
 .highlight-orange {
   color: orange;
 }
