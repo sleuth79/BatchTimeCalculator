@@ -177,7 +177,7 @@ export default {
       ) {
         localBatchStartTime.value = "";
         timeInputError.value =
-          "Invalid time. Enter time as HH:mm:ss, such as 09:30:00.";
+          "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
       }
     };
 

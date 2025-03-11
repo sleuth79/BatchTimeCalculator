@@ -1,6 +1,6 @@
 <template>
+  <!-- Wrap all the main inputs in a content container -->
   <div class="time-delay-input">
-    <!-- Wrap all the main inputs in a content container -->
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
       <!-- We no longer hide the inputs -->
@@ -38,7 +38,7 @@
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
           <!-- Caveat note in small print -->
           <p class="caveat">
-            If no batches are currently running, select a GC and select delayed runs to just calculate the time delay based on the current time of day.
+            If no batches are currently running, select a GC and select delayed runs to calculate the time delay required based on the current time of day.
           </p>
           <!-- Display the current time if delayed mode is active -->
           <p class="current-time" v-if="delayedMode">
@@ -370,12 +370,12 @@ export default {
     });
 
     const delayedRunsEndTimeComputed = computed(() => {
-     if (!delayedRunSelected.value) return "";
-     // adjustedFinalEndTime already adds the computed delay hours (using your target logic)
+      if (!delayedRunSelected.value) return "";
+      // adjustedFinalEndTime already adds the computed delay hours (using your target logic)
       const endDate = adjustedFinalEndTime.value;
       const timeStr = formatTimeWithAmPmAndSeconds(endDate); // e.g., "06:40:42 AM"
       const dateStr = endDate.toLocaleDateString();           // e.g., "3/12/2025"
-     return `${timeStr} (${dateStr})`;
+      return `${timeStr} (${dateStr})`;
     });
 
     const overallEndTimeFormatted = computed(() => {
@@ -608,10 +608,18 @@ export default {
 .sequential-batch-section {
   margin-bottom: 10px;
 }
+
+/* Added space between the label and the position selector */
+.sequential-batch-section label {
+  display: block;
+  margin-bottom: 10px;
+}
+
 .additional-runs-input label {
   font-weight: bold;
   white-space: nowrap;
 }
+
 /* Updated: Apply drop shadow to inputs similar to start time input */
 .additional-runs-input input,
 .misc-runs input {
@@ -660,12 +668,9 @@ export default {
 }
 label {
   font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
 }
 .highlight-green {
   color: var(--highlight-color);
-}
-/* Add a subtle drop shadow to all headings (labels in this case) */
-label {
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
 }
 </style>
