@@ -608,8 +608,11 @@ export default {
   font-weight: bold;
   white-space: nowrap;
 }
-.additional-runs-input input {
+/* Updated: Apply drop shadow to inputs similar to start time input */
+.additional-runs-input input,
+.misc-runs input {
   width: 60px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 .separator {
   border: none;
@@ -632,9 +635,6 @@ export default {
 }
 .misc-runs .misc-label {
   white-space: nowrap;
-}
-.misc-runs input {
-  width: 60px;
 }
 .box {
   display: inline-block;
