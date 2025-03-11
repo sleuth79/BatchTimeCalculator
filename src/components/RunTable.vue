@@ -2,20 +2,22 @@
   <div class="run-table">
     <table>
       <thead>
-        <!-- Header for Initial Batch -->
-        <tr class="title-row">
-          <th colspan="4" class="batch-header">Initial Batch</th>
-        </tr>
-        <tr class="header-row">
-          <th class="run-column">Run</th>
-          <th>Run Title</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-        </tr>
+        <!-- Only display the Initial Batch header if computedRuns has entries -->
+        <template v-if="computedRuns.length > 0">
+          <tr class="title-row">
+            <th colspan="4" class="batch-header">Initial Batch</th>
+          </tr>
+          <tr class="header-row">
+            <th class="run-column">Run</th>
+            <th>Run Title</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+          </tr>
+        </template>
       </thead>
       <tbody>
         <!-- Initial Batch Rows -->
-        <tr v-for="(run, index) in computedRuns" :key="'initial-' + index">
+        <tr v-for="(run, index) in computedRuns" :key="'initial-' + index" v-if="computedRuns.length > 0">
           <td class="run-column">{{ run.position }}</td>
           <td>{{ run.computedTitle }}</td>
           <td>{{ run.startTime }}</td>
@@ -55,7 +57,7 @@
           </td>
         </tr>
 
-        <!-- Delayed Runs (Prebatch) Rows -->
+        <!-- Delayed Runs Rows -->
         <template v-if="prebatchRows.length">
           <tr class="title-row">
             <td colspan="4" class="batch-header">Delayed Runs</td>
@@ -91,6 +93,10 @@ export default {
   },
   computed: {
     computedRuns() {
+      // Optionally, if no start time is provided, return an empty array.
+      if (!this.gcStore.results || !this.gcStore.results.startTimeFinalPosition) {
+        return [];
+      }
       let seq = 3;
       // Look up the GC type from the store's allGcData using the selected GC id.
       const gcType = String(this.gcStore.allGcData[this.gcStore.selectedGc]?.type || '')
@@ -144,7 +150,6 @@ export default {
       if (!sequentialFinalPosition || !timeDelayResults.sequentialBatchActive) {
         return [];
       }
-      // Look up the GC type.
       const gcType = String(allGcData[selectedGc]?.type || '')
         .trim()
         .toLowerCase();
