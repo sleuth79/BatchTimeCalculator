@@ -20,7 +20,7 @@
     </p>
     <p v-if="results.batchEndTime">
       Batch End Time:
-      <span class="result-value">{{ results.batchEndTime }}</span>
+      <span class="result-value">{{ displayBatchEndTime }}</span>
     </p>
     <p v-if="results.closestPositionBefore4PM || closestPositionDisplay">
       Closest Position Before 4:00 PM:
@@ -79,16 +79,16 @@ export default {
     },
   },
   setup(props) {
-    // A reactive property that updates every second
+    // A reactive property that updates every second (not used for batch end time here)
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
     }, 1000);
 
-    // Current date as MM/DD/YYYY (not used for display in this component now)
+    // Current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // If no start time is provided, return an empty string.
+    // If no start time is provided, use the stored value (do not fallback to current time)
     const displayBatchStartTime = computed(() => {
       const storedTime =
         props.results.batchStartTime ||
@@ -131,6 +131,13 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
+    // New: Format the batch end time to include the current date.
+    // You can adjust this logic if you wish to use a date from the result instead.
+    const displayBatchEndTime = computed(() => {
+      if (!props.results.batchEndTime) return "";
+      return `${props.results.batchEndTime} (${currentDate.value})`;
+    });
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -139,6 +146,7 @@ export default {
       additionalRunsExistBool,
       isClosestPositionObject,
       closestPositionDisplay,
+      displayBatchEndTime,
     };
   },
 };
