@@ -616,6 +616,9 @@ export default {
 }
 
 .additional-runs-input label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: bold;
   white-space: nowrap;
 }
