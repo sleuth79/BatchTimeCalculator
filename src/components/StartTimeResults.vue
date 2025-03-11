@@ -4,7 +4,6 @@
     <p>
       Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
-      <span class="result-date"> ({{ currentDate }})</span>
     </p>
     <p>
       Final Position:
@@ -86,7 +85,7 @@ export default {
       currentTime.value = new Date();
     }, 1000);
 
-    // Current date as MM/DD/YYYY
+    // Current date as MM/DD/YYYY (not displayed here anymore)
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     // If no start time is provided, use the current time in 24-hour format.
