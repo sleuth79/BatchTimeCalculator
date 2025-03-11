@@ -4,7 +4,7 @@
     <div class="gc-group">
       <!-- Row for Energy GCs -->
       <div class="gc-group-row">
-        <div class="gc-group-heading">Energy:</div>
+        <div class="gc-group-heading">Energy</div>
         <div class="gc-grid">
           <div
             v-for="gc in energyOptions"
@@ -19,7 +19,7 @@
       </div>
       <!-- Row for Sulphur GCs -->
       <div class="gc-group-row">
-        <div class="gc-group-heading">Sulphur:</div>
+        <div class="gc-group-heading">Sulphur</div>
         <div class="gc-grid">
           <div
             v-for="gc in sulphurOptions"
