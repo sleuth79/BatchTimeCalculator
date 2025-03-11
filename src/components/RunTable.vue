@@ -274,7 +274,7 @@ export default {
         const rowEnd   = new Date(delayedStart.getTime() + (i + 1) * runtime);
         rows.push({
           position: (this.lastMainRunNumber + (this.additionalRows.length || 0)) + i + 1,
-          computedTitle: `Prebatch ${i + 1}`,
+          computedTitle: `Delayed Run ${i + 1}`,
           startTime: formatTimeWithAmPmAndSeconds(rowStart),
           endTime: formatTimeWithAmPmAndSeconds(rowEnd),
           endDate: rowEnd,
