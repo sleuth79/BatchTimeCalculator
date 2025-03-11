@@ -587,15 +587,15 @@ export default {
   text-align: left;
 }
 
-/* The caveat note in small print under the delayed runs heading */
+/* The caveat note in small print under the delayed runs heading and additional runs */
 .caveat {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #666;
   margin-top: 4px;
   margin-bottom: 8px;
 }
 
-/* Additional caveat text for additional runs - one notch smaller */
+/* Additional caveat text for additional runs (same size as caveat) */
 .additional-runs-caveat {
   font-size: 0.65rem;
   color: #666;
