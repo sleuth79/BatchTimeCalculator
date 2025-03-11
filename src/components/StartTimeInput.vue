@@ -119,6 +119,11 @@ export default {
       recalculateResults();
     });
 
+    // Clear error when input is reset via store.
+    watch(() => gcStore.startTimeResetCounter, () => {
+      timeInputError.value = "";
+    });
+
     // Formats input to HH:mm:ss format.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
