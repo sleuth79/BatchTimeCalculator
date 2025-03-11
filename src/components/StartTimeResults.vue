@@ -79,16 +79,16 @@ export default {
     },
   },
   setup(props) {
-    // A reactive property that updates every second (not used for batch end time here)
+    // A reactive property that updates every second (for fallback, if needed)
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
     }, 1000);
 
-    // Current date as MM/DD/YYYY
+    // Current date as MM/DD/YYYY – used as fallback if needed
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // If no start time is provided, use the stored value (do not fallback to current time)
+    // Use the stored start time; if none, return an empty string.
     const displayBatchStartTime = computed(() => {
       const storedTime =
         props.results.batchStartTime ||
@@ -131,11 +131,53 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
-    // New: Format the batch end time to include the current date.
-    // You can adjust this logic if you wish to use a date from the result instead.
+    // New computed property for Batch End Time with date adjustment.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
-      return `${props.results.batchEndTime} (${currentDate.value})`;
+      // Get the batch end time string as provided (e.g. "05:43:06 AM")
+      const batchEndStr = props.results.batchEndTime;
+
+      // Use displayBatchStartTime (assumed to be in "HH:mm:ss" 24-hour format)
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) {
+        // If no start time is available, fallback to current date.
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+
+      // Parse start time (assume "HH:mm:ss")
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+
+      // Create a Date object for the start time using today's date.
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+
+      // Now, create a Date object for the batch end time.
+      // We'll combine the date from startDate with the batch end time string.
+      // Note: batchEndStr is expected in "hh:mm:ss AM/PM" format.
+      const endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      if (isNaN(endDateCandidate.getTime())) {
+        // If parsing fails, fallback.
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      // If the parsed batch end time is earlier than or equal to the start time,
+      // assume it's on the next day.
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      // Format the date for display.
+      const endDateString = endDateCandidate.toLocaleDateString();
+      return `${batchEndStr} (${endDateString})`;
     });
 
     return {
