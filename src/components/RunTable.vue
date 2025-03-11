@@ -93,18 +93,16 @@ export default {
   },
   computed: {
     computedRuns() {
-      // Optionally, if no start time is provided, return an empty array.
+      // In a delayed-run–only scenario, if there's no final position, return an empty array.
       if (!this.gcStore.results || !this.gcStore.results.startTimeFinalPosition) {
         return [];
       }
       let seq = 3;
-      // Look up the GC type from the store's allGcData using the selected GC id.
       const gcType = String(this.gcStore.allGcData[this.gcStore.selectedGc]?.type || '')
         .trim()
         .toLowerCase();
       return this.runs.map((run, index) => {
         let title = '';
-        // Normalize the run position string.
         let posString = run.position.toString().trim().toLowerCase();
         if (posString.startsWith('run ')) {
           posString = posString.substring(4).trim();
@@ -261,17 +259,29 @@ export default {
       const runtime = Math.round(Number(allGcData[selectedGc].runTime) * 60000);
       
       let baseTime;
+      // Use additionalRows or sequentialRows if available.
       if (this.additionalRows.length) {
         baseTime = this.additionalRows[this.additionalRows.length - 1].endDate;
       } else if (this.sequentialRows.length) {
         baseTime = this.sequentialRows[this.sequentialRows.length - 1].endDate;
-      } else {
+      } else if (startTime.batchEndTime) {
         baseTime = new Date(startTime.batchEndTime);
+      } else {
+        // Fallback to delayedRunsStartTimeDate if batchEndTime is not available.
+        baseTime = timeDelayResults.delayedRunsStartTimeDate
+          ? new Date(timeDelayResults.delayedRunsStartTimeDate)
+          : new Date();
       }
       
-      const delayedStart = timeDelayResults.delayedRunsStartTimeDate
-        ? new Date(timeDelayResults.delayedRunsStartTimeDate)
-        : new Date(baseTime.getTime() + (parseInt(this.timeDelayRequired, 10) || 0) * 3600000);
+      // Compute delayedStart using delayedRunsStartTimeDate if available,
+      // otherwise use the baseTime plus the parsed time delay.
+      let delayedStart;
+      if (timeDelayResults.delayedRunsStartTimeDate) {
+        delayedStart = new Date(timeDelayResults.delayedRunsStartTimeDate);
+      } else {
+        const delayHours = parseInt(this.timeDelayRequired, 10) || 0;
+        delayedStart = new Date(baseTime.getTime() + delayHours * 3600000);
+      }
       
       let rows = [];
       for (let i = 0; i < prebatchCount; i++) {
