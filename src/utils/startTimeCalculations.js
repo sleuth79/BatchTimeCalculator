@@ -132,7 +132,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
       }
     }
     closestPositionBefore4PM = candidate === null 
-      ? "No Sample Position Ended Before 4:00 PM" 
+      ? "No Sample Position Ends Before 4:00 PM" 
       : { 
           position: samplePositionForRun(candidate), 
           startTime: formatTimeWithAmPmAndSeconds(candidateStartTime),
