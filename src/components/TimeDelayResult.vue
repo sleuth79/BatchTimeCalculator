@@ -68,13 +68,12 @@
           Total Duration of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
         </p>
-        <!-- Combined heading for delayed runs start and end time with date -->
+        <!-- Use the delayedRunsEndTime as provided in the payload (which already includes the date) -->
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
           <strong>
             {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
           </strong>
-          <span class="result-date"> ({{ delayedRunsDate }})</span>
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
@@ -132,20 +131,18 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Instead of returning a string date, we return a Date object for the Additional Runs End Date.
+    // Return a computed date for Additional Runs End Date.
     additionalRunsEndDateObj() {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
       return tomorrow;
     },
-    // Return the Additional Runs End Date as a locale date string.
     additionalRunsEndDate() {
       return this.additionalRunsEndDateObj.toLocaleDateString();
     },
-    // Computed property for the Delayed Runs Date.
-    // It uses the additionalRunsEndDateObj as the base and adds one extra day if
-    // the Additional Runs End Time (assumed in "hh:mm:ss AM/PM" format) is after 7:30 AM.
+    // (Optional) This computed property is still here for reference,
+    // but note that we no longer use it in the delayed runs section.
     delayedRunsDate() {
       const base = new Date(this.additionalRunsEndDateObj);
       const additionalEnd = this.timeDelayData.additionalRunsEndTime;
@@ -162,7 +159,7 @@ export default {
           if (ampm.toUpperCase() === "AM" && hour === 12) {
             hour = 0;
           }
-          // If the Additional Runs End Time is after 7:30 AM, add one extra day.
+          // Add one extra day if the Additional Runs End Time is after 7:30 AM.
           if (hour > 7 || (hour === 7 && minute >= 30)) {
             base.setDate(base.getDate() + 1);
           }
