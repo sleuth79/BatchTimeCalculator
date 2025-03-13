@@ -134,7 +134,16 @@ export default {
         (totalDelayed > 0)
       );
     },
+    // Orange highlighting only applies if the computed run end date is not today
+    // and the run time is past 7:30 AM.
     batchEndTimeAfter730() {
+      // Compare the computed end date (from additionalRunsEndDate) with today's date.
+      const todayStr = new Date().toLocaleDateString();
+      if (this.additionalRunsEndDate === todayStr) {
+        // If the batch is still on the current day, do not highlight.
+        return false;
+      }
+      // Otherwise, parse the time string as before.
       let timeString = '';
       if (this.timeDelayData.sequentialBatchActive) {
         timeString = this.timeDelayData.sequentialBatchEndTime;
@@ -156,6 +165,7 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
+      // Only highlight if the time is past 7:30 AM.
       return hour > 7 || (hour === 7 && minute >= 30);
     },
     additionalRunsEndDate() {
@@ -231,6 +241,8 @@ hr {
   color: var(--highlight-color);
 }
 
+/* The highlight-orange class is still defined so that if batchEndTimeAfter730 returns true, it is applied.
+   However, with the updated computed property, it will only be applied when the batch is on the next day and passes 7:30 AM. */
 .highlight-orange {
   color: orange;
 }
