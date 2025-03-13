@@ -1,19 +1,21 @@
 <template>
   <div class="start-time-results">
-    <!-- Always display Start Time and Final Position headings -->
-    <p>
-      Start Time:
-      <span class="result-value">{{ displayBatchStartTime }}</span>
-    </p>
-    <p>
-      Final Position:
-      <span class="result-value">{{ displayFinalPosition }}</span>
-      <span v-if="displayTotalRuns">
-        &nbsp;| Total Runs (Including Controls):
-        <span class="result-value">{{ results.totalRuns }}</span>
-      </span>
-    </p>
-    <!-- Only render these fields if they have values -->
+    <!-- Only display Start Time and Final Position headings if there is a value -->
+    <template v-if="showStartTimeFinalPosition">
+      <p>
+        Start Time:
+        <span class="result-value">{{ displayBatchStartTime }}</span>
+      </p>
+      <p>
+        Final Position:
+        <span class="result-value">{{ displayFinalPosition }}</span>
+        <span v-if="displayTotalRuns">
+          &nbsp;| Total Runs (Including Controls):
+          <span class="result-value">{{ results.totalRuns }}</span>
+        </span>
+      </p>
+    </template>
+    <!-- Other outputs remain unchanged -->
     <p v-if="results.totalRunTime">
       Total Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
@@ -27,7 +29,6 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Updated condition: show closest position only if a final position exists -->
     <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
@@ -44,7 +45,6 @@
         </template>
       </span>
     </p>
-    <!-- Show the initial batch time gap only if data exists, no delayed runs, and no additional runs -->
     <div
       v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
     >
@@ -85,16 +85,9 @@ export default {
     },
   },
   setup(props) {
-    // A reactive property that updates every second (for fallback, if needed)
-    const currentTime = ref(new Date());
-    setInterval(() => {
-      currentTime.value = new Date();
-    }, 1000);
-
-    // Current date as MM/DD/YYYY – used as fallback if needed
+    // A reactive property for the current date (for fallback)
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // Use the stored start time; if none, return an empty string.
     const displayBatchStartTime = computed(() => {
       const storedTime =
         props.results.batchStartTime ||
@@ -110,7 +103,6 @@ export default {
     });
 
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
-
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
     const isClosestPositionObject = computed(() => {
@@ -122,7 +114,6 @@ export default {
       );
     });
 
-    // Checks if the batch start time is after 4:00 PM.
     const closestPositionDisplay = computed(() => {
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
@@ -137,24 +128,18 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
-    // Computed property for Batch End Time with date adjustment.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
-      // Get the batch end time string as provided (e.g. "05:43:06 AM")
       const batchEndStr = props.results.batchEndTime;
-      // Use displayBatchStartTime (assumed to be in "HH:mm:ss" 24-hour format)
       const startStr = displayBatchStartTime.value;
       if (!startStr) {
-        // If no start time is available, fallback to current date.
         return `${batchEndStr} (${currentDate.value})`;
       }
-      // Parse start time (assume "HH:mm:ss")
       const startParts = startStr.split(":");
       if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
       const startSecond = parseInt(startParts[2], 10);
-      // Create a Date object for the start time using today's date.
       const today = new Date();
       const startDate = new Date(
         today.getFullYear(),
@@ -164,29 +149,22 @@ export default {
         startMinute,
         startSecond
       );
-      // Create a Date object for the batch end time using the start date.
       let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) {
         return `${batchEndStr} (${currentDate.value})`;
       }
-      // If the parsed batch end time is earlier than or equal to the start time,
-      // assume it's on the next day.
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
       }
-      // Format the date for display.
       const endDateString = endDateCandidate.toLocaleDateString();
       return `${batchEndStr} (${endDateString})`;
     });
 
-    // New computed property: highlight batch end time if it's on the next day
-    // and if its time-of-day is after 7:30 AM.
     const initialBatchEndTimeAfter730 = computed(() => {
       if (!props.results.batchEndTime) return false;
-      const batchEndStr = props.results.batchEndTime; // e.g., "08:43:06 PM"
+      const batchEndStr = props.results.batchEndTime;
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
-      // Parse start time ("HH:mm:ss") to create a Date for today.
       const startParts = startStr.split(":");
       if (startParts.length < 3) return false;
       const startHour = parseInt(startParts[0], 10);
@@ -201,20 +179,22 @@ export default {
         startMinute,
         startSecond
       );
-      // Parse the batch end time using the start date.
       let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) return false;
-      // If the parsed end time is earlier than or equal to the start time,
-      // assume the batch end is on the next day.
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
       }
-      // Only highlight if the end time falls on a different day than the start time.
       if (endDateCandidate.getDate() === startDate.getDate()) return false;
-      // Check if the time-of-day is after 7:30 AM.
       const endHour = endDateCandidate.getHours();
       const endMinute = endDateCandidate.getMinutes();
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
+    });
+
+    // NEW: Hide Start Time and Final Position if both are empty.
+    const showStartTimeFinalPosition = computed(() => {
+      const batchTime = props.results.batchStartTime || props.startTime.batchStartTime;
+      const finalPos = props.results.startTimeFinalPosition || props.startTime.finalPosition;
+      return Boolean(batchTime || finalPos);
     });
 
     return {
@@ -227,6 +207,7 @@ export default {
       closestPositionDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
+      showStartTimeFinalPosition,
     };
   },
 };
@@ -261,7 +242,6 @@ hr {
   margin-top: 10px;
   margin-bottom: 10px;
 }
-/* Highlight orange if batch end time is after 7:30 AM on the next day */
 .highlight-orange {
   color: orange;
 }
