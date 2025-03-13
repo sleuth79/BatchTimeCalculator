@@ -16,7 +16,7 @@
       </div>
       <div>
         <p v-if="Number(timeDelayData.additionalRuns) > 0">
-          Additional Runs:
+          Misc Additional Runs:
           <strong>{{ timeDelayData.additionalRuns }}</strong>
         </p>
         <!-- Flip the order: Total Runs comes first -->
