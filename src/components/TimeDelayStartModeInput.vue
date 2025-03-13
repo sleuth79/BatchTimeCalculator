@@ -243,11 +243,9 @@ export default {
         return new Date(batch1End.value.getTime() + secs * 1000);
       } else if (additionalRuns.value) {
         const secs = Number(additionalRuns.value) * runtimeSeconds.value;
-        let endTime = new Date(batch1End.value.getTime() + secs * 1000);
-        if (endTime.getHours() >= 12) {
-          endTime.setDate(endTime.getDate() + 1);
-        }
-        return endTime;
+        // Removed the unconditional addition of one day.
+        // The Date object will naturally roll over to the next day if necessary.
+        return new Date(batch1End.value.getTime() + secs * 1000);
       }
       return batch1End.value;
     });
@@ -374,7 +372,7 @@ export default {
 
     const delayedRunsEndTimeComputed = computed(() => {
       if (!delayedRunSelected.value) return "";
-      // adjustedFinalEndTime already adds the computed delay hours (using your target logic)
+      // adjustedFinalEndTime already includes the computed delay hours.
       const endDate = adjustedFinalEndTime.value;
       const timeStr = formatTimeWithAmPmAndSeconds(endDate); // e.g., "06:40:42 AM"
       const dateStr = endDate.toLocaleDateString();           // e.g., "3/12/2025"
@@ -561,8 +559,6 @@ export default {
   font-weight: bold;
 }
 
-/* Use a fixed height for the entire container so it never scrolls.
-   Adjust the height as needed to fit on your screen. */
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
@@ -570,24 +566,22 @@ export default {
   display: flex;
   flex-direction: column;
   height: 400px; /* fixed height */
-  overflow: hidden; /* prevent scrolling */
+  overflow: hidden;
 }
 
 .time-delay-content {
   flex: 1 1 auto;
-  overflow: hidden; /* content will shrink if needed */
+  overflow: hidden;
 }
 
-/* Section header style with a darker background spanning the container */
 .section-header {
-  background-color: #d0d0d0; /* slightly darker shade */
+  background-color: #d0d0d0;
   padding: 8px 10px;
   margin-bottom: 6px;
   width: 100%;
   text-align: left;
 }
 
-/* The caveat note in small print under the delayed runs heading and additional runs */
 .caveat {
   font-size: 0.65rem;
   color: #666;
@@ -595,7 +589,6 @@ export default {
   margin-bottom: 8px;
 }
 
-/* Additional caveat text for additional runs (same size as caveat) */
 .additional-runs-caveat {
   font-size: 0.65rem;
   color: #666;
@@ -603,24 +596,22 @@ export default {
   margin-bottom: 0;
 }
 
-/* Style for displaying the current time under the caveat note */
 .current-time {
   font-size: 0.75rem;
   color: #666;
   margin-bottom: 8px;
 }
 
-/* The rest of your styles */
 .info-message {
   color: #666;
   font-style: italic;
   margin: 10px 0;
 }
+
 .sequential-batch-section {
   margin-bottom: 10px;
 }
 
-/* Added space between the label and the position selector */
 .sequential-batch-section label {
   display: block;
   margin-bottom: 10px;
@@ -632,16 +623,15 @@ export default {
   gap: 8px;
   font-weight: bold;
   white-space: nowrap;
-  height: 36px;      /* match the input height */
-  line-height: 36px; /* force vertical centering */
-  margin: 0;         /* remove any default margin */
+  height: 36px;
+  line-height: 36px;
+  margin: 0;
 }
 
-/* Updated: Apply drop shadow and fixed height to inputs */
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
-  height: 36px; /* Added fixed height to ensure consistency */
+  height: 36px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 .separator {
