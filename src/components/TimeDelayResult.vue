@@ -134,27 +134,25 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Orange highlighting only applies if the computed run end date is not today
-    // and the run time is past 7:30 AM.
+    // Orange highlighting is applied only when a sequential batch is active.
+    // This means that if misc additional runs are added without a sequential batch, no orange highlighting occurs.
+    // Also, we check that the computed end date (additionalRunsEndDate) isn’t the same as today.
+    // Only then do we parse the time and highlight if it’s past 7:30 AM.
     batchEndTimeAfter730() {
-      // Compare the computed end date (from additionalRunsEndDate) with today's date.
-      const todayStr = new Date().toLocaleDateString();
-      if (this.additionalRunsEndDate === todayStr) {
-        // If the batch is still on the current day, do not highlight.
+      if (!this.timeDelayData.sequentialBatchActive) {
         return false;
       }
-      // Otherwise, parse the time string as before.
-      let timeString = '';
-      if (this.timeDelayData.sequentialBatchActive) {
-        timeString = this.timeDelayData.sequentialBatchEndTime;
-      } else {
-        timeString = this.timeDelayData.additionalRunsEndTime;
+      const todayStr = new Date().toLocaleDateString();
+      if (this.additionalRunsEndDate === todayStr) {
+        return false;
       }
+      // Use the sequential batch end time for parsing.
+      const timeString = this.timeDelayData.sequentialBatchEndTime;
       if (!timeString) return false;
       const parts = timeString.split(" ");
       if (parts.length < 2) return false;
-      const timePart = parts[0];
-      const ampm = parts[1];
+      const timePart = parts[0]; // e.g., "08:57:48"
+      const ampm = parts[1];     // e.g., "PM"
       const timeParts = timePart.split(":");
       if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
@@ -168,8 +166,9 @@ export default {
       // Only highlight if the time is past 7:30 AM.
       return hour > 7 || (hour === 7 && minute >= 30);
     },
+    // Instead of using the current time as a reference to bump the date, we simply parse the provided time string.
+    // (This logic can be adjusted if you have a known batch start date available.)
     additionalRunsEndDate() {
-      // Determine which time string to use.
       let timeString = this.timeDelayData.sequentialBatchActive
         ? this.timeDelayData.sequentialBatchEndTime
         : this.timeDelayData.additionalRunsEndTime;
@@ -177,7 +176,7 @@ export default {
       // Expecting format: "hh:mm:ss AM/PM"
       const parts = timeString.split(" ");
       if (parts.length < 2) return '';
-      const timePart = parts[0]; // e.g., "08:52:15"
+      const timePart = parts[0]; // e.g., "08:57:48"
       const meridiem = parts[1];  // e.g., "PM"
       const timeParts = timePart.split(":");
       if (timeParts.length < 2) return '';
@@ -190,7 +189,9 @@ export default {
       if (meridiem.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // Use today's date as a reference.
+      // Here we simply assume that the formatted end time comes from the computed baseEndTime.
+      // If your payload already computes the correct date (e.g. "3/12/2025" vs. "3/13/2025"),
+      // you could pass that in directly. For now we reconstruct it using today's date as reference.
       const today = new Date();
       let runEndDate = new Date(
         today.getFullYear(),
@@ -200,7 +201,8 @@ export default {
         minute,
         second
       );
-      // If the computed run end time is earlier than now, assume it's for the next day.
+      // Only bump to the next day if the run end time (as computed) is earlier than the reference.
+      // (Adjust this logic if you have a dedicated batch start time.)
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
@@ -242,7 +244,7 @@ hr {
 }
 
 /* The highlight-orange class is still defined so that if batchEndTimeAfter730 returns true, it is applied.
-   However, with the updated computed property, it will only be applied when the batch is on the next day and passes 7:30 AM. */
+   With the updated logic, misc additional runs (when no sequential batch is active) will not trigger orange highlighting. */
 .highlight-orange {
   color: orange;
 }
