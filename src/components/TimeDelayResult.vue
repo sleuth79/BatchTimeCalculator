@@ -134,16 +134,6 @@ export default {
         (totalDelayed > 0)
       );
     },
-    additionalRunsEndDateObj() {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      return tomorrow;
-    },
-    additionalRunsEndDate() {
-      return this.additionalRunsEndDateObj.toLocaleDateString();
-    },
-    // New computed property to check if the batch end time is after 7:30 AM.
     batchEndTimeAfter730() {
       let timeString = '';
       if (this.timeDelayData.sequentialBatchActive) {
@@ -152,11 +142,10 @@ export default {
         timeString = this.timeDelayData.additionalRunsEndTime;
       }
       if (!timeString) return false;
-      // Expecting a format like "hh:mm:ss AM/PM"
       const parts = timeString.split(" ");
       if (parts.length < 2) return false;
-      const timePart = parts[0]; // e.g., "01:00:12"
-      const ampm = parts[1];     // e.g., "PM"
+      const timePart = parts[0];
+      const ampm = parts[1];
       const timeParts = timePart.split(":");
       if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
@@ -167,8 +156,45 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // Compare to 7:30 in 24-hour format.
       return hour > 7 || (hour === 7 && minute >= 30);
+    },
+    additionalRunsEndDate() {
+      // Determine which time string to use.
+      let timeString = this.timeDelayData.sequentialBatchActive
+        ? this.timeDelayData.sequentialBatchEndTime
+        : this.timeDelayData.additionalRunsEndTime;
+      if (!timeString) return '';
+      // Expecting format: "hh:mm:ss AM/PM"
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return '';
+      const timePart = parts[0]; // e.g., "08:52:15"
+      const meridiem = parts[1];  // e.g., "PM"
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return '';
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+      if (meridiem.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (meridiem.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // Use today's date as a reference.
+      const today = new Date();
+      let runEndDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hour,
+        minute,
+        second
+      );
+      // If the computed run end time is earlier than now, assume it's for the next day.
+      if (runEndDate < today) {
+        runEndDate.setDate(runEndDate.getDate() + 1);
+      }
+      return runEndDate.toLocaleDateString();
     },
   },
 };
@@ -205,7 +231,6 @@ hr {
   color: var(--highlight-color);
 }
 
-/* New style for highlighting the batch end time in orange */
 .highlight-orange {
   color: orange;
 }
@@ -218,13 +243,5 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
-}
-</style>
-
-<style>
-#timeDelayOverride .explanation {
-  font-size: 0.9rem !important;
-  color: #57ca48 !important;
-  margin-top: 10px !important;
 }
 </style>
