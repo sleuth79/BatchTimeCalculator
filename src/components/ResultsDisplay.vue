@@ -7,7 +7,7 @@
         {{ currentTimeString }} ({{ currentDate }})
       </div>
     </div>
-    <!-- Always show Mode and Selected GC -->
+    <!-- Always show Selected GC -->
     <p>
       Selected GC:
       <span class="result-value">
@@ -15,49 +15,37 @@
       </span>
     </p>
 
-    <!-- When in Time Delay Calculator mode, display only the results -->
-    <template v-if="selectedMode === 'delay-calculator'">
-      <section class="delay-calculator-results-section">
-        <!-- Optionally, display a placeholder or alternative content -->
-        <div>
-          Time Delay Calculator results are not available.
-        </div>
-      </section>
-    </template>
-
-    <!-- Otherwise, display the normal results for start-time mode -->
-    <template v-else>
-      <div v-if="results">
-        <StartTimeResults
-          v-if="results.mode === 'start-time'"
-          :results="results"
-          :selectedGcData="selectedGcData"
-          :delayedRunsExist="delayedRunsExist"
-          :additionalRunsExist="additionalRunsExist"
-        />
-        <!-- Separator line if additional or delayed runs exist -->
-        <hr class="section-separator" v-if="timeDelaySectionExists" />
-        <div v-if="timeDelaySectionExists" class="time-delay-section">
-          <TimeDelayResult :timeDelayData="timeDelayResults" />
-        </div>
+    <!-- Display the normal results -->
+    <div v-if="results">
+      <StartTimeResults
+        v-if="results.mode === 'start-time'"
+        :results="results"
+        :selectedGcData="selectedGcData"
+        :delayedRunsExist="delayedRunsExist"
+        :additionalRunsExist="additionalRunsExist"
+      />
+      <!-- Separator line if additional or delayed runs exist -->
+      <hr class="section-separator" v-if="timeDelaySectionExists" />
+      <div v-if="timeDelaySectionExists" class="time-delay-section">
+        <TimeDelayResult :timeDelayData="timeDelayResults" />
       </div>
-      <div v-else-if="showPlaceholders">
-        <template v-if="selectedMode === 'start-time'">
-          <p>
-            Start Time:
-            <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
-          </p>
-          <p v-if="selectedGcData && selectedGcData.type === 'Energy'">
-            15-Minute Wait:
-            <span class="result-value">{{ wait15 !== null ? (wait15 ? 'Yes' : 'No') : '' }}</span>
-          </p>
-          <p>
-            Final Position:
-            <span class="result-value"></span>
-          </p>
-        </template>
-      </div>
-    </template>
+    </div>
+    <div v-else-if="showPlaceholders">
+      <p>
+        Start Time:
+        <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
+      </p>
+      <p v-if="selectedGcData && selectedGcData.type === 'Energy'">
+        15-Minute Wait:
+        <span class="result-value">
+          {{ wait15 !== null ? (wait15 ? "Yes" : "No") : "" }}
+        </span>
+      </p>
+      <p>
+        Final Position:
+        <span class="result-value"></span>
+      </p>
+    </div>
 
     <!-- Toggle Button for Run Table -->
     <template v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
@@ -74,7 +62,7 @@
 </template>
 
 <script>
-import { computed, watch, ref } from "vue";
+import { computed, ref } from "vue";
 import { useGcStore } from "../store";
 import StartTimeResults from "./StartTimeResults.vue";
 import TimeDelayResult from "./TimeDelayResult.vue";
@@ -98,7 +86,6 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    const selectedMode = computed(() => gcStore.selectedMode);
     const selectedGcData = computed(() => gcStore.selectedGcData);
     const results = computed(() => gcStore.results);
     const timeDelayResults = computed(() => gcStore.timeDelayResults);
@@ -109,8 +96,10 @@ export default {
 
     const additionalRunsExist = computed(() => {
       const tdr = timeDelayResults.value || {};
-      return (Number(tdr.additionalRuns) > 0) ||
-             (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0);
+      return (
+        Number(tdr.additionalRuns) > 0 ||
+        (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0)
+      );
     });
 
     const delayedRunsExist = computed(() => {
@@ -122,14 +111,6 @@ export default {
       return additionalRunsExist.value || delayedRunsExist.value;
     });
 
-    const shouldShowTimeDelay = computed(() => {
-      if (!results.value || !timeDelayResults.value || !selectedGcData.value) return false;
-      if (selectedMode.value === 'start-time') {
-        return batchStartTime.value && (results.value.startTimeFinalPosition || results.value.finalPosition);
-      }
-      return false;
-    });
-
     const showRunTable = ref(false);
     const toggleRunTable = () => {
       showRunTable.value = !showRunTable.value;
@@ -137,7 +118,7 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
-    // Updated computed property to simply return the runtime value as it is from the store.
+    // Simply return the runtime value as stored in the selected GC data.
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
       return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
@@ -161,18 +142,7 @@ export default {
     // Format current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    watch(
-      () => gcStore.selectedMode,
-      (newMode) => {
-        if (newMode === 'start-time') {
-          showRunTable.value = false;
-        }
-      },
-      { immediate: true }
-    );
-
     return {
-      selectedMode,
       selectedGcData,
       formattedSelectedGc,
       results,
@@ -180,7 +150,6 @@ export default {
       batchStartTime,
       batchStartTimeAMPM,
       wait15,
-      shouldShowTimeDelay,
       showRunTable,
       toggleRunTable,
       runData,
