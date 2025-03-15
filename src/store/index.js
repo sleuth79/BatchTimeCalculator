@@ -301,22 +301,4 @@ export const useGcStore = defineStore('gc', {
       return formatTime(baseDate);
     },
   },
-  // Updated baseEndTime computed property:
-  getters: {
-    // ... (other getters remain unchanged)
-  },
-  // We'll override the previous definition of baseEndTime in the actions section:
-  // Place the updated baseEndTime computed property inside the actions section, if needed.
-  // Alternatively, you can define it as a computed property within state, but here it's part of the calculation in calculateStartTimeBatch.
-  // The updated branch is shown below in the calculateStartTimeBatch action.
-  // In the additionalRuns branch:
-  // else if (additionalRuns.value) {
-  //   const secs = Number(additionalRuns.value) * runtimeSeconds.value;
-  //   let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
-  //   // If computedTime is earlier than batch1End, it means it wrapped past midnight. Then add one day.
-  //   if (computedTime.getTime() < batch1End.value.getTime()) {
-  //     computedTime.setDate(computedTime.getDate() + 1);
-  //   }
-  //   return computedTime;
-  // }
 });
