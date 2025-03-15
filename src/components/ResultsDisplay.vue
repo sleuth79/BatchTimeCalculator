@@ -15,24 +15,20 @@
       </span>
     </p>
 
-    <!-- Display the normal results -->
-    <div v-if="results">
-      <StartTimeResults
-        v-if="results.mode === 'start-time'"
-        :results="results"
-        :selectedGcData="selectedGcData"
-        :delayedRunsExist="delayedRunsExist"
-        :additionalRunsExist="additionalRunsExist"
-      />
-      <!-- Separator line if additional or delayed runs exist -->
-      <hr class="section-separator" v-if="timeDelaySectionExists" />
-      <div v-if="timeDelaySectionExists" class="time-delay-section">
+    <!-- Always render StartTimeResults even if results is empty -->
+    <StartTimeResults
+      :results="results || {}"
+      :selectedGcData="selectedGcData"
+      :delayedRunsExist="delayedRunsExist"
+      :additionalRunsExist="additionalRunsExist"
+    />
+
+    <!-- Display additional time delay section if applicable -->
+    <div v-if="results && Object.keys(results).length && timeDelaySectionExists">
+      <hr class="section-separator" />
+      <div class="time-delay-section">
         <TimeDelayResult :timeDelayData="timeDelayResults" />
       </div>
-    </div>
-    <!-- Optional placeholder if no results exist -->
-    <div v-else-if="showPlaceholders">
-      <!-- You can show placeholder content here if desired -->
     </div>
 
     <!-- Toggle Button for Run Table -->
@@ -71,7 +67,7 @@ export default {
       required: true,
     },
   },
-  setup(props) {
+  setup() {
     const gcStore = useGcStore();
 
     const selectedGcData = computed(() => gcStore.selectedGcData);
