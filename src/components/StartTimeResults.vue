@@ -1,20 +1,18 @@
 <template>
   <div class="start-time-results">
-    <!-- Only display Start Time and Final Position headings if there is a value -->
-    <template v-if="showStartTimeFinalPosition">
-      <p>
-        Start Time:
-        <span class="result-value">{{ displayBatchStartTime }}</span>
-      </p>
-      <p>
-        Final Position:
-        <span class="result-value">{{ displayFinalPosition }}</span>
-        <span v-if="displayTotalRuns">
-          &nbsp;| Total Runs (Including Controls):
-          <span class="result-value">{{ results.totalRuns }}</span>
-        </span>
-      </p>
-    </template>
+    <!-- Always display Start Time and Final Position headings -->
+    <p>
+      Start Time:
+      <span class="result-value">{{ displayBatchStartTime }}</span>
+    </p>
+    <p>
+      Final Position:
+      <span class="result-value">{{ displayFinalPosition }}</span>
+      <span v-if="displayTotalRuns">
+        &nbsp;| Total Runs (Including Controls):
+        <span class="result-value">{{ results.totalRuns }}</span>
+      </span>
+    </p>
     <!-- Other outputs remain unchanged -->
     <p v-if="results.totalRunTime">
       Total Run Time:
@@ -185,12 +183,8 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // Hide Start Time and Final Position if both are empty.
-    const showStartTimeFinalPosition = computed(() => {
-      const batchTime = props.results.batchStartTime || props.startTime.batchStartTime;
-      const finalPos = props.results.startTimeFinalPosition || props.startTime.finalPosition;
-      return Boolean(batchTime || finalPos);
-    });
+    // Remove the conditional that hides the headings. Always return true.
+    const showStartTimeFinalPosition = computed(() => true);
 
     return {
       currentDate,
