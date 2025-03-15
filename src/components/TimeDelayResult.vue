@@ -134,34 +134,63 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Updated to parse a "hh:mm" (or mm:ss) time string (without AM/PM)
+    // Orange highlighting only applies if the computed run end date is not today
+    // and the run time is past 7:30 AM.
     batchEndTimeAfter730() {
-      if (!this.timeDelayData.sequentialBatchActive) {
-        return false;
-      }
+      // Compare the computed end date (from additionalRunsEndDate) with today's date.
       const todayStr = new Date().toLocaleDateString();
       if (this.additionalRunsEndDate === todayStr) {
+        // If the batch is still on the current day, do not highlight.
         return false;
       }
-      const timeString = this.timeDelayData.sequentialBatchEndTime;
+      // Otherwise, parse the time string as before.
+      let timeString = '';
+      if (this.timeDelayData.sequentialBatchActive) {
+        timeString = this.timeDelayData.sequentialBatchEndTime;
+      } else {
+        timeString = this.timeDelayData.additionalRunsEndTime;
+      }
       if (!timeString) return false;
-      const timeParts = timeString.split(":");
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
       if (timeParts.length < 2) return false;
-      const hour = parseInt(timeParts[0], 10);
+      let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
-      // Assuming 24-hour format; highlight if time is past 07:30.
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // Only highlight if the time is past 7:30 AM.
       return hour > 7 || (hour === 7 && minute >= 30);
     },
-    // Updated additionalRunsEndDate to expect a "hh:mm" string (no seconds, no AM/PM)
     additionalRunsEndDate() {
+      // Determine which time string to use.
       let timeString = this.timeDelayData.sequentialBatchActive
         ? this.timeDelayData.sequentialBatchEndTime
         : this.timeDelayData.additionalRunsEndTime;
       if (!timeString) return '';
-      const timeParts = timeString.split(":");
+      // Expecting format: "hh:mm:ss AM/PM"
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return '';
+      const timePart = parts[0]; // e.g., "08:52:15"
+      const meridiem = parts[1];  // e.g., "PM"
+      const timeParts = timePart.split(":");
       if (timeParts.length < 2) return '';
-      const hour = parseInt(timeParts[0], 10);
+      let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
+      const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+      if (meridiem.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (meridiem.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // Use today's date as a reference.
       const today = new Date();
       let runEndDate = new Date(
         today.getFullYear(),
@@ -169,8 +198,9 @@ export default {
         today.getDate(),
         hour,
         minute,
-        0
+        second
       );
+      // If the computed run end time is earlier than now, assume it's for the next day.
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
@@ -211,6 +241,8 @@ hr {
   color: var(--highlight-color);
 }
 
+/* The highlight-orange class is still defined so that if batchEndTimeAfter730 returns true, it is applied.
+   However, with the updated computed property, it will only be applied when the batch is on the next day and passes 7:30 AM. */
 .highlight-orange {
   color: orange;
 }
