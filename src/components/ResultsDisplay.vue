@@ -18,7 +18,11 @@
     <!-- When in Time Delay Calculator mode, display only the results -->
     <template v-if="selectedMode === 'delay-calculator'">
       <section class="delay-calculator-results-section">
-        <TimeDelayCalculatorResults />
+        <!-- Removed the reference to TimeDelayCalculatorResults component -->
+        <!-- Optionally, display a placeholder or alternative content -->
+        <div>
+          Time Delay Calculator results are not available.
+        </div>
       </section>
     </template>
 
@@ -75,7 +79,8 @@ import { computed, watch, ref } from "vue";
 import { useGcStore } from "../store";
 import StartTimeResults from "./StartTimeResults.vue";
 import TimeDelayResult from "./TimeDelayResult.vue";
-import TimeDelayCalculatorResults from "./TimeDelayCalculatorResults.vue";
+// Remove the import for TimeDelayCalculatorResults as it is no longer used
+// import TimeDelayCalculatorResults from "./TimeDelayCalculatorResults.vue";
 import RunTable from "./RunTable.vue";
 import ModeSelector from "./ModeSelector.vue";
 
@@ -84,7 +89,8 @@ export default {
   components: {
     StartTimeResults,
     TimeDelayResult,
-    TimeDelayCalculatorResults,
+    // Remove TimeDelayCalculatorResults from components as well:
+    // TimeDelayCalculatorResults,
     RunTable,
     ModeSelector,
   },
