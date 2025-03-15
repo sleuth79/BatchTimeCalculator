@@ -239,7 +239,7 @@ export default {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
           totalSequentialRuns.value * runtimeSeconds.value +
-          (props.gcType === 'Energy' ? 15 * 60 : 0);
+          (props.gcType === 'Energy' ? (15 * 60 +25): 0);
         return new Date(batch1End.value.getTime() + secs * 1000);
       } else if (additionalRuns.value) {
         const secs = Number(additionalRuns.value) * runtimeSeconds.value;

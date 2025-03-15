@@ -93,7 +93,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   
   // Original batch start time (before any wait)
   const batchStartTimeDate = parseStartTime(batchStartTime, ampm);
-  const wait15MS = wait15 ? 15 * 60 * 1000 : 0;
+  const wait15MS = wait15 ? (15 * 60 +25) * 1000 : 0;
   // Effective start time shifts by 15 minutes if wait15 is true.
   const effectiveStartTime = wait15 ? new Date(batchStartTimeDate.getTime() + wait15MS) : batchStartTimeDate;
   const finalPositionNum = Number(finalPosition);
