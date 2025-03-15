@@ -15,20 +15,22 @@
       </span>
     </p>
 
-    <!-- Always display headings for Start Time and Final Position -->
-    <p>
-      Start Time:
-      <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
-    </p>
-    <p>
-      Final Position:
-      <span class="result-value">
-        <!-- Add a default value or binding if needed -->
-      </span>
-    </p>
+    <!-- When no results exist, display the headings as placeholders -->
+    <div v-if="!results">
+      <p>
+        Start Time:
+        <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
+      </p>
+      <p>
+        Final Position:
+        <span class="result-value">
+          <!-- Add a default value or binding if needed -->
+        </span>
+      </p>
+    </div>
 
-    <!-- Display the normal results -->
-    <div v-if="results">
+    <!-- Display the normal results if they exist -->
+    <div v-else>
       <StartTimeResults
         v-if="results.mode === 'start-time'"
         :results="results"
@@ -41,9 +43,6 @@
       <div v-if="timeDelaySectionExists" class="time-delay-section">
         <TimeDelayResult :timeDelayData="timeDelayResults" />
       </div>
-    </div>
-    <div v-else-if="showPlaceholders">
-      <!-- Optionally, you could include some placeholder text here -->
     </div>
 
     <!-- Toggle Button for Run Table -->
