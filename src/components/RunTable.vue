@@ -75,6 +75,24 @@
 </template>
 
 <script>
+// Define the helper function outside the component so it's accessible in computed properties.
+function parseRunTime(timeStr) {
+  if (!timeStr) return 0;
+  if (typeof timeStr === "number") return timeStr * 60000;
+  const parts = timeStr.split(":");
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return (minutes * 60 + seconds) * 1000;
+  } else if (parts.length === 3) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    return (hours * 3600 + minutes * 60 + seconds) * 1000;
+  }
+  return 0;
+}
+
 import { useGcStore } from '../store';
 import { formatTimeWithAmPmAndSeconds } from '../utils/utils.js';
 
@@ -89,29 +107,7 @@ export default {
   },
   setup() {
     const gcStore = useGcStore();
-
-    // Helper function to parse runTime strings (mm:ss or hh:mm:ss) into milliseconds
-    const parseRunTime = (timeStr) => {
-      if (!timeStr) return 0;
-      if (typeof timeStr === "number") return timeStr * 60000;
-      const parts = timeStr.split(":");
-      if (parts.length === 2) {
-        // mm:ss format
-        const minutes = parseInt(parts[0], 10);
-        const seconds = parseInt(parts[1], 10);
-        return (minutes * 60 + seconds) * 1000;
-      } else if (parts.length === 3) {
-        // hh:mm:ss format
-        const hours = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-        const seconds = parseInt(parts[2], 10);
-        return (hours * 3600 + minutes * 60 + seconds) * 1000;
-      }
-      // Fallback if it doesn't match expected formats:
-      return Number(timeStr) * 60000;
-    };
-
-    return { gcStore, parseRunTime };
+    return { gcStore };
   },
   computed: {
     computedRuns() {
