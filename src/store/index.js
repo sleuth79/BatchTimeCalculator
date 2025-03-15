@@ -203,11 +203,9 @@ export const useGcStore = defineStore('gc', {
 
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
-      // Use convertRuntime to get runtime in seconds (not decimal minutes)
-      const runtimeSec = convertRuntime(runtime);
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
-        runtime, // Pass the original runtime string (if needed by your function)
+        runtime,
         null,
         finalPosition,
         batchStartTime,
@@ -233,6 +231,8 @@ export const useGcStore = defineStore('gc', {
         const seqFinal = Number(this.sequentialFinalPosition);
         const totalRunsSequential = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
+        // Convert runtime string to total seconds using convertRuntime helper.
+        const runtimeSec = convertRuntime(runtime);
         const runtimeSeconds = Math.round(runtimeSec); // runtimeSec is already in seconds
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
         const sequentialBatchEndTimeDate = new Date(
