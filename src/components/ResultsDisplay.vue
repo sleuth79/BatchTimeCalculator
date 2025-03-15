@@ -14,20 +14,8 @@
         {{ formattedSelectedGc }}
       </span>
     </p>
-    
-    <!-- Always display the headings -->
-    <p>
-      Start Time:
-      <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
-    </p>
-    <p>
-      Final Position:
-      <span class="result-value">
-        {{ results && results.finalPosition ? results.finalPosition : '' }}
-      </span>
-    </p>
 
-    <!-- Display the normal results if they exist -->
+    <!-- Display the normal results -->
     <div v-if="results">
       <StartTimeResults
         v-if="results.mode === 'start-time'"
@@ -42,9 +30,9 @@
         <TimeDelayResult :timeDelayData="timeDelayResults" />
       </div>
     </div>
-    <!-- Optionally, if no results exist and placeholders should be shown -->
+    <!-- Optional placeholder if no results exist -->
     <div v-else-if="showPlaceholders">
-      <!-- Placeholder content could be added here if desired -->
+      <!-- You can show placeholder content here if desired -->
     </div>
 
     <!-- Toggle Button for Run Table -->
