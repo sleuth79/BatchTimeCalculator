@@ -30,15 +30,9 @@
       </span>
     </p>
     <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
-      Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }}
-          <span
-            v-if="results.closestPositionBefore4PM.startTime && results.closestPositionBefore4PM.endTime"
-          >
-            ({{ results.closestPositionBefore4PM.startTime }} to {{ results.closestPositionBefore4PM.endTime }})
-          </span>
+          {{ results.closestPositionBefore4PM.position }} ends at {{ results.closestPositionBefore4PM.endTime }}
         </template>
         <template v-else>
           {{ closestPositionDisplay }}
@@ -190,7 +184,7 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // NEW: Hide Start Time and Final Position if both are empty.
+    // Hide Start Time and Final Position if both are empty.
     const showStartTimeFinalPosition = computed(() => {
       const batchTime = props.results.batchStartTime || props.startTime.batchStartTime;
       const finalPos = props.results.startTimeFinalPosition || props.startTime.finalPosition;
