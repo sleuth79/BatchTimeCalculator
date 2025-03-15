@@ -134,10 +134,7 @@ export default {
         (totalDelayed > 0)
       );
     },
-    // Orange highlighting is applied only when a sequential batch is active.
-    // This means that if misc additional runs are added without a sequential batch, no orange highlighting occurs.
-    // Also, we check that the computed end date (additionalRunsEndDate) isn’t the same as today.
-    // Only then do we parse the time and highlight if it’s past 7:30 AM.
+    // Updated to parse a "hh:mm" (or mm:ss) time string (without AM/PM)
     batchEndTimeAfter730() {
       if (!this.timeDelayData.sequentialBatchActive) {
         return false;
@@ -146,52 +143,25 @@ export default {
       if (this.additionalRunsEndDate === todayStr) {
         return false;
       }
-      // Use the sequential batch end time for parsing.
       const timeString = this.timeDelayData.sequentialBatchEndTime;
       if (!timeString) return false;
-      const parts = timeString.split(" ");
-      if (parts.length < 2) return false;
-      const timePart = parts[0]; // e.g., "08:57:48"
-      const ampm = parts[1];     // e.g., "PM"
-      const timeParts = timePart.split(":");
+      const timeParts = timeString.split(":");
       if (timeParts.length < 2) return false;
-      let hour = parseInt(timeParts[0], 10);
+      const hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      // Only highlight if the time is past 7:30 AM.
+      // Assuming 24-hour format; highlight if time is past 07:30.
       return hour > 7 || (hour === 7 && minute >= 30);
     },
-    // Instead of using the current time as a reference to bump the date, we simply parse the provided time string.
-    // (This logic can be adjusted if you have a known batch start date available.)
+    // Updated additionalRunsEndDate to expect a "hh:mm" string (no seconds, no AM/PM)
     additionalRunsEndDate() {
       let timeString = this.timeDelayData.sequentialBatchActive
         ? this.timeDelayData.sequentialBatchEndTime
         : this.timeDelayData.additionalRunsEndTime;
       if (!timeString) return '';
-      // Expecting format: "hh:mm:ss AM/PM"
-      const parts = timeString.split(" ");
-      if (parts.length < 2) return '';
-      const timePart = parts[0]; // e.g., "08:57:48"
-      const meridiem = parts[1];  // e.g., "PM"
-      const timeParts = timePart.split(":");
+      const timeParts = timeString.split(":");
       if (timeParts.length < 2) return '';
-      let hour = parseInt(timeParts[0], 10);
+      const hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
-      const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
-      if (meridiem.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (meridiem.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      // Here we simply assume that the formatted end time comes from the computed baseEndTime.
-      // If your payload already computes the correct date (e.g. "3/12/2025" vs. "3/13/2025"),
-      // you could pass that in directly. For now we reconstruct it using today's date as reference.
       const today = new Date();
       let runEndDate = new Date(
         today.getFullYear(),
@@ -199,10 +169,8 @@ export default {
         today.getDate(),
         hour,
         minute,
-        second
+        0
       );
-      // Only bump to the next day if the run end time (as computed) is earlier than the reference.
-      // (Adjust this logic if you have a dedicated batch start time.)
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
@@ -243,8 +211,6 @@ hr {
   color: var(--highlight-color);
 }
 
-/* The highlight-orange class is still defined so that if batchEndTimeAfter730 returns true, it is applied.
-   With the updated logic, misc additional runs (when no sequential batch is active) will not trigger orange highlighting. */
 .highlight-orange {
   color: orange;
 }
