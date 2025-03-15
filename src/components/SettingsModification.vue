@@ -19,14 +19,14 @@
       </tr>
       <tr>
         <td class="label-cell">
-          <label for="newRunTime">Run Time:</label>
+          <label for="newRunTime">Run Time (mm:ss):</label>
         </td>
         <td class="input-cell">
           <input
             type="text"
             id="newRunTime"
             v-model="newRunTimeInput"
-            placeholder="Run Time"
+            placeholder="mm:ss"
             @keypress="handleNumericInput"
             @input="validateUpdateRunTime"
           />
@@ -86,14 +86,14 @@
         </tr>
         <tr>
           <td class="label-cell">
-            <label for="newGCRunTime">Run Time:</label>
+            <label for="newGCRunTime">Run Time (mm:ss):</label>
           </td>
           <td class="input-cell">
             <input
               type="text"
               id="newGCRunTime"
               v-model="newGCRunTimeInput"
-              placeholder="Run Time"
+              placeholder="mm:ss"
               @keypress="handleNumericInput"
               @input="validateAddRunTime"
             />
@@ -131,23 +131,25 @@ export default {
     return {
       selectedGC: "",
       newRunTimeInput: "",
-      newRunTime: null,
+      newRunTime: null, // now stored as an mm:ss string
       newType: "",
       newName: "",
       newGCId: "",
       newGCRunTimeInput: "",
-      newGCRunTime: null,
+      newGCRunTime: null, // mm:ss string
       newGCType: "",
     };
   },
   watch: {
     selectedGC(newVal) {
       if (newVal && this.config[newVal]) {
-        const currentRuntime = this.config[newVal].runTime;
-        this.newRunTimeInput =
-          currentRuntime !== undefined ? Number(currentRuntime).toFixed(2) : "";
-        this.newRunTime =
-          currentRuntime !== undefined ? currentRuntime : null;
+        let currentRuntime = this.config[newVal].runTime;
+        // If stored as a number, convert to mm:ss; otherwise, assume it's already a string.
+        if (typeof currentRuntime === "number") {
+          currentRuntime = this.convertDecimalToMmSs(currentRuntime);
+        }
+        this.newRunTimeInput = currentRuntime !== undefined ? currentRuntime : "";
+        this.newRunTime = currentRuntime !== undefined ? currentRuntime : null;
         this.newType = this.config[newVal].type || "";
         this.newName = this.config[newVal].name || "";
       } else {
@@ -159,59 +161,58 @@ export default {
     },
   },
   methods: {
+    // Helper function: convert decimal minutes to mm:ss string
+    convertDecimalToMmSs(decimalMinutes) {
+      const totalSeconds = Math.round(decimalMinutes * 60);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    },
+    // Allow only digits and colon for run time inputs
     handleNumericInput(e) {
-      const allowedChars = /[0-9\.]/;
+      const allowedChars = /[0-9:]/;
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (!allowedChars.test(e.key)) {
         e.preventDefault();
       }
     },
+    // Validate update run time input to match mm:ss format
     validateUpdateRunTime(e) {
       const inputVal = e.target.value;
-      if (!inputVal) {
+      // Expected format: 1-2 digits, a colon, then exactly 2 digits
+      const pattern = /^\d{1,2}:\d{2}$/;
+      if (!inputVal || !pattern.test(inputVal)) {
         this.newRunTime = null;
-        this.newRunTimeInput = "";
-        return;
-      }
-      const num = parseFloat(inputVal);
-      if (isNaN(num)) return;
-      const intPart = Math.floor(num);
-      if (intPart > 99) {
-        this.newRunTime = 99;
-        this.newRunTimeInput = "99";
       } else {
-        this.newRunTime = num;
-        this.newRunTimeInput = inputVal;
+        this.newRunTime = inputVal;
       }
+      this.newRunTimeInput = inputVal;
     },
+    // Validate added GC run time input
     validateAddRunTime(e) {
       const inputVal = e.target.value;
-      if (!inputVal) {
+      const pattern = /^\d{1,2}:\d{2}$/;
+      if (!inputVal || !pattern.test(inputVal)) {
         this.newGCRunTime = null;
-        this.newGCRunTimeInput = "";
-        return;
-      }
-      const num = parseFloat(inputVal);
-      if (isNaN(num)) return;
-      const intPart = Math.floor(num);
-      if (intPart > 99) {
-        this.newGCRunTime = 99;
-        this.newGCRunTimeInput = "99";
       } else {
-        this.newGCRunTime = num;
-        this.newGCRunTimeInput = inputVal;
+        this.newGCRunTime = inputVal;
       }
+      this.newGCRunTimeInput = inputVal;
     },
     updateSettings() {
       if (!this.selectedGC) {
         alert("Please select a GC to update.");
         return;
       }
+      if (!this.newRunTime) {
+        alert("Please enter a valid run time in mm:ss format.");
+        return;
+      }
       const updatedConfig = { ...this.config };
       if (updatedConfig[this.selectedGC]) {
         updatedConfig[this.selectedGC] = {
           ...updatedConfig[this.selectedGC],
-          runTime: this.newRunTime,
+          runTime: this.newRunTime, // now a string in mm:ss format
           type: this.newType,
           name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
         };
@@ -251,7 +252,7 @@ export default {
       }
       updatedConfig[this.newGCId] = {
         name: this.newGCId,
-        runTime: this.newGCRunTime,
+        runTime: this.newGCRunTime, // mm:ss format
         type: this.newGCType,
       };
       this.$emit("update-config", updatedConfig);
