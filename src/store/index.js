@@ -4,6 +4,23 @@ import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 
 export const pinia = createPinia();
 
+// Helper function to convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
+function convertRuntime(runtimeStr) {
+  if (!runtimeStr) return 0;
+  const parts = runtimeStr.split(":");
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return minutes * 60 + seconds;
+  } else if (parts.length === 3) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+  return 0;
+}
+
 export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
@@ -186,9 +203,11 @@ export const useGcStore = defineStore('gc', {
 
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
+      // Use convertRuntime to get runtime in seconds (not decimal minutes)
+      const runtimeSec = convertRuntime(runtime);
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
-        runtime,
+        runtime, // Pass the original runtime string (if needed by your function)
         null,
         finalPosition,
         batchStartTime,
@@ -214,7 +233,7 @@ export const useGcStore = defineStore('gc', {
         const seqFinal = Number(this.sequentialFinalPosition);
         const totalRunsSequential = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
-        const runtimeSeconds = Math.round(parseFloat(runtime) * 60);
+        const runtimeSeconds = Math.round(runtimeSec); // runtimeSec is already in seconds
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
         const sequentialBatchEndTimeDate = new Date(
           initialBatchEndTime.getTime() + sequentialBatchRunTimeMS
