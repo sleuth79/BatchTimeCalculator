@@ -99,7 +99,15 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const finalPositionNum = Number(finalPosition);
   const totalRuns = finalPositionNum <= 15 ? finalPositionNum + 2 : finalPositionNum + 1;
   
-  const runtimeSeconds = Math.round(parseFloat(runtime) * 60);
+  // Updated: Parse runtime from either mm:ss or decimal format.
+  let runtimeSeconds;
+  if (runtime.includes(':')) {
+    const parts = runtime.split(':');
+    runtimeSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  } else {
+    runtimeSeconds = Math.round(parseFloat(runtime) * 60);
+  }
+  
   const totalRunTimeSeconds = totalRuns * runtimeSeconds;
   const totalRunTimeMS = totalRunTimeSeconds * 1000;
   
