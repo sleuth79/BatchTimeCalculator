@@ -30,6 +30,7 @@
       </span>
     </p>
     <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
+      Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
           {{ results.closestPositionBefore4PM.position }} ends at {{ results.closestPositionBefore4PM.endTime }}
