@@ -15,6 +15,18 @@
       </span>
     </p>
 
+    <!-- Always display headings for Start Time and Final Position -->
+    <p>
+      Start Time:
+      <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
+    </p>
+    <p>
+      Final Position:
+      <span class="result-value">
+        <!-- Add a default value or binding if needed -->
+      </span>
+    </p>
+
     <!-- Display the normal results -->
     <div v-if="results">
       <StartTimeResults
@@ -31,20 +43,7 @@
       </div>
     </div>
     <div v-else-if="showPlaceholders">
-      <p>
-        Start Time:
-        <span class="result-value">{{ batchStartTime }} {{ batchStartTimeAMPM }}</span>
-      </p>
-      <p v-if="selectedGcData && selectedGcData.type === 'Energy'">
-        15-Minute Wait:
-        <span class="result-value">
-          {{ wait15 !== null ? (wait15 ? "Yes" : "No") : "" }}
-        </span>
-      </p>
-      <p>
-        Final Position:
-        <span class="result-value"></span>
-      </p>
+      <!-- Optionally, you could include some placeholder text here -->
     </div>
 
     <!-- Toggle Button for Run Table -->
