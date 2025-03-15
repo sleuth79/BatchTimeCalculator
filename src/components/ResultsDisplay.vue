@@ -18,7 +18,6 @@
     <!-- When in Time Delay Calculator mode, display only the results -->
     <template v-if="selectedMode === 'delay-calculator'">
       <section class="delay-calculator-results-section">
-        <!-- Removed the reference to TimeDelayCalculatorResults component -->
         <!-- Optionally, display a placeholder or alternative content -->
         <div>
           Time Delay Calculator results are not available.
@@ -79,8 +78,6 @@ import { computed, watch, ref } from "vue";
 import { useGcStore } from "../store";
 import StartTimeResults from "./StartTimeResults.vue";
 import TimeDelayResult from "./TimeDelayResult.vue";
-// Remove the import for TimeDelayCalculatorResults as it is no longer used
-// import TimeDelayCalculatorResults from "./TimeDelayCalculatorResults.vue";
 import RunTable from "./RunTable.vue";
 import ModeSelector from "./ModeSelector.vue";
 
@@ -89,8 +86,6 @@ export default {
   components: {
     StartTimeResults,
     TimeDelayResult,
-    // Remove TimeDelayCalculatorResults from components as well:
-    // TimeDelayCalculatorResults,
     RunTable,
     ModeSelector,
   },
@@ -142,11 +137,10 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
-    // Computed property to format the selected GC with runtime to 2 decimals
+    // Updated computed property to simply return the runtime value as it is from the store.
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
-      const runtime = Number(gcStore.selectedGcData.runTime);
-      return `${gcStore.selectedGcData.name} (Runtime: ${runtime.toFixed(2)})`;
+      return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
     });
 
     // Create a reactive current time that updates every second.
