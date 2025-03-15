@@ -235,17 +235,22 @@ export default {
       return 0;
     });
 
+    // Updated baseEndTime: if additionalRuns is provided and the computed time
+    // is on the same day as batch1End, bump it to the next day.
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
           totalSequentialRuns.value * runtimeSeconds.value +
-          (props.gcType === 'Energy' ? (15 * 60 +25): 0);
+          (props.gcType === 'Energy' ? (15 * 60 + 25) : 0);
         return new Date(batch1End.value.getTime() + secs * 1000);
       } else if (additionalRuns.value) {
         const secs = Number(additionalRuns.value) * runtimeSeconds.value;
-        // Removed the unconditional addition of one day.
-        // The Date object will naturally roll over to the next day if necessary.
-        return new Date(batch1End.value.getTime() + secs * 1000);
+        let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
+        // If computedTime is on the same day as batch1End, add one day.
+        if (computedTime.getDate() === batch1End.value.getDate()) {
+          computedTime.setDate(computedTime.getDate() + 1);
+        }
+        return computedTime;
       }
       return batch1End.value;
     });
