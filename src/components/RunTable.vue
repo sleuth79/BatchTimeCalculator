@@ -89,11 +89,32 @@ export default {
   },
   setup() {
     const gcStore = useGcStore();
-    return { gcStore };
+
+    // Helper function to parse runTime strings (mm:ss or hh:mm:ss) into milliseconds
+    const parseRunTime = (timeStr) => {
+      if (!timeStr) return 0;
+      if (typeof timeStr === "number") return timeStr * 60000;
+      const parts = timeStr.split(":");
+      if (parts.length === 2) {
+        // mm:ss format
+        const minutes = parseInt(parts[0], 10);
+        const seconds = parseInt(parts[1], 10);
+        return (minutes * 60 + seconds) * 1000;
+      } else if (parts.length === 3) {
+        // hh:mm:ss format
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        const seconds = parseInt(parts[2], 10);
+        return (hours * 3600 + minutes * 60 + seconds) * 1000;
+      }
+      // Fallback if it doesn't match expected formats:
+      return Number(timeStr) * 60000;
+    };
+
+    return { gcStore, parseRunTime };
   },
   computed: {
     computedRuns() {
-      // In a delayed-run–only scenario, if there's no final position, return an empty array.
       if (!this.gcStore.results || !this.gcStore.results.startTimeFinalPosition) {
         return [];
       }
@@ -101,6 +122,8 @@ export default {
       const gcType = String(this.gcStore.allGcData[this.gcStore.selectedGc]?.type || '')
         .trim()
         .toLowerCase();
+      // Use parseRunTime() to compute runtime in milliseconds.
+      const runtime = Math.round(parseRunTime(this.gcStore.allGcData[this.gcStore.selectedGc].runTime));
       return this.runs.map((run, index) => {
         let title = '';
         let posString = run.position.toString().trim().toLowerCase();
@@ -168,7 +191,7 @@ export default {
       }
       const seqFinal = Number(sequentialFinalPosition);
       const totalNonWaitRows = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
-      const runtime = Math.round(Number(allGcData[selectedGc].runTime) * 60000);
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       for (let i = 0; i < totalNonWaitRows; i++) {
         let computedTitle = "";
         if (i === 0) {
@@ -222,7 +245,7 @@ export default {
         : 0;
       if (!additionalCount) return [];
       
-      const runtime = Math.round(Number(allGcData[selectedGc].runTime) * 60000);
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
       if (this.sequentialRows.length) {
         const nonWaitRows = this.sequentialRows.filter(r => r.position !== 'Wait');
@@ -256,10 +279,9 @@ export default {
         ? timeDelayResults.totalDelayedRuns
         : 0;
       if (!prebatchCount) return [];
-      const runtime = Math.round(Number(allGcData[selectedGc].runTime) * 60000);
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       
       let baseTime;
-      // Use additionalRows or sequentialRows if available.
       if (this.additionalRows.length) {
         baseTime = this.additionalRows[this.additionalRows.length - 1].endDate;
       } else if (this.sequentialRows.length) {
@@ -267,14 +289,11 @@ export default {
       } else if (startTime.batchEndTime) {
         baseTime = new Date(startTime.batchEndTime);
       } else {
-        // Fallback to delayedRunsStartTimeDate if batchEndTime is not available.
         baseTime = timeDelayResults.delayedRunsStartTimeDate
           ? new Date(timeDelayResults.delayedRunsStartTimeDate)
           : new Date();
       }
       
-      // Compute delayedStart using delayedRunsStartTimeDate if available,
-      // otherwise use the baseTime plus the parsed time delay.
       let delayedStart;
       if (timeDelayResults.delayedRunsStartTimeDate) {
         delayedStart = new Date(timeDelayResults.delayedRunsStartTimeDate);
