@@ -10,7 +10,7 @@
         <thead>
           <tr>
             <th>GC Name</th>
-            <th>Run Time (Minutes)</th>
+            <th>Run Time (mm:ss)</th>
             <th>Type</th>
           </tr>
         </thead>
@@ -52,14 +52,14 @@ export default {
     const isLoading = ref(true);
     const error = ref(null);
 
-    // Default Configuration (if file is missing)
+    // Default Configuration with runTime values in mm:ss format.
     const defaultConfig = {
-      "2024": { "name": "2024", "runTime": 24.88, "type": "Energy" },
-      "1708": { "name": "1708", "runTime": 19.04, "type": "Energy" },
-      "2181": { "name": "2181", "runTime": 30.43, "type": "Energy" },
-      "1772": { "name": "1772", "runTime": 15.67, "type": "Sulphur" },
-      "1709": { "name": "1709", "runTime": 14.30, "type": "Sulphur" },
-      "2180": { "name": "2180", "runTime": 18.37, "type": "Sulphur" }
+      "2024": { "name": "2024", "runTime": "24:53", "type": "Energy" },
+      "1708": { "name": "1708", "runTime": "19:02", "type": "Energy" },
+      "2181": { "name": "2181", "runTime": "30:26", "type": "Energy" },
+      "1772": { "name": "1772", "runTime": "15:40", "type": "Sulphur" },
+      "1709": { "name": "1709", "runTime": "14:18", "type": "Sulphur" },
+      "2180": { "name": "2180", "runTime": "18:22", "type": "Sulphur" }
     };
 
     // Determine API endpoint (local vs Netlify function)
@@ -75,6 +75,7 @@ export default {
         config.value = data;
       } catch (err) {
         error.value = "Could not load configuration. Using default settings.";
+        // Clone the default configuration.
         config.value = JSON.parse(JSON.stringify(defaultConfig));
       } finally {
         isLoading.value = false;
@@ -83,7 +84,7 @@ export default {
 
     onMounted(fetchConfig);
 
-    // Sort GC Entries by Type and Numerically (descending order)
+    // Sort GC Entries by Type and Numerically (ascending order by GC name)
     const sortedEntries = computed(() => {
       if (!config.value) return [];
       return Object.entries(config.value)
@@ -126,7 +127,7 @@ export default {
 
     // Revert Configuration to Default Values
     const revertToDefaults = () => {
-      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to it was at the time of creation. Suggest you record the current GC run times down before doing this. This action cannot be undone.")) {
+      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to what it was at the time of creation. Suggest you record the current GC run times down before doing this. This action cannot be undone.")) {
         config.value = JSON.parse(JSON.stringify(defaultConfig));
         handleUpdateConfig(config.value);
       }
@@ -142,23 +143,19 @@ export default {
     };
   },
   methods: {
+    // Converts a runtime value to mm:ss format.
+    // If the runtime is a number, it converts the decimal minutes to mm:ss.
+    // If it's already a string with a colon, it returns it as-is.
     formatRuntime(runtime) {
-      return runtime !== undefined ? runtime.toFixed(2) : "0.00";
-    },
-    async updateConfig(payload) {
-      try {
-        const response = await fetch('/.netlify/functions/update-config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to update configuration. HTTP status: ${response.status}`);
-        }
-        const data = await response.json();
-      } catch (error) {
-        // Error handling can be refined as needed.
+      if (typeof runtime === "number") {
+        const totalSeconds = Math.round(runtime * 60);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+      } else if (typeof runtime === "string" && runtime.includes(":")) {
+        return runtime;
       }
+      return runtime;
     },
   },
 };
