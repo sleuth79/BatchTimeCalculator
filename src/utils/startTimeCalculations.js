@@ -101,7 +101,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   
   // Updated: Parse runtime from either mm:ss or decimal format.
   let runtimeSeconds;
-  if (runtime.includes(':')) {
+  if (typeof runtime === 'string' && runtime.includes(':')) {
     const parts = runtime.split(':');
     runtimeSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
   } else {
