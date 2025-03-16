@@ -1,5 +1,5 @@
 <template>
-  <div class="start-time-results" v-if="areResultsValid">
+  <div class="start-time-results">
     <!-- Always display Start Time and Final Position headings -->
     <p>
       Start Time:
@@ -13,12 +13,12 @@
         <span class="result-value">{{ results.totalRuns }}</span>
       </span>
     </p>
-    <!-- Other outputs remain unchanged -->
-    <p v-if="results.totalRunTime">
+    <!-- Detailed outputs: only displayed when start time is valid -->
+    <p v-if="showDetailedResults && results.totalRunTime">
       Total Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
     </p>
-    <p v-if="results.batchEndTime">
+    <p v-if="showDetailedResults && results.batchEndTime">
       Batch End Time:
       <span 
         class="result-value" 
@@ -27,7 +27,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <p v-if="(results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
+    <p v-if="showDetailedResults && (results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
@@ -38,9 +38,7 @@
         </template>
       </span>
     </p>
-    <div
-      v-if="results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -92,9 +90,8 @@ export default {
       return storedTime;
     });
 
-    // New computed property to check if start time is valid (format: HH:mm:ss)
-    const areResultsValid = computed(() => {
-      // Only display results if start time matches the expected pattern.
+    // New computed property: only show detailed results if the start time is complete (HH:mm:ss)
+    const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
@@ -190,7 +187,7 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // Always show headings if valid.
+    // Always show headings for start time and final position.
     const showStartTimeFinalPosition = computed(() => true);
 
     return {
@@ -204,7 +201,7 @@ export default {
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
-      areResultsValid,
+      showDetailedResults,
     };
   },
 };
