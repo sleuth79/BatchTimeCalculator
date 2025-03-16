@@ -205,7 +205,7 @@ export default {
         return;
       }
       if (!this.newRunTime) {
-        alert("Please enter a valid run time in mm:ss format.");
+        alert("Please enter a valid run time in mm:ss format. Include a colon");
         return;
       }
       const updatedConfig = { ...this.config };
@@ -242,7 +242,7 @@ export default {
     },
     addGC() {
       if (!this.newGCId || this.newGCRunTime === null || !this.newGCType) {
-        alert("Please fill in all fields to add a new GC.");
+        alert("Please fill in all fields to add a new GC. Include a colon in the run time.");
         return;
       }
       const updatedConfig = { ...this.config };

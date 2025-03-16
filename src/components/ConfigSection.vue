@@ -15,7 +15,7 @@
           :selected-gc="selectedGc"
           @update-results="handleUpdateResults"
         />
-        <TimeDelayStartModeInput
+        <TimeDelayInput
           :batch1EndTime="batch1EndTime"
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
@@ -46,14 +46,14 @@ import { computed, onMounted } from 'vue';
 import { useGcStore } from '../store';
 import GcSelector from './GcSelector.vue';
 import StartTimeInput from './StartTimeInput.vue';
-import TimeDelayStartModeInput from './TimeDelayStartModeInput.vue';
+import TimeDelayInput from './TimeDelayInput.vue';
 
 export default {
   name: 'ConfigSection',
   components: {
     GcSelector,
     StartTimeInput,
-    TimeDelayStartModeInput,
+    TimeDelayInput,
   },
   emits: ['update-results'],
   setup() {

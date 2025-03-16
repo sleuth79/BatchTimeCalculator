@@ -3,10 +3,9 @@
   <div class="time-delay-input">
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
-      <!-- We no longer hide the inputs -->
       <div>
-        <!-- Sequential Batch Optional Field: Only shown if delayed mode is OFF -->
-        <div v-if="!delayedMode" class="sequential-batch-section">
+        <!-- Sequential Batch Optional Field -->
+        <div class="sequential-batch-section">
           <label>
             Final Position For Sequential Batch:
             <span style="font-size: 0.80em;">(if required)</span>
@@ -34,13 +33,13 @@
         </div>
 
         <!-- Separator line between Additional Runs and Delayed Runs -->
-        <hr v-if="!delayedMode" class="separator" />
+        <hr class="separator" />
 
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
-          <!-- Display the current time if delayed mode is active -->
-          <p class="current-time" v-if="delayedMode">
+          <!-- Always display current time -->
+          <p class="current-time">
             Current Time: {{ currentTimeString }}
           </p>
           <div class="delayed-runs-inputs">
@@ -71,7 +70,7 @@
               />
             </div>
           </div>
-          <!-- Informational Text moved below the input selectors -->
+          <!-- Informational Text -->
           <p class="caveat">
             If no batches are currently running, select a GC and select delayed runs to calculate the time delay required based on the current time of day.
           </p>
@@ -84,11 +83,11 @@
 <script>
 import { ref, computed, watch, onMounted } from 'vue';
 import PositionSelector from './PositionSelector.vue';
-import { useGcStore } from '../store';
+import { useGcStore } from '../store/index.js';
 import { formatTimeWithAmPmAndSeconds } from '../utils/utils.js';
 
 export default {
-  name: 'TimeDelayStartModeInput',
+  name: 'TimeDelayInput',
   components: { PositionSelector },
   props: {
     batch1EndTime: { type: [Date, String], required: true },
@@ -112,7 +111,7 @@ export default {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
 
-    // New: currentTime is updated every second.
+    // Update currentTime every second.
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
@@ -128,20 +127,6 @@ export default {
         prebatchSelected.value = false;
         calibrationSelected.value = false;
         miscRuns.value = 0;
-      }
-    );
-
-    // Also watch selectedMode for resets
-    watch(
-      () => gcStore.selectedMode,
-      (newMode) => {
-        if (newMode === 'start-time') {
-          sequentialFinalPosition.value = null;
-          additionalRuns.value = null;
-          prebatchSelected.value = false;
-          calibrationSelected.value = false;
-          miscRuns.value = 0;
-        }
       }
     );
 
@@ -202,15 +187,6 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ]);
 
-    const delayedMode = ref(false);
-    const handleDelayedRunsModeChange = (mode) => {
-      delayedMode.value = mode;
-      if (mode) {
-        sequentialFinalPosition.value = null;
-        additionalRuns.value = null;
-      }
-    };
-
     // --- Helper Computations for Time Calculations ---
     const batch1End = computed(() => {
       if (props.batch1EndTime) {
@@ -235,14 +211,13 @@ export default {
       return 0;
     });
 
-    // Updated baseEndTime: for sequential batch, if the computed time is before batch1End, bump it to the same day as batch1End or later.
+    // Updated baseEndTime: for sequential batch, if computed time is before batch1End, bump it by one day.
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
           totalSequentialRuns.value * runtimeSeconds.value +
           (props.gcType === 'Energy' ? (15 * 60 + 25) : 0);
         let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
-        // If computedTime is before the initial batch end time, bump it by one day.
         if (computedTime.getTime() < batch1End.value.getTime()) {
           computedTime.setDate(computedTime.getDate() + 1);
         }
@@ -250,7 +225,6 @@ export default {
       } else if (additionalRuns.value) {
         const secs = Number(additionalRuns.value) * runtimeSeconds.value;
         let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
-        // If computedTime is on the same day as batch1End, add one day.
         if (computedTime.getDate() === batch1End.value.getDate()) {
           computedTime.setDate(computedTime.getDate() + 1);
         }
@@ -278,7 +252,7 @@ export default {
       return '';
     });
 
-    // --- New: Computed property for calibration runs ---
+    // --- Computed property for calibration runs ---
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -381,10 +355,9 @@ export default {
 
     const delayedRunsEndTimeComputed = computed(() => {
       if (!delayedRunSelected.value) return "";
-      // adjustedFinalEndTime already includes the computed delay hours.
       const endDate = adjustedFinalEndTime.value;
-      const timeStr = formatTimeWithAmPmAndSeconds(endDate); // e.g., "06:40:42 AM"
-      const dateStr = endDate.toLocaleDateString();           // e.g., "3/12/2025"
+      const timeStr = formatTimeWithAmPmAndSeconds(endDate);
+      const dateStr = endDate.toLocaleDateString();
       return `${timeStr} (${dateStr})`;
     });
 
@@ -543,9 +516,6 @@ export default {
       totalPreruns,
       totalRuns,
       hideInputs,
-      handleDelayedRunsModeChange,
-      delayedMode,
-      totalDelayedDurationFormatted,
       limitAdditionalRuns,
       limitMiscRuns,
       calibrationRuns,
