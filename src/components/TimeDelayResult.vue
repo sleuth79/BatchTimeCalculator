@@ -34,7 +34,7 @@
                 timeDelayData.additionalRunsDuration !== ''"
         >
           Duration of Additional Runs:
-          <strong>{{ displayAdditionalRunsDuration }}</strong>
+          <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
         </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
@@ -112,53 +112,50 @@ import { useGcStore } from '../store';
 
 export default {
   name: 'TimeDelayResult',
-  props: {
-    timeDelayData: {
-      type: Object,
-      required: true,
-    },
-  },
   setup() {
     const gcStore = useGcStore();
-    return {};
-  },
-  computed: {
-    resultsComplete() {
+
+    // Directly reference the store's reactive timeDelayResults object.
+    const timeDelayData = computed(() => gcStore.timeDelayResults);
+
+    // Computed properties as before:
+    const resultsComplete = computed(() => {
       return (
-        (this.timeDelayData.sequentialBatchEndTime && this.timeDelayData.sequentialBatchEndTime !== '') ||
-        (this.timeDelayData.delayedRunsEndTime && this.timeDelayData.delayedRunsEndTime !== '')
+        (timeDelayData.value.sequentialBatchEndTime && timeDelayData.value.sequentialBatchEndTime !== '') ||
+        (timeDelayData.value.delayedRunsEndTime && timeDelayData.value.delayedRunsEndTime !== '')
       );
-    },
-    sequentialBatchRuns() {
-      if (this.timeDelayData.sequentialFinalPosition !== null) {
-        const seqPos = Number(this.timeDelayData.sequentialFinalPosition);
+    });
+
+    const sequentialBatchRuns = computed(() => {
+      if (timeDelayData.value.sequentialFinalPosition !== null) {
+        const seqPos = Number(timeDelayData.value.sequentialFinalPosition);
         return seqPos <= 15 ? seqPos + 2 : seqPos + 1;
       }
       return null;
-    },
-    totalRunsHeading() {
-      return "Total Runs (Initial Batch + Additional Runs)";
-    },
-    hasDelayedRuns() {
-      const description = this.timeDelayData.prerunsDescription;
-      const totalDelayed = Number(this.timeDelayData.totalDelayedRuns);
+    });
+
+    const totalRunsHeading = computed(() => "Total Runs (Initial Batch + Additional Runs)");
+
+    const hasDelayedRuns = computed(() => {
+      const description = timeDelayData.value.prerunsDescription;
+      const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
       return (
-        (description && description.trim() !== '' && description !== 'None' && description !== 'Delayed Runs') ||
+        (description &&
+          description.trim() !== '' &&
+          description !== 'None' &&
+          description !== 'Delayed Runs') ||
         (totalDelayed > 0)
       );
-    },
-    // This computed property ensures we display a fallback if additionalRunsDuration is missing.
-    displayAdditionalRunsDuration() {
-      return this.timeDelayData.additionalRunsDuration || "0 seconds";
-    },
-    batchEndTimeAfter730() {
+    });
+
+    const batchEndTimeAfter730 = computed(() => {
       const todayStr = new Date().toLocaleDateString();
-      if (this.additionalRunsEndDate === todayStr) {
+      if (additionalRunsEndDate.value === todayStr) {
         return false;
       }
-      let timeString = this.timeDelayData.sequentialBatchActive
-        ? this.timeDelayData.sequentialBatchEndTime
-        : this.timeDelayData.additionalRunsEndTime;
+      let timeString = timeDelayData.value.sequentialBatchActive
+        ? timeDelayData.value.sequentialBatchEndTime
+        : timeDelayData.value.additionalRunsEndTime;
       if (!timeString) return false;
       const parts = timeString.split(" ");
       if (parts.length < 2) return false;
@@ -168,14 +165,19 @@ export default {
       if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
-      if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
       return hour > 7 || (hour === 7 && minute >= 30);
-    },
-    additionalRunsEndDate() {
-      let timeString = this.timeDelayData.sequentialBatchActive
-        ? this.timeDelayData.sequentialBatchEndTime
-        : this.timeDelayData.additionalRunsEndTime;
+    });
+
+    const additionalRunsEndDate = computed(() => {
+      let timeString = timeDelayData.value.sequentialBatchActive
+        ? timeDelayData.value.sequentialBatchEndTime
+        : timeDelayData.value.additionalRunsEndTime;
       if (!timeString) return '';
       const parts = timeString.split(" ");
       if (parts.length < 2) return '';
@@ -186,15 +188,36 @@ export default {
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
       const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
-      if (meridiem.toUpperCase() === "PM" && hour < 12) hour += 12;
-      if (meridiem.toUpperCase() === "AM" && hour === 12) hour = 0;
+      if (meridiem.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (meridiem.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
       const today = new Date();
-      let runEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute, second);
+      let runEndDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hour,
+        minute,
+        second
+      );
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
       return runEndDate.toLocaleDateString();
-    },
+    });
+
+    return {
+      timeDelayData,
+      resultsComplete,
+      sequentialBatchRuns,
+      totalRunsHeading,
+      hasDelayedRuns,
+      batchEndTimeAfter730,
+      additionalRunsEndDate,
+    };
   },
 };
 </script>
