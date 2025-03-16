@@ -50,7 +50,7 @@ export const useGcStore = defineStore('gc', {
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '', // New field
+      additionalRunsDuration: '', // New field for additional runs duration.
     },
     // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
@@ -185,10 +185,11 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // Calculate Duration of Additional Runs and update timeDelayResults
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
-        const totalRunsSequential = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
+        // Include misc additional runs in the sequential total.
+        const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1)
+          + (this.additionalRuns ? Number(this.additionalRuns) : 0);
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
@@ -211,7 +212,7 @@ export const useGcStore = defineStore('gc', {
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
-        // For sequential mode, additional runs count equals the sequential batch runs.
+        // For sequential mode, additional runs count equals the computed totalRunsSequential.
         const additionalRunsCount = totalRunsSequential;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
         const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
@@ -241,7 +242,7 @@ export const useGcStore = defineStore('gc', {
         };
       } else {
         // If sequentialFinalPosition is not provided, additional runs count equals misc additional runs.
-        const additionalRunsCount = Number(additionalRuns.value) || 0;
+        const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
         const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
 
