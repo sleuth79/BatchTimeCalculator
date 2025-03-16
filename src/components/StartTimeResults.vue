@@ -1,5 +1,5 @@
 <template>
-  <div class="start-time-results">
+  <div class="start-time-results" v-if="areResultsValid">
     <!-- Always display Start Time and Final Position headings -->
     <p>
       Start Time:
@@ -51,10 +51,11 @@
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { computed } from 'vue';
+import { useGcStore } from '../store';
 
 export default {
-  name: "StartTimeResults",
+  name: 'StartTimeResults',
   props: {
     results: {
       type: Object,
@@ -89,6 +90,12 @@ export default {
         props.startTime.startTime ||
         "";
       return storedTime;
+    });
+
+    // New computed property to check if start time is valid (format: HH:mm:ss)
+    const areResultsValid = computed(() => {
+      // Only display results if start time matches the expected pattern.
+      return /^\d{2}:\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
     const displayFinalPosition = computed(() => {
@@ -183,7 +190,7 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // Remove the conditional that hides the headings. Always return true.
+    // Always show headings if valid.
     const showStartTimeFinalPosition = computed(() => true);
 
     return {
@@ -197,6 +204,7 @@ export default {
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
+      areResultsValid,
     };
   },
 };
