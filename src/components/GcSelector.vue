@@ -137,7 +137,10 @@ label {
   user-select: none;
   font-size: 0.85rem;
   flex-grow: 1;
-  min-width: 60px; /* Updated to match the grid minmax value */
+  min-width: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Selected GC styling */
