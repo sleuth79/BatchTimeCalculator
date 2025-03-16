@@ -54,6 +54,10 @@ export const useGcStore = defineStore('gc', {
     },
     // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
+    // Hold misc additional runs (if any)
+    additionalRuns: null,
+    // And misc runs for delayed runs (if applicable)
+    miscRuns: 0,
   }),
   actions: {
     async fetchGcData() {
@@ -187,9 +191,9 @@ export const useGcStore = defineStore('gc', {
 
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
-        // Include misc additional runs in the sequential total.
-        const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1)
-          + (this.additionalRuns ? Number(this.additionalRuns) : 0);
+        // Include misc additional runs if present
+        const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
+        const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) + miscAdditional;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
@@ -212,7 +216,7 @@ export const useGcStore = defineStore('gc', {
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
-        // For sequential mode, additional runs count equals the computed totalRunsSequential.
+        // For sequential mode, additional runs count equals the totalRunsSequential.
         const additionalRunsCount = totalRunsSequential;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
         const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
