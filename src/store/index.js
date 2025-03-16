@@ -219,9 +219,13 @@ export const useGcStore = defineStore('gc', {
         // For sequential mode, additional runs count equals the totalRunsSequential.
         const additionalRunsCount = totalRunsSequential;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
-        const additionalRunsDurationFormatted = additionalRunsDurationSeconds > 0 
-          ? formatDuration(additionalRunsDurationSeconds * 1000) 
-          : "0 seconds";
+        console.log("Sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
+        let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
+        if (!formatted || formatted.trim() === "") {
+          formatted = "0 seconds";
+        }
+        const additionalRunsDurationFormatted = formatted;
+        console.log("Sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
 
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
 
@@ -250,10 +254,13 @@ export const useGcStore = defineStore('gc', {
         // If sequentialFinalPosition is not provided, additional runs count equals misc additional runs.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
-        const additionalRunsDurationFormatted = additionalRunsDurationSeconds > 0 
-          ? formatDuration(additionalRunsDurationSeconds * 1000) 
-          : "0 seconds";
-
+        console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
+        let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
+        if (!formatted || formatted.trim() === "") {
+          formatted = "0 seconds";
+        }
+        const additionalRunsDurationFormatted = formatted;
+        console.log("Non-sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
         const baseTimeStr = calcResults.batchEndTime;
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);
         this.timeDelayResults = {
