@@ -75,7 +75,6 @@
 </template>
 
 <script>
-// Define the helper function outside the component so it's accessible in computed properties.
 function parseRunTime(timeStr) {
   if (!timeStr) return 0;
   if (typeof timeStr === "number") return timeStr * 60000;
@@ -118,7 +117,6 @@ export default {
       const gcType = String(this.gcStore.allGcData[this.gcStore.selectedGc]?.type || '')
         .trim()
         .toLowerCase();
-      // Use parseRunTime() to compute runtime in milliseconds.
       const runtime = Math.round(parseRunTime(this.gcStore.allGcData[this.gcStore.selectedGc].runTime));
       return this.runs.map((run, index) => {
         let title = '';
@@ -345,9 +343,10 @@ export default {
   margin-top: 8px;
   font-size: 0.9rem;
 }
+/* Reduced vertical padding for table cells */
 .run-table th,
 .run-table td {
-  padding: 8px 10px;
+  padding: 4px 10px;
   border: none;
   text-align: center;
 }
