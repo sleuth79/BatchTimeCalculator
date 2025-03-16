@@ -2,7 +2,7 @@
   <!-- Only display results if resultsComplete is true -->
   <div class="time-delay-result" v-if="resultsComplete">
     <!-- Additional Runs Section -->
-    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime">
+    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime || timeDelayData.additionalRunsDuration">
       <p class="section-heading"><strong>Additional Runs</strong></p>
       <div v-if="timeDelayData.sequentialBatchActive">
         <p>
@@ -25,7 +25,7 @@
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
         <!-- New heading for Duration of Additional Runs -->
-        <p v-if="timeDelayData.additionalRunsDuration !== null && timeDelayData.additionalRunsDuration !== undefined">
+        <p v-if="timeDelayData.additionalRunsDuration">
           Duration of Additional Runs:
           <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
         </p>
