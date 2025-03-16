@@ -38,10 +38,6 @@
         <!-- Delayed Runs Section -->
         <div class="delayed-runs-section">
           <h3 class="delayed-runs-heading">Delayed Runs</h3>
-          <!-- Always display current time -->
-          <p class="current-time">
-            Current Time: {{ currentTimeString }}
-          </p>
           <div class="delayed-runs-inputs">
             <!-- Prebatch button is only shown if GC type is not Energy -->
             <div
