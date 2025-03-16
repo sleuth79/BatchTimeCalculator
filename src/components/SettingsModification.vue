@@ -316,7 +316,7 @@ select {
 button {
   padding: 6px 12px;
   background-color: var(--highlight-color, #007bff);
-  color: black; /* Button text set to black */
+  color: var(--text-highlight, #fff);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -325,16 +325,18 @@ button {
 }
 button:hover {
   background-color: var(--highlight-hover, #0056b3);
+  color: var(--text-highlight, #fff);
 }
 .delete-button {
-  background-color: var(--highlight-color); /* Change delete GC to green (same as update) */
-  color: black; /* Text set to black */
+  background-color: var(--highlight-color);
+  color: var(--text-highlight, #fff);
 }
 .delete-button:hover {
   background-color: var(--highlight-hover);
+  color: var(--text-highlight, #fff);
 }
 .add-gc button {
-  color: black; /* Ensure add new GC button text is black */
+  color: var(--text-highlight, #fff);
 }
 .add-gc {
   margin-top: 16px;
