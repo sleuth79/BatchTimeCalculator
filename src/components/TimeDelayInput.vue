@@ -396,6 +396,7 @@ export default {
 
     const hideInputs = computed(() => false);
 
+    // Watcher to emit payload when any input changes
     watch(
       [
         sequentialFinalPosition,
@@ -419,6 +420,8 @@ export default {
             sequentialBatchEndTime: '',
             additionalRuns: additionalRuns.value,
             additionalRunsEndTime: '',
+            // Include additionalRunsDuration from the store
+            additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
             prerunsDescription: prerunsDescription.value,
             totalDelayedRuns: totalPreruns.value,
             totalRuns: totalRuns.value,
@@ -437,6 +440,8 @@ export default {
           sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
           additionalRuns: additionalRuns.value,
           additionalRunsEndTime: additionalRunsEndTime.value,
+          // Include additionalRunsDuration from the store
+          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
           totalDelayedRuns: totalPreruns.value,
           totalRuns: totalRuns.value,
@@ -463,6 +468,7 @@ export default {
           sequentialBatchEndTime: '',
           additionalRuns: additionalRuns.value,
           additionalRunsEndTime: '',
+          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
           totalDelayedRuns: totalPreruns.value,
           totalRuns: totalRuns.value,
@@ -480,6 +486,7 @@ export default {
           sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
           additionalRuns: additionalRuns.value,
           additionalRunsEndTime: additionalRunsEndTime.value,
+          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
           totalDelayedRuns: totalPreruns.value,
           totalRuns: totalRuns.value,
@@ -524,7 +531,7 @@ export default {
 </script>
 
 <style scoped>
-/* Unified Heading Styles for all headings - margin-bottom set to 6px */
+/* Your existing CSS styles here */
 .main-heading,
 .batch-label,
 .delayed-runs-heading {
@@ -533,7 +540,6 @@ export default {
   margin-bottom: 6px;
   font-weight: bold;
 }
-
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
@@ -543,12 +549,10 @@ export default {
   height: 400px; /* fixed height */
   overflow: hidden;
 }
-
 .time-delay-content {
   flex: 1 1 auto;
   overflow: hidden;
 }
-
 .section-header {
   background-color: #d0d0d0;
   padding: 8px 10px;
@@ -556,42 +560,35 @@ export default {
   width: 100%;
   text-align: left;
 }
-
 .caveat {
   font-size: 0.65rem;
   color: #666;
   margin-top: 4px;
   margin-bottom: 8px;
 }
-
 .additional-runs-caveat {
   font-size: 0.65rem;
   color: #666;
   margin-top: 4px;
   margin-bottom: 0;
 }
-
 .current-time {
   font-size: 0.75rem;
   color: #666;
   margin-bottom: 8px;
 }
-
 .info-message {
   color: #666;
   font-style: italic;
   margin: 10px 0;
 }
-
 .sequential-batch-section {
   margin-bottom: 10px;
 }
-
 .sequential-batch-section label {
   display: block;
   margin-bottom: 10px;
 }
-
 .additional-runs-input label {
   display: inline-flex;
   align-items: center;
@@ -602,7 +599,6 @@ export default {
   line-height: 36px;
   margin: 0;
 }
-
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
