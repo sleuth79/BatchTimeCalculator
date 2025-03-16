@@ -51,7 +51,6 @@ import { useGcStore } from "../store";
 import StartTimeResults from "./StartTimeResults.vue";
 import TimeDelayResult from "./TimeDelayResult.vue";
 import RunTable from "./RunTable.vue";
-import ModeSelector from "./ModeSelector.vue";
 
 export default {
   name: "ResultsDisplay",
@@ -59,7 +58,6 @@ export default {
     StartTimeResults,
     TimeDelayResult,
     RunTable,
-    ModeSelector,
   },
   props: {
     showPlaceholders: {

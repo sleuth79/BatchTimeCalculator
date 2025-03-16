@@ -10,7 +10,7 @@
         <!-- GC Selector remains -->
         <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
 
-        <!-- Always render start-time input components (i.e. start-time mode is assumed) -->
+        <!-- Always render start-time input components -->
         <start-time-input
           :selected-gc="selectedGc"
           @update-results="handleUpdateResults"
@@ -89,13 +89,9 @@ export default {
     );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Reset function that triggers the store's reset actions based on the current mode.
+    // Reset function now always calls resetStartTime since only one mode is supported.
     const resetInputs = () => {
-      if (gcStore.selectedMode === 'start-time') {
-        gcStore.resetStartTime();
-      } else if (gcStore.selectedMode === 'delay-calculator') {
-        gcStore.resetDelayCalculator();
-      }
+      gcStore.resetStartTime();
       // Optionally, reset the GC selector:
       gcStore.setSelectedGc(null);
     };

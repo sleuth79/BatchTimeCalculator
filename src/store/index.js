@@ -25,14 +25,10 @@ export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
     selectedGc: null,
-    // Modes: "start-time" or "delay-calculator"
-    selectedMode: 'start-time',
     results: null,
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // delayedMode flag: false means batches are running; true means no batches are running
-    delayedMode: false,
     // Start‑time mode state:
     startTime: {
       batchStartTime: null,
@@ -54,7 +50,7 @@ export const useGcStore = defineStore('gc', {
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
     },
-    // A counter to trigger resets even if the mode doesn't change.
+    // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
   }),
   actions: {
@@ -79,26 +75,8 @@ export const useGcStore = defineStore('gc', {
       this.selectedGc = gcId;
     },
 
-    setSelectedMode(mode) {
-      if (this.selectedMode === mode) {
-        if (mode === 'start-time') {
-          this.resetStartTime();
-        } else if (mode === 'delay-calculator') {
-          this.resetDelayCalculator();
-        }
-      } else {
-        if (mode === 'start-time') {
-          this.resetStartTime();
-        } else if (mode === 'delay-calculator') {
-          this.resetDelayCalculator();
-          this.sequentialFinalPosition = null;
-        }
-      }
-      this.selectedMode = mode;
-      this.results = { mode: mode };
-      this.calculationAttempted = false;
-      this.delayedMode = (mode === 'delay-calculator');
-    },
+    // Removed setSelectedMode action since we no longer support mode switching.
+    // The app now always uses start‑time mode.
 
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
@@ -114,43 +92,23 @@ export const useGcStore = defineStore('gc', {
       this.startTimeResetCounter++;
     },
 
-    resetDelayCalculator() {
-      this.timeDelayResults = {
-        prerunsDescription: 'None',
-        totalDelayedRuns: 0,
-        delayedRunsEndTime: '',
-        totalDelayedDurationFormatted: '',
-        delayedRunsStartTime: '',
-      };
-    },
-
     setSequentialFinalPosition(position) {
       if (this.sequentialFinalPosition === position) {
         this.sequentialFinalPosition = null;
       } else {
         this.sequentialFinalPosition = position;
       }
-      if (this.selectedMode === 'start-time') {
-        this.calculateStartTimeBatch();
-      }
-    },
-
-    setDelayedMode(mode) {
-      this.delayedMode = mode;
+      this.calculateStartTimeBatch();
     },
 
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
-      if (this.selectedMode === 'start-time') {
-        this.calculateStartTimeBatch();
-      }
+      this.calculateStartTimeBatch();
     },
 
     setBatchStartTimeAMPM(ampm) {
       this.startTime.batchStartTimeAMPM = ampm;
-      if (this.selectedMode === 'start-time') {
-        this.calculateStartTimeBatch();
-      }
+      this.calculateStartTimeBatch();
     },
 
     setWait15(value) {
@@ -203,11 +161,10 @@ export const useGcStore = defineStore('gc', {
 
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
-      // Use convertRuntime() to get runtime in seconds
       const runtimeSec = convertRuntime(runtime);
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
-        runtime, // Pass the original runtime string (if needed by your function)
+        runtime,
         null,
         finalPosition,
         batchStartTime,
@@ -233,7 +190,7 @@ export const useGcStore = defineStore('gc', {
         const seqFinal = Number(this.sequentialFinalPosition);
         const totalRunsSequential = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
-        const runtimeSeconds = Math.round(runtimeSec); // runtimeSec is already in seconds
+        const runtimeSeconds = Math.round(runtimeSec);
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
         const sequentialBatchEndTimeDate = new Date(
           initialBatchEndTime.getTime() + sequentialBatchRunTimeMS
