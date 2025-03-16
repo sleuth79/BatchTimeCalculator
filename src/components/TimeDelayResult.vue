@@ -61,11 +61,6 @@
           <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
         </p>
       </div>
-      <!-- Debugging Information -->
-      <div class="debug-info">
-        <h3>Debug Info</h3>
-        <pre>{{ timeDelayData }}</pre>
-      </div>
     </div>
     
     <!-- Delayed Runs Section -->
@@ -114,11 +109,9 @@ export default {
   name: 'TimeDelayResult',
   setup() {
     const gcStore = useGcStore();
-
     // Directly reference the store's reactive timeDelayResults object.
     const timeDelayData = computed(() => gcStore.timeDelayResults);
 
-    // Computed properties as before:
     const resultsComplete = computed(() => {
       return (
         (timeDelayData.value.sequentialBatchEndTime && timeDelayData.value.sequentialBatchEndTime !== '') ||
@@ -258,12 +251,5 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
-}
-.debug-info {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
-  margin-top: 15px;
-  padding: 10px;
-  font-size: 0.9rem;
 }
 </style>
