@@ -25,7 +25,7 @@
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
         <!-- New heading for Duration of Additional Runs -->
-        <p v-if="timeDelayData.additionalRunsDuration">
+        <p v-if="timeDelayData.additionalRunsDuration !== null && timeDelayData.additionalRunsDuration !== undefined">
           Duration of Additional Runs:
           <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
         </p>
