@@ -1,6 +1,7 @@
 import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
+import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
 
 export const pinia = createPinia();
 
@@ -49,6 +50,7 @@ export const useGcStore = defineStore('gc', {
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
+      additionalRunsDuration: '', // <-- New field for additional runs duration.
     },
     // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
@@ -120,6 +122,7 @@ export const useGcStore = defineStore('gc', {
     },
 
     calculateStartTimeBatch() {
+      // Helper function to compute delayed runs start time.
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
         if (!baseTimeStr) return "";
         const parsed = parseTimeString(baseTimeStr);
@@ -186,6 +189,7 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
+      // Calculate Duration of Additional Runs and update timeDelayResults
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const totalRunsSequential = seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1;
@@ -195,7 +199,7 @@ export const useGcStore = defineStore('gc', {
         const sequentialBatchEndTimeDate = new Date(
           initialBatchEndTime.getTime() + sequentialBatchRunTimeMS
         );
-        const sequentialBatchEndTime = formatTime(sequentialBatchEndTimeDate);
+        const sequentialBatchEndTime = formatTimeWithAmPmAndSeconds(sequentialBatchEndTimeDate);
         const overallTotalRuns = calcResults.totalRuns + totalRunsSequential;
         const target = new Date(initialBatchEndTime);
         target.setHours(7, 30, 0, 0);
@@ -210,6 +214,11 @@ export const useGcStore = defineStore('gc', {
             ? `${gapHours} hours, ${gapMinutes} minutes`
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
+
+        // For sequential batch, additional runs count equals the sequential runs count.
+        const additionalRunsCount = totalRunsSequential;
+        const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
+        const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
 
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
 
@@ -232,8 +241,14 @@ export const useGcStore = defineStore('gc', {
             return desc;
           })(),
           delayedRunsStartTime: delayedRunsStartTimeComputed,
+          additionalRunsDuration: additionalRunsDurationFormatted
         };
       } else {
+        // If sequentialFinalPosition is not provided, additional runs count equals misc additional runs.
+        const additionalRunsCount = Number(additionalRuns.value) || 0;
+        const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
+        const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
+
         const baseTimeStr = calcResults.batchEndTime;
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);
         this.timeDelayResults = {
@@ -247,6 +262,7 @@ export const useGcStore = defineStore('gc', {
           delayedRunsEndTime: calcResults.delayedRunsEndTime || '',
           totalDelayedDurationFormatted: calcResults.totalDelayedDurationFormatted || '',
           delayedRunsStartTime: delayedRunsStartTimeComputed,
+          additionalRunsDuration: additionalRunsDurationFormatted
         };
       }
     },
