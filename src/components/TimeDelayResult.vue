@@ -24,6 +24,11 @@
           {{ totalRunsHeading }}:
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
+        <!-- New heading for Duration of Additional Runs -->
+        <p v-if="timeDelayData.additionalRunsDuration">
+          Duration of Additional Runs:
+          <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
+        </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
             Additional Runs End Time:
