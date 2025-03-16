@@ -5,7 +5,7 @@ import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js'
 
 export const pinia = createPinia();
 
-// Helper function: convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
+// Helper: convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
 function convertRuntime(runtimeStr) {
   if (!runtimeStr) return 0;
   const parts = runtimeStr.split(":");
@@ -22,19 +22,15 @@ function convertRuntime(runtimeStr) {
   return 0;
 }
 
-// Fallback formatting function if formatDuration returns empty
+// Fallback formatting if formatDuration returns an empty string.
 function fallbackFormatDuration(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   let str = "";
-  if (hours > 0) {
-    str += `${hours}h `;
-  }
-  if (minutes > 0 || hours > 0) {
-    str += `${minutes}m `;
-  }
+  if (hours > 0) str += `${hours}h `;
+  if (minutes > 0 || hours > 0) str += `${minutes}m `;
   str += `${seconds}s`;
   return str.trim();
 }
@@ -53,27 +49,21 @@ export const useGcStore = defineStore('gc', {
       batchStartTimeAMPM: "",
       wait15: null,
       finalPosition: null,
-      // Raw Date for batch end time.
       batchEndTime: null,
     },
-    // (Optional) Save last start‑time inputs if needed.
     lastStartTimeInputs: null,
-    // Sequential batch selection (only used in start‑time mode)
     sequentialFinalPosition: null,
-    // Time Delay Results (will include sequential batch fields if applicable)
+    // Time Delay Results – our object passed to the component.
     timeDelayResults: {
       prerunsDescription: 'None',
       totalDelayedRuns: 0,
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '', // New field for additional runs duration.
+      additionalRunsDuration: '', // This property will hold our computed duration.
     },
-    // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
-    // Hold misc additional runs (if any)
     additionalRuns: null,
-    // And misc runs for delayed runs (if applicable)
     miscRuns: 0,
   }),
   actions: {
@@ -93,11 +83,9 @@ export const useGcStore = defineStore('gc', {
         this.isLoading = false;
       }
     },
-
     setSelectedGc(gcId) {
       this.selectedGc = gcId;
     },
-
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
       this.startTime = {
@@ -111,34 +99,24 @@ export const useGcStore = defineStore('gc', {
       this.sequentialFinalPosition = null;
       this.startTimeResetCounter++;
     },
-
     setSequentialFinalPosition(position) {
-      if (this.sequentialFinalPosition === position) {
-        this.sequentialFinalPosition = null;
-      } else {
-        this.sequentialFinalPosition = position;
-      }
+      this.sequentialFinalPosition = (this.sequentialFinalPosition === position) ? null : position;
       this.calculateStartTimeBatch();
     },
-
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
       this.calculateStartTimeBatch();
     },
-
     setBatchStartTimeAMPM(ampm) {
       this.startTime.batchStartTimeAMPM = ampm;
       this.calculateStartTimeBatch();
     },
-
     setWait15(value) {
       this.startTime.wait15 = value;
     },
-
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
     },
-
     calculateStartTimeBatch() {
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
         if (!baseTimeStr) return "";
@@ -193,7 +171,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Create base results object.
+      // Build base results.
       this.results = {
         ...partialResults,
         totalRuns: calcResults.totalRuns,
@@ -207,11 +185,11 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // Calculate additional runs duration based on sequential or non-sequential mode.
+      // Now compute additional runs duration.
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
-        // For sequential mode, total additional runs equals (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) plus miscAdditional.
+        // Total additional runs for sequential mode.
         const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) + miscAdditional;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
@@ -240,10 +218,10 @@ export const useGcStore = defineStore('gc', {
         console.log("Sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
-          // Use fallback if needed.
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
-        const additionalRunsDurationFormatted = formatted;
+        // Ensure we always have a non-empty string.
+        const additionalRunsDurationFormatted = formatted || "0 seconds";
         console.log("Sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
 
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
@@ -259,20 +237,17 @@ export const useGcStore = defineStore('gc', {
           prerunsDescription: (function() {
             let desc = (calcResults.prerunsDescription || 'None').trim();
             desc = desc.replace(/\s*\(\d+\)\s*$/, '');
-            if (desc.toLowerCase().includes("prebatch")) {
-              return "Prebatch";
-            } else if (desc.toLowerCase().includes("calibration")) {
-              return "Calibration";
-            }
+            if (desc.toLowerCase().includes("prebatch")) return "Prebatch";
+            if (desc.toLowerCase().includes("calibration")) return "Calibration";
             return desc;
           })(),
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
-        // Merge additionalRunsDuration into results so that the component receives it.
+        // Merge the duration into our results.
         this.results = { ...this.results, additionalRunsDuration: additionalRunsDurationFormatted };
       } else {
-        // Non-sequential branch: additional runs count equals misc additional runs.
+        // Non-sequential branch.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
         console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
@@ -280,7 +255,7 @@ export const useGcStore = defineStore('gc', {
         if (!formatted || formatted.trim() === "") {
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
-        const additionalRunsDurationFormatted = formatted;
+        const additionalRunsDurationFormatted = formatted || "0 seconds";
         console.log("Non-sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
         const baseTimeStr = calcResults.batchEndTime;
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);

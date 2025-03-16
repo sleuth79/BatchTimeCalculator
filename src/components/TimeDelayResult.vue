@@ -34,7 +34,7 @@
                 timeDelayData.additionalRunsDuration !== ''"
         >
           Duration of Additional Runs:
-          <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
+          <strong>{{ displayAdditionalRunsDuration }}</strong>
         </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
@@ -68,7 +68,7 @@
       </div>
     </div>
     
-    <!-- Delayed Runs Section: only display if valid delayed runs exist -->
+    <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
       <p class="section-heading"><strong>Delayed Runs</strong></p>
@@ -89,7 +89,6 @@
           Total Duration of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
         </p>
-        <!-- Use the delayedRunsEndTime as provided in the payload (which already includes the date) -->
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
           <strong>
@@ -144,26 +143,22 @@ export default {
       const description = this.timeDelayData.prerunsDescription;
       const totalDelayed = Number(this.timeDelayData.totalDelayedRuns);
       return (
-        (description &&
-          description.trim() !== '' &&
-          description !== 'None' &&
-          description !== 'Delayed Runs') ||
+        (description && description.trim() !== '' && description !== 'None' && description !== 'Delayed Runs') ||
         (totalDelayed > 0)
       );
     },
-    // Orange highlighting only applies if the computed run end date is not today
-    // and the run time is past 7:30 AM.
+    // This computed property ensures we display a fallback if additionalRunsDuration is missing.
+    displayAdditionalRunsDuration() {
+      return this.timeDelayData.additionalRunsDuration || "0 seconds";
+    },
     batchEndTimeAfter730() {
       const todayStr = new Date().toLocaleDateString();
       if (this.additionalRunsEndDate === todayStr) {
         return false;
       }
-      let timeString = '';
-      if (this.timeDelayData.sequentialBatchActive) {
-        timeString = this.timeDelayData.sequentialBatchEndTime;
-      } else {
-        timeString = this.timeDelayData.additionalRunsEndTime;
-      }
+      let timeString = this.timeDelayData.sequentialBatchActive
+        ? this.timeDelayData.sequentialBatchEndTime
+        : this.timeDelayData.additionalRunsEndTime;
       if (!timeString) return false;
       const parts = timeString.split(" ");
       if (parts.length < 2) return false;
@@ -173,12 +168,8 @@ export default {
       if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
+      if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
+      if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
       return hour > 7 || (hour === 7 && minute >= 30);
     },
     additionalRunsEndDate() {
@@ -195,21 +186,10 @@ export default {
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
       const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
-      if (meridiem.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (meridiem.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
+      if (meridiem.toUpperCase() === "PM" && hour < 12) hour += 12;
+      if (meridiem.toUpperCase() === "AM" && hour === 12) hour = 0;
       const today = new Date();
-      let runEndDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        hour,
-        minute,
-        second
-      );
+      let runEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute, second);
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
@@ -224,49 +204,38 @@ export default {
   margin: 0;
   padding: 0;
 }
-
 .section-heading {
   margin: 0 0 5px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
-
 .time-delay-result p {
   margin-bottom: 2px !important;
   line-height: 1.2 !important;
   font-size: 1rem !important;
   color: #333;
 }
-
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 10px 0;
   padding: 0;
 }
-
-/* Remove the green highlight for time delay required */
 .highlight-green {
   color: #000;
 }
-
-/* The highlight-orange class remains unchanged */
 .highlight-orange {
   color: orange;
 }
-
 .time-gap-hr {
   border-top: 1px solid #ccc;
 }
-
 .result-date {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
 }
-
-/* Debug info styling */
 .debug-info {
   background: #f5f5f5;
   border: 1px solid #ccc;
