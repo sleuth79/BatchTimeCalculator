@@ -250,8 +250,10 @@ export const useGcStore = defineStore('gc', {
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
+        // Merge the additionalRunsDuration into results so that the component receives it.
+        this.results.additionalRunsDuration = additionalRunsDurationFormatted;
       } else {
-        // If sequentialFinalPosition is not provided, additional runs count equals misc additional runs.
+        // Non-sequential branch: additional runs count equals misc additional runs.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
         console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
@@ -276,6 +278,8 @@ export const useGcStore = defineStore('gc', {
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
+        // Also merge into results.
+        this.results.additionalRunsDuration = additionalRunsDurationFormatted;
       }
     },
   },
