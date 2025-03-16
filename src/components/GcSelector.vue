@@ -120,7 +120,7 @@ label {
 /* Grid for the GC boxes - dynamically adjusting */
 .gc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Adjusts dynamically */
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Changed minmax from 80px to 60px */
   gap: 5px; /* Reduce gap for better spacing */
   flex: 1;
   min-width: 0;
@@ -137,7 +137,7 @@ label {
   user-select: none;
   font-size: 0.85rem;
   flex-grow: 1;
-  min-width: 80px; /* Ensures a minimum width */
+  min-width: 60px; /* Updated to match the grid minmax value */
 }
 
 /* Selected GC styling */
