@@ -120,7 +120,7 @@ label {
 /* Grid for the GC boxes - dynamically adjusting */
 .gc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); /* Adjusts dynamically */
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Adjusts dynamically */
   gap: 5px; /* Reduce gap for better spacing */
   flex: 1;
   min-width: 0;
