@@ -22,6 +22,23 @@ function convertRuntime(runtimeStr) {
   return 0;
 }
 
+// Fallback formatting function if formatDuration returns empty
+function fallbackFormatDuration(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  let str = "";
+  if (hours > 0) {
+    str += `${hours}h `;
+  }
+  if (minutes > 0 || hours > 0) {
+    str += `${minutes}m `;
+  }
+  str += `${seconds}s`;
+  return str.trim();
+}
+
 export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
@@ -194,7 +211,7 @@ export const useGcStore = defineStore('gc', {
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
-        // For sequential mode, total additional runs equals (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) plus any misc additional.
+        // For sequential mode, total additional runs equals (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) plus miscAdditional.
         const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) + miscAdditional;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
@@ -223,7 +240,8 @@ export const useGcStore = defineStore('gc', {
         console.log("Sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
-          formatted = "0 seconds";
+          // Use fallback if needed.
+          formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
         const additionalRunsDurationFormatted = formatted;
         console.log("Sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
@@ -260,7 +278,7 @@ export const useGcStore = defineStore('gc', {
         console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
-          formatted = "0 seconds";
+          formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
         const additionalRunsDurationFormatted = formatted;
         console.log("Non-sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
