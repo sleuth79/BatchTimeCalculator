@@ -235,14 +235,18 @@ export default {
       return 0;
     });
 
-    // Updated baseEndTime: if additionalRuns is provided and the computed time
-    // is on the same day as batch1End, bump it to the next day.
+    // Updated baseEndTime: for sequential batch, if the computed time is before batch1End, bump it to the same day as batch1End or later.
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
           totalSequentialRuns.value * runtimeSeconds.value +
           (props.gcType === 'Energy' ? (15 * 60 + 25) : 0);
-        return new Date(batch1End.value.getTime() + secs * 1000);
+        let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
+        // If computedTime is before the initial batch end time, bump it by one day.
+        if (computedTime.getTime() < batch1End.value.getTime()) {
+          computedTime.setDate(computedTime.getDate() + 1);
+        }
+        return computedTime;
       } else if (additionalRuns.value) {
         const secs = Number(additionalRuns.value) * runtimeSeconds.value;
         let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
