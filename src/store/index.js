@@ -176,6 +176,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
+      // Create base results object.
       this.results = {
         ...partialResults,
         totalRuns: calcResults.totalRuns,
@@ -189,10 +190,11 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
+      // Calculate additional runs duration based on sequential or non-sequential mode.
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
-        // Include misc additional runs if present
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
+        // For sequential mode, total additional runs equals (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) plus any misc additional.
         const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) + miscAdditional;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
@@ -216,9 +218,8 @@ export const useGcStore = defineStore('gc', {
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
-        // For sequential mode, additional runs count equals the totalRunsSequential.
-        const additionalRunsCount = totalRunsSequential;
-        const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
+        // Compute additional runs duration.
+        const additionalRunsDurationSeconds = totalRunsSequential * runtimeSeconds;
         console.log("Sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
@@ -250,8 +251,8 @@ export const useGcStore = defineStore('gc', {
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
-        // Merge the additionalRunsDuration into results so that the component receives it.
-        this.results.additionalRunsDuration = additionalRunsDurationFormatted;
+        // Merge additionalRunsDuration into results so that the component receives it.
+        this.results = { ...this.results, additionalRunsDuration: additionalRunsDurationFormatted };
       } else {
         // Non-sequential branch: additional runs count equals misc additional runs.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
@@ -278,8 +279,7 @@ export const useGcStore = defineStore('gc', {
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
-        // Also merge into results.
-        this.results.additionalRunsDuration = additionalRunsDurationFormatted;
+        this.results = { ...this.results, additionalRunsDuration: additionalRunsDurationFormatted };
       }
     },
   },
