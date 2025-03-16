@@ -219,7 +219,9 @@ export const useGcStore = defineStore('gc', {
         // For sequential mode, additional runs count equals the totalRunsSequential.
         const additionalRunsCount = totalRunsSequential;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
-        const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
+        const additionalRunsDurationFormatted = additionalRunsDurationSeconds > 0 
+          ? formatDuration(additionalRunsDurationSeconds * 1000) 
+          : "0 seconds";
 
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
 
@@ -248,7 +250,9 @@ export const useGcStore = defineStore('gc', {
         // If sequentialFinalPosition is not provided, additional runs count equals misc additional runs.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
-        const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
+        const additionalRunsDurationFormatted = additionalRunsDurationSeconds > 0 
+          ? formatDuration(additionalRunsDurationSeconds * 1000) 
+          : "0 seconds";
 
         const baseTimeStr = calcResults.batchEndTime;
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);

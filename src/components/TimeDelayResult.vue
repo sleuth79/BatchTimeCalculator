@@ -2,7 +2,7 @@
   <!-- Only display results if resultsComplete is true -->
   <div class="time-delay-result" v-if="resultsComplete">
     <!-- Additional Runs Section -->
-    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime || timeDelayData.additionalRunsDuration">
+    <div v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime || (timeDelayData.additionalRunsDuration !== null && timeDelayData.additionalRunsDuration !== '')">
       <p class="section-heading"><strong>Additional Runs</strong></p>
       <div v-if="timeDelayData.sequentialBatchActive">
         <p>
@@ -25,7 +25,7 @@
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
         <!-- New heading for Duration of Additional Runs -->
-        <p v-if="timeDelayData.additionalRunsDuration">
+        <p v-if="timeDelayData.additionalRunsDuration !== null && timeDelayData.additionalRunsDuration !== ''">
           Duration of Additional Runs:
           <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
         </p>
@@ -53,6 +53,11 @@
           Time Gap to 7:30 AM:
           <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
         </p>
+      </div>
+      <!-- Debugging Information -->
+      <div class="debug-info">
+        <h3>Debug Info</h3>
+        <pre>{{ timeDelayData }}</pre>
       </div>
     </div>
     
@@ -252,5 +257,14 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
+}
+
+/* Debug info styling */
+.debug-info {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  margin-top: 15px;
+  padding: 10px;
+  font-size: 0.9rem;
 }
 </style>
