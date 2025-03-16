@@ -290,15 +290,15 @@ export default {
 }
 /* Increase the width of the first column to allow labels to fit in one line */
 .label-cell {
-  width: 30%;
+  width: 25%;
   text-align: left;
   font-weight: bold;
 }
 .input-cell {
-  width: 40%;
+  width: 33.3%;
 }
 .button-cell {
-  width: 30%;
+  width: 33.3%;
   text-align: center;
 }
 input,
