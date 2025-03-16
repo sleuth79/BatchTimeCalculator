@@ -95,7 +95,7 @@
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
           <strong style="color: black;">
-            {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
+            {{ formattedTimeDelayRequired }}
           </strong>
         </p>
       </div>
@@ -204,6 +204,18 @@ export default {
       return runEndDate.toLocaleDateString();
     });
 
+    // Computed property to format the time delay required string
+    const formattedTimeDelayRequired = computed(() => {
+      const val = timeDelayData.value.timeDelayRequired;
+      if (val === '0 hours') {
+        return 'No Time Delay Required';
+      }
+      if (val === '1 hours') {
+        return '1 hour';
+      }
+      return val;
+    });
+
     return {
       timeDelayData,
       resultsComplete,
@@ -212,6 +224,7 @@ export default {
       hasDelayedRuns,
       batchEndTimeAfter730,
       additionalRunsEndDate,
+      formattedTimeDelayRequired,
     };
   },
 };
