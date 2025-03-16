@@ -24,10 +24,12 @@
           <strong>{{ timeDelayData.additionalRuns }}</strong>
         </p>
         <!-- Flip the order: Total Runs comes first -->
+        <!--
         <p v-if="timeDelayData.totalRuns">
           {{ totalRunsHeading }}:
           <strong>{{ timeDelayData.totalRuns }}</strong>
         </p>
+        -->
         <!-- New heading for Duration of Additional Runs -->
         <p
           v-if="timeDelayData.additionalRunsDuration !== null &&
