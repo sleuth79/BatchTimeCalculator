@@ -162,10 +162,12 @@ export default {
   align-items: center;
 }
 
+/* Updated results heading with drop shadow similar to the config window */
 .results-heading {
   font-size: 2.1rem;
   margin: 0;
   color: #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .current-date-time {
@@ -185,9 +187,8 @@ export default {
 }
 
 .results-display p {
-  margin-bottom: 2px !important;
-  line-height: 1.2 !important;
-  font-size: 1rem !important;
+  margin-bottom: 10px;
+  font-size: 1rem;
   color: #333;
 }
 
