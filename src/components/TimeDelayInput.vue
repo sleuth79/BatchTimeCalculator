@@ -102,6 +102,11 @@ export default {
     const calibrationSelected = ref(false);
     const miscRuns = ref(0);
 
+    // Watch local additionalRuns and update store state
+    watch(additionalRuns, (newVal) => {
+      gcStore.additionalRuns = newVal;
+    });
+
     // Computed property to check if the selected GC is Energy (case-insensitive)
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
@@ -420,7 +425,6 @@ export default {
             sequentialBatchEndTime: '',
             additionalRuns: additionalRuns.value,
             additionalRunsEndTime: '',
-            // Include additionalRunsDuration from the store
             additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
             prerunsDescription: prerunsDescription.value,
             totalDelayedRuns: totalPreruns.value,
@@ -440,7 +444,6 @@ export default {
           sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
           additionalRuns: additionalRuns.value,
           additionalRunsEndTime: additionalRunsEndTime.value,
-          // Include additionalRunsDuration from the store
           additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
           totalDelayedRuns: totalPreruns.value,
@@ -531,7 +534,7 @@ export default {
 </script>
 
 <style scoped>
-/* Your existing CSS styles here */
+/* Unified Heading Styles for all headings - margin-bottom set to 6px */
 .main-heading,
 .batch-label,
 .delayed-runs-heading {
@@ -540,6 +543,7 @@ export default {
   margin-bottom: 6px;
   font-weight: bold;
 }
+
 .time-delay-input {
   border-top: 1px solid #ddd;
   margin-top: 0;
@@ -549,10 +553,12 @@ export default {
   height: 400px; /* fixed height */
   overflow: hidden;
 }
+
 .time-delay-content {
   flex: 1 1 auto;
   overflow: hidden;
 }
+
 .section-header {
   background-color: #d0d0d0;
   padding: 8px 10px;
@@ -560,35 +566,42 @@ export default {
   width: 100%;
   text-align: left;
 }
+
 .caveat {
   font-size: 0.65rem;
   color: #666;
   margin-top: 4px;
   margin-bottom: 8px;
 }
+
 .additional-runs-caveat {
   font-size: 0.65rem;
   color: #666;
   margin-top: 4px;
   margin-bottom: 0;
 }
+
 .current-time {
   font-size: 0.75rem;
   color: #666;
   margin-bottom: 8px;
 }
+
 .info-message {
   color: #666;
   font-style: italic;
   margin: 10px 0;
 }
+
 .sequential-batch-section {
   margin-bottom: 10px;
 }
+
 .sequential-batch-section label {
   display: block;
   margin-bottom: 10px;
 }
+
 .additional-runs-input label {
   display: inline-flex;
   align-items: center;
@@ -599,34 +612,41 @@ export default {
   line-height: 36px;
   margin: 0;
 }
+
 .additional-runs-input input,
 .misc-runs input {
   width: 60px;
   height: 36px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
+
 .separator {
   border: none;
   border-top: 1px solid #ccc;
   margin: 0 !important;
   padding: 0;
 }
+
 .delayed-runs-section {
   margin-top: 10px;
 }
+
 .delayed-runs-inputs {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .misc-runs {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
 .misc-runs .misc-label {
   white-space: nowrap;
 }
+
 .box {
   display: inline-block;
   border: 1px solid #ccc;
@@ -639,16 +659,20 @@ export default {
   background-color: #fff;
   transition: background-color 0.2s ease;
 }
+
 .box:hover {
   background-color: #f0f0f0;
 }
+
 .box.selected {
   background-color: var(--highlight-color);
 }
+
 label {
   font-weight: bold;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
 }
+
 .highlight-green {
   color: var(--highlight-color);
 }
