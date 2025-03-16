@@ -288,12 +288,9 @@ export default {
   border-collapse: collapse;
   margin-bottom: 10px;
 }
-.update-table td {
-  padding: 5px;
-  vertical-align: middle;
-}
+/* Increase the width of the first column to allow labels to fit in one line */
 .label-cell {
-  width: 20%;
+  width: 30%;
   text-align: left;
   font-weight: bold;
 }
@@ -301,15 +298,15 @@ export default {
   width: 40%;
 }
 .button-cell {
-  width: 40%;
+  width: 30%;
   text-align: center;
 }
 input,
 select {
   width: 100%;
   box-sizing: border-box;
-  padding: 4px;
-  margin: 2px 0; /* Uniform, slightly reduced vertical margin */
+  padding: 2px;       /* reduced padding for a streamlined look */
+  margin: 2px 0;      /* consistent vertical margin */
   font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 4px;
