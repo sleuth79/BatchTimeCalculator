@@ -138,6 +138,7 @@ export default {
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   margin-bottom: 60px;
 }
 
