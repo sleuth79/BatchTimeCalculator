@@ -38,7 +38,9 @@
         </template>
       </span>
     </p>
-    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -111,13 +113,18 @@ export default {
       );
     });
 
+    // Updated computed property for closest position display:
     const closestPositionDisplay = computed(() => {
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
         const parts = batchStart.split(":");
         if (parts.length === 3) {
           const hour = parseInt(parts[0], 10);
-          if (hour >= 16) {
+          const minute = parseInt(parts[1], 10);
+          const second = parseInt(parts[2], 10);
+          if (hour === 16 && minute === 0 && second === 0) {
+            return "This Batch Started At 4:00 PM";
+          } else if (hour >= 16) {
             return "This Batch Started After 4:00 PM";
           }
         }
@@ -176,7 +183,7 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
