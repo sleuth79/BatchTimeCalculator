@@ -50,7 +50,7 @@ export const useGcStore = defineStore('gc', {
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '', // <-- New field for additional runs duration.
+      additionalRunsDuration: '', // New field
     },
     // A counter to trigger resets even if inputs haven't changed.
     startTimeResetCounter: 0,
@@ -76,9 +76,6 @@ export const useGcStore = defineStore('gc', {
     setSelectedGc(gcId) {
       this.selectedGc = gcId;
     },
-
-    // Removed setSelectedMode action since we no longer support mode switching.
-    // The app now always uses start‑time mode.
 
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
@@ -122,7 +119,6 @@ export const useGcStore = defineStore('gc', {
     },
 
     calculateStartTimeBatch() {
-      // Helper function to compute delayed runs start time.
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
         if (!baseTimeStr) return "";
         const parsed = parseTimeString(baseTimeStr);
@@ -215,7 +211,7 @@ export const useGcStore = defineStore('gc', {
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
-        // For sequential batch, additional runs count equals the sequential runs count.
+        // For sequential mode, additional runs count equals the sequential batch runs.
         const additionalRunsCount = totalRunsSequential;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSeconds;
         const additionalRunsDurationFormatted = formatDuration(additionalRunsDurationSeconds * 1000);
