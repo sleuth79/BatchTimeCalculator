@@ -81,7 +81,7 @@
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
-          <strong class="highlight-green">
+          <strong style="color: black;">
             {{ timeDelayData.timeDelayRequired === '0 hours' ? 'No Time Delay Required' : timeDelayData.timeDelayRequired }}
           </strong>
         </p>
@@ -137,13 +137,10 @@ export default {
     // Orange highlighting only applies if the computed run end date is not today
     // and the run time is past 7:30 AM.
     batchEndTimeAfter730() {
-      // Compare the computed end date (from additionalRunsEndDate) with today's date.
       const todayStr = new Date().toLocaleDateString();
       if (this.additionalRunsEndDate === todayStr) {
-        // If the batch is still on the current day, do not highlight.
         return false;
       }
-      // Otherwise, parse the time string as before.
       let timeString = '';
       if (this.timeDelayData.sequentialBatchActive) {
         timeString = this.timeDelayData.sequentialBatchEndTime;
@@ -165,20 +162,17 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // Only highlight if the time is past 7:30 AM.
       return hour > 7 || (hour === 7 && minute >= 30);
     },
     additionalRunsEndDate() {
-      // Determine which time string to use.
       let timeString = this.timeDelayData.sequentialBatchActive
         ? this.timeDelayData.sequentialBatchEndTime
         : this.timeDelayData.additionalRunsEndTime;
       if (!timeString) return '';
-      // Expecting format: "hh:mm:ss AM/PM"
       const parts = timeString.split(" ");
       if (parts.length < 2) return '';
-      const timePart = parts[0]; // e.g., "08:52:15"
-      const meridiem = parts[1];  // e.g., "PM"
+      const timePart = parts[0];
+      const meridiem = parts[1];
       const timeParts = timePart.split(":");
       if (timeParts.length < 2) return '';
       let hour = parseInt(timeParts[0], 10);
@@ -190,7 +184,6 @@ export default {
       if (meridiem.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // Use today's date as a reference.
       const today = new Date();
       let runEndDate = new Date(
         today.getFullYear(),
@@ -200,7 +193,6 @@ export default {
         minute,
         second
       );
-      // If the computed run end time is earlier than now, assume it's for the next day.
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
@@ -237,12 +229,12 @@ hr {
   padding: 0;
 }
 
+/* Remove the green highlight for time delay required */
 .highlight-green {
-  color: var(--highlight-color);
+  color: #000;
 }
 
-/* The highlight-orange class is still defined so that if batchEndTimeAfter730 returns true, it is applied.
-   However, with the updated computed property, it will only be applied when the batch is on the next day and passes 7:30 AM. */
+/* The highlight-orange class remains unchanged */
 .highlight-orange {
   color: orange;
 }
