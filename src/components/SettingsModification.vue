@@ -274,13 +274,13 @@ export default {
   background-color: #f8f8f8;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 .settings-modification h3 {
   margin-top: 0;
   margin-bottom: 10px;
   font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 .update-table {
   width: 100%;
@@ -309,6 +309,7 @@ select {
   width: 100%;
   box-sizing: border-box;
   padding: 4px;
+  margin: 2px 0; /* Uniform, slightly reduced vertical margin */
   font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 4px;
