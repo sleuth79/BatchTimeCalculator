@@ -20,7 +20,8 @@
             @blur="validateTimeInput"
           />
           <span class="time-input-note">
-            Enter 24 Hour Time (ie. 09:30:00)
+            Enter 24 Hour Time<br />
+            <span class="example-time">(ie. 09:30:00)</span>
             <span v-if="timeInputError" class="error-message">
               - {{ timeInputError }}
             </span>
@@ -31,21 +32,23 @@
           <div class="control-group">
             <label for="control1">C1:</label>
             <input
-              type="text"
+              type="number"
               id="control1"
-              v-model="control1"
+              v-model.number="control1"
               class="control-input"
-              placeholder="Control 1"
+              placeholder="C1"
+              max="32"
             />
           </div>
           <div class="control-group">
             <label for="control2">C2:</label>
             <input
-              type="text"
+              type="number"
               id="control2"
-              v-model="control2"
+              v-model.number="control2"
               class="control-input"
-              placeholder="Control 2"
+              placeholder="C2"
+              max="32"
             />
           </div>
         </div>
@@ -204,8 +207,8 @@ export default {
     };
 
     // New reactive properties for Controls inputs.
-    const control1 = ref("");
-    const control2 = ref("");
+    const control1 = ref(null);
+    const control2 = ref(null);
 
     return {
       localBatchStartTime,
@@ -240,13 +243,13 @@ export default {
 }
 .input-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 15px;
 }
 .batch-time-input {
   flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 .batch-time-input input {
   width: 100px;
@@ -258,7 +261,11 @@ export default {
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
-  margin-left: 10px;
+  margin-top: 3px;
+}
+.example-time {
+  display: block;
+  margin-top: 2px;
 }
 .error-message {
   color: red;
@@ -281,7 +288,7 @@ export default {
 }
 .control-input {
   width: 60px;
-  height: 30px;
+  height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
