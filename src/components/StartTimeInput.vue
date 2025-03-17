@@ -1,46 +1,84 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Batch Start Time Input -->
-      <div class="input-group">
-        <label for="batch-start-time">Batch Start Time:</label>
-        <div class="time-input">
-          <input
-            type="text"
-            id="batch-start-time"
-            v-model="localBatchStartTime"
-            placeholder="hh:mm:ss"
-            @input="formatTimeInput"
-            @blur="validateTimeInput"
-          />
-          <span class="time-input-note">
-            Enter 24 Hour Time (ie. 09:30:00)
-            <span v-if="timeInputError" class="error-message">
-              - {{ timeInputError }}
-            </span>
-          </span>
+      <!-- Header Row with Two Columns -->
+      <div class="header-row">
+        <div class="column-left">
+          <h3>Batch Start Time</h3>
+        </div>
+        <div class="column-right">
+          <h3>Enter Controls:</h3>
         </div>
       </div>
 
-      <!-- 15-Minute Wait Toggle -->
-      <div class="input-group wait-input" v-if="showWaitInput">
-        <label>15-Minute Wait:</label>
-        <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
-          <span>{{ localWait15 ? 'Yes' : 'No' }}</span>
-        </div>
-      </div>
+      <!-- Content Row with Two Columns -->
+      <div class="content-row">
+        <!-- Left Column: Existing Inputs -->
+        <div class="column-left">
+          <!-- Batch Start Time Input -->
+          <div class="input-group">
+            <label for="batch-start-time">Batch Start Time:</label>
+            <div class="time-input">
+              <input
+                type="text"
+                id="batch-start-time"
+                v-model="localBatchStartTime"
+                placeholder="hh:mm:ss"
+                @input="formatTimeInput"
+                @blur="validateTimeInput"
+              />
+              <span class="time-input-note">
+                Enter 24 Hour Time (ie. 09:30:00)
+                <span v-if="timeInputError" class="error-message">
+                  - {{ timeInputError }}
+                </span>
+              </span>
+            </div>
+          </div>
 
-      <!-- Final Position Selector -->
-      <div class="input-group">
-        <label for="position-selector">Final Position:</label>
-        <position-selector
-          id="position-selector"
-          :allowed-positions="allowedFinalPositions"
-          mode="start-time"
-          field="start-time"
-          v-model="finalPosition"
-        />
-        <div class="error-message">{{ startTimeFinalPositionError }}</div>
+          <!-- 15-Minute Wait Toggle -->
+          <div class="input-group wait-input" v-if="showWaitInput">
+            <label>15-Minute Wait:</label>
+            <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
+              <span>{{ localWait15 ? 'Yes' : 'No' }}</span>
+            </div>
+          </div>
+
+          <!-- Final Position Selector -->
+          <div class="input-group">
+            <label for="position-selector">Final Position:</label>
+            <position-selector
+              id="position-selector"
+              :allowed-positions="allowedFinalPositions"
+              mode="start-time"
+              field="start-time"
+              v-model="finalPosition"
+            />
+            <div class="error-message">{{ startTimeFinalPositionError }}</div>
+          </div>
+        </div>
+
+        <!-- Right Column: New Controls Inputs -->
+        <div class="column-right">
+          <div class="input-group">
+            <label for="control1">Control 1:</label>
+            <input
+              type="text"
+              id="control1"
+              v-model="control1"
+              placeholder="Enter control value"
+            />
+          </div>
+          <div class="input-group">
+            <label for="control2">Control 2:</label>
+            <input
+              type="text"
+              id="control2"
+              v-model="control2"
+              placeholder="Enter control value"
+            />
+          </div>
+        </div>
       </div>
     </div>
     <div v-else>Loading...</div>
@@ -62,7 +100,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Use the store's batchStartTime, assuming it's stored as a 24-hour time string.
+    // Batch Start Time input from store.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -138,9 +176,7 @@ export default {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
       localBatchStartTime.value = value.slice(0, 8);
-      // Clear previous error as user types
       timeInputError.value = "";
-      // If user has typed at least 7 characters (almost complete), validate the input
       if (localBatchStartTime.value.length >= 7) {
         validateTimeInput();
       }
@@ -182,6 +218,10 @@ export default {
       recalculateResults();
     };
 
+    // New reactive properties for the Controls inputs.
+    const control1 = ref("");
+    const control2 = ref("");
+
     return {
       localBatchStartTime,
       localWait15,
@@ -194,12 +234,35 @@ export default {
       showWaitInput,
       setWait15,
       finalPosition,
+      control1,
+      control2,
     };
   },
 };
 </script>
 
 <style scoped>
+
+/* Header Row styling */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.column-left,
+.column-right {
+  width: 48%;
+}
+
+/* Content Row styling */
+.content-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Existing input styling */
 .time-input {
   display: flex;
   align-items: center;
@@ -207,9 +270,8 @@ export default {
 
 .time-input input {
   width: 90px;
-  height: 36px; /* Fixed height */
+  height: 36px;
   text-align: center;
-  /* Updated drop shadow to match gc selector boxes */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
@@ -226,6 +288,11 @@ export default {
   margin-left: 5px;
 }
 
+.input-group {
+  margin-bottom: 10px;
+}
+
+/* 15-Minute Wait Toggle styling */
 .input-group.wait-input {
   display: flex;
   align-items: center;
@@ -252,22 +319,15 @@ export default {
   color: var(--text-highlight);
 }
 
-.start-time-results p {
-  margin-bottom: 2px !important;
-  line-height: 1.2 !important;
-  font-size: 1rem !important;
-  color: #333;
-}
-
-.result-value {
-  font-weight: bold;
-}
-
-.input-group {
-  margin-bottom: 10px;
-}
-
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
+}
+
+/* New Controls input styling - can be adjusted as needed */
+.column-right .input-group input {
+  width: 100%;
+  height: 36px;
+  padding: 0 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 </style>
