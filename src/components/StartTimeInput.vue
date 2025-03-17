@@ -9,7 +9,7 @@
       
       <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input & Note -->
+        <!-- Batch Start Time Input & Inline Note -->
         <div class="batch-time-input">
           <input
             type="text"
@@ -28,7 +28,7 @@
             <input
               type="number"
               id="control1"
-              v-model.number="control1"
+              v-model="control1"
               class="control-input"
               min="1"
               max="32"
@@ -39,7 +39,7 @@
             <input
               type="number"
               id="control2"
-              v-model.number="control2"
+              v-model="control2"
               class="control-input"
               min="1"
               max="32"
@@ -200,9 +200,9 @@ export default {
       recalculateResults();
     };
 
-    // New reactive properties for Controls inputs.
-    const control1 = ref(1);
-    const control2 = ref(1);
+    // New reactive properties for Controls inputs, initialized as empty strings.
+    const control1 = ref('');
+    const control2 = ref('');
 
     return {
       localBatchStartTime,
