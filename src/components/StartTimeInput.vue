@@ -1,15 +1,15 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Combined Header Row -->
+      <!-- Header Row -->
       <div class="heading-row">
         <div class="heading-batch">Batch Start Time:</div>
         <div class="heading-controls">Enter Controls:</div>
       </div>
-
-      <!-- Combined Input Row -->
+      
+      <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input with Inline Note -->
+        <!-- Batch Start Time Input & Note -->
         <div class="batch-time-input">
           <input
             type="text"
@@ -24,30 +24,30 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <label for="control1">C1:</label>
+            <label for="control1" class="control-label">C1:</label>
             <input
               type="number"
               id="control1"
               v-model.number="control1"
               class="control-input"
-              placeholder="C1"
+              min="1"
               max="32"
             />
           </div>
           <div class="control-group">
-            <label for="control2">C2:</label>
+            <label for="control2" class="control-label">C2:</label>
             <input
               type="number"
               id="control2"
               v-model.number="control2"
               class="control-input"
-              placeholder="C2"
+              min="1"
               max="32"
             />
           </div>
         </div>
       </div>
-
+      
       <!-- Existing Additional Inputs -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
@@ -201,8 +201,8 @@ export default {
     };
 
     // New reactive properties for Controls inputs.
-    const control1 = ref(null);
-    const control2 = ref(null);
+    const control1 = ref(1);
+    const control2 = ref(1);
 
     return {
       localBatchStartTime,
@@ -234,11 +234,14 @@ export default {
 .heading-controls {
   flex: 1;
 }
+
 .input-row {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
 }
+
+/* Left column for Batch Start Time */
 .batch-time-input {
   flex: 1;
   display: flex;
@@ -256,19 +259,24 @@ export default {
   color: #181818;
   font-weight: bold;
 }
+
+/* Right column for Controls */
 .controls-inputs {
+  flex: 1;
   display: flex;
   align-items: center;
-  margin-left: 20px;
+  justify-content: flex-start;
 }
 .control-group {
   display: flex;
   align-items: center;
   margin-right: 10px;
 }
-.control-group label {
-  margin-right: 5px;
+.control-label {
+  font-size: 0.8rem;
+  color: #181818;
   font-weight: bold;
+  margin-right: 5px;
 }
 .control-input {
   width: 60px;
@@ -277,7 +285,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
-/* Styles for the existing additional inputs */
+/* Existing Additional Inputs */
 .input-group.wait-input {
   display: flex;
   align-items: center;
