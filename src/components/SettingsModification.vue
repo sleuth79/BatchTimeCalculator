@@ -269,7 +269,7 @@ export default {
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 8px; /* Rounded edges for the entire window */
+  border-radius: 8px;
 }
 
 /* Reduce top margin on headings */
@@ -279,7 +279,7 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Apply uniform height and drop shadow to inputs, selects, and buttons */
+/* Uniform element styling with drop shadow matching provided code */
 .input-cell input,
 .input-cell select,
 .button-cell button {
@@ -327,30 +327,30 @@ button:hover {
   background-color: var(--highlight-hover, #0056b3);
 }
 
-/* Table layout */
+/* Table layout with adjusted column width and reduced gap */
 .update-table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: separate; /* allow cell spacing */
-  border-spacing: 0 4px; /* vertical gap between rows */
+  border-collapse: separate;
+  border-spacing: 0 4px;
   margin-bottom: 10px;
 }
 
 .label-cell {
-  width: 21%; /* Adjusted from 20% to 21% */
+  width: 21.5%; /* Updated column width */
   text-align: left;
   font-weight: bold;
 }
 
 .input-cell {
   width: 33.3%;
-  padding-right: 8px; /* gap between input and button */
+  padding-right: 6px; /* Reduced gap */
 }
 
 .button-cell {
   width: 33.3%;
   text-align: center;
-  padding-left: 8px; /* gap between input and button */
+  padding-left: 6px; /* Reduced gap */
 }
 
 .add-gc {
