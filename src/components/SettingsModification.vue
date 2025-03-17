@@ -131,12 +131,12 @@ export default {
     return {
       selectedGC: "",
       newRunTimeInput: "",
-      newRunTime: null, // now stored as an mm:ss string
+      newRunTime: null,
       newType: "",
       newName: "",
       newGCId: "",
       newGCRunTimeInput: "",
-      newGCRunTime: null, // mm:ss string
+      newGCRunTime: null,
       newGCType: "",
     };
   },
@@ -144,7 +144,6 @@ export default {
     selectedGC(newVal) {
       if (newVal && this.config[newVal]) {
         let currentRuntime = this.config[newVal].runTime;
-        // If stored as a number, convert to mm:ss; otherwise, assume it's already a string.
         if (typeof currentRuntime === "number") {
           currentRuntime = this.convertDecimalToMmSs(currentRuntime);
         }
@@ -161,14 +160,12 @@ export default {
     },
   },
   methods: {
-    // Helper function: convert decimal minutes to mm:ss string
     convertDecimalToMmSs(decimalMinutes) {
       const totalSeconds = Math.round(decimalMinutes * 60);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     },
-    // Allow only digits and colon for run time inputs
     handleNumericInput(e) {
       const allowedChars = /[0-9:]/;
       if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -176,10 +173,8 @@ export default {
         e.preventDefault();
       }
     },
-    // Validate update run time input to match mm:ss format
     validateUpdateRunTime(e) {
       const inputVal = e.target.value;
-      // Expected format: 1-2 digits, a colon, then exactly 2 digits
       const pattern = /^\d{1,2}:\d{2}$/;
       if (!inputVal || !pattern.test(inputVal)) {
         this.newRunTime = null;
@@ -188,7 +183,6 @@ export default {
       }
       this.newRunTimeInput = inputVal;
     },
-    // Validate added GC run time input
     validateAddRunTime(e) {
       const inputVal = e.target.value;
       const pattern = /^\d{1,2}:\d{2}$/;
@@ -212,7 +206,7 @@ export default {
       if (updatedConfig[this.selectedGC]) {
         updatedConfig[this.selectedGC] = {
           ...updatedConfig[this.selectedGC],
-          runTime: this.newRunTime, // now a string in mm:ss format
+          runTime: this.newRunTime,
           type: this.newType,
           name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
         };
@@ -252,7 +246,7 @@ export default {
       }
       updatedConfig[this.newGCId] = {
         name: this.newGCId,
-        runTime: this.newGCRunTime, // mm:ss format
+        runTime: this.newGCRunTime,
         type: this.newGCType,
       };
       this.$emit("update-config", updatedConfig);
@@ -271,48 +265,35 @@ export default {
   margin: 5px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
-  background-color: #f8f8f8;
+  background-color: #fff; /* Changed from gray (#f8f8f8) to white */
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
-.settings-modification h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+
+/* Apply a consistent height to inputs, selects, and buttons */
+.input-cell input,
+.input-cell select,
+.button-cell button {
+  height: 34px;      /* Fixed height for consistency */
+  box-sizing: border-box;
 }
-.update-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  margin-bottom: 10px;
-}
-/* Increase the width of the first column to allow labels to fit in one line */
-.label-cell {
-  width: 25%;
-  text-align: left;
-  font-weight: bold;
-}
-.input-cell {
-  width: 33.3%;
-}
-.button-cell {
-  width: 33.3%;
-  text-align: center;
-}
+
+/* Adjust the shared styling for inputs and selects */
 input,
 select {
   width: 100%;
-  box-sizing: border-box;
-  padding: 2px;       /* reduced padding for a streamlined look */
-  margin: 2px 0;      /* consistent vertical margin */
+  padding: 0 8px;    /* Adjust padding to work with the fixed height */
+  margin: 2px 0;
   font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+/* Adjust the buttons so they match the height of the inputs */
 button {
-  padding: 6px 12px;
+  width: 100%;
+  padding: 0 12px;   /* Horizontal padding only */
   background-color: var(--highlight-color, #007bff);
   color: var(--text-highlight, #fff);
   border: none;
@@ -321,21 +302,50 @@ button {
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
 }
+
+/* Ensure the hover state for buttons remains consistent */
 button:hover {
   background-color: var(--highlight-hover, #0056b3);
   color: var(--text-highlight, #fff);
 }
+
 .delete-button {
   background-color: var(--highlight-color);
   color: var(--text-highlight, #fff);
 }
+
 .delete-button:hover {
   background-color: var(--highlight-hover);
   color: var(--text-highlight, #fff);
 }
+
 .add-gc button {
   color: var(--text-highlight, #fff);
 }
+
+/* Table layout remains the same */
+.update-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+
+.label-cell {
+  width: 25%;
+  text-align: left;
+  font-weight: bold;
+}
+
+.input-cell {
+  width: 33.3%;
+}
+
+.button-cell {
+  width: 33.3%;
+  text-align: center;
+}
+
 .add-gc {
   margin-top: 16px;
   padding-top: 8px;
