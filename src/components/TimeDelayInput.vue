@@ -651,7 +651,7 @@ export default {
 }
 label {
   font-weight: bold;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.15);
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
 .highlight-green {
   color: var(--highlight-color);
