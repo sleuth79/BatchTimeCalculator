@@ -9,7 +9,7 @@
 
       <!-- Combined Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input -->
+        <!-- Batch Start Time Input with Inline Note -->
         <div class="batch-time-input">
           <input
             type="text"
@@ -19,13 +19,7 @@
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">
-            Enter 24 Hour Time<br />
-            <span class="example-time">(ie. 09:30:00)</span>
-            <span v-if="timeInputError" class="error-message">
-              - {{ timeInputError }}
-            </span>
-          </span>
+          <span class="time-input-note">Enter 24 Hour Time</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -92,7 +86,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time from store
+    // Batch Start Time from store.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -150,7 +144,7 @@ export default {
       timeInputError.value = "";
     });
 
-    // Format the time input to HH:mm:ss
+    // Formats the time input to HH:mm:ss.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
@@ -170,7 +164,7 @@ export default {
       }
     };
 
-    // Validate the HH:mm:ss input
+    // Validates the HH:mm:ss input.
     const validateTimeInput = () => {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
@@ -233,7 +227,6 @@ export default {
 .heading-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-bottom: 5px;
   font-weight: bold;
 }
@@ -243,13 +236,13 @@ export default {
 }
 .input-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 15px;
 }
 .batch-time-input {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 .batch-time-input input {
   width: 100px;
@@ -258,19 +251,10 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 .time-input-note {
+  margin-left: 10px;
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
-  margin-top: 3px;
-}
-.example-time {
-  display: block;
-  margin-top: 2px;
-}
-.error-message {
-  color: red;
-  font-size: 0.8rem;
-  margin-left: 5px;
 }
 .controls-inputs {
   display: flex;
