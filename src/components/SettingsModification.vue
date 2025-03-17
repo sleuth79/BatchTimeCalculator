@@ -288,7 +288,7 @@ export default {
   font-size: 0.85rem;
   padding: 0 8px;
   box-sizing: border-box;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Drop shadow similar to provided code */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Shared styling for inputs and selects */
@@ -310,7 +310,7 @@ button {
   width: 100%;
   padding: 0 8px;
   transition: background-color 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Drop shadow */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 button:hover {
@@ -331,23 +331,26 @@ button:hover {
 .update-table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
+  border-collapse: separate; /* allow cell spacing */
+  border-spacing: 0 4px; /* vertical gap between rows */
   margin-bottom: 10px;
 }
 
 .label-cell {
-  width: 22%; /* Adjusted from 25% to 22% */
+  width: 20%; /* Adjusted from 22% to 20% */
   text-align: left;
   font-weight: bold;
 }
 
 .input-cell {
   width: 33.3%;
+  padding-right: 8px; /* gap between input and button */
 }
 
 .button-cell {
   width: 33.3%;
   text-align: center;
+  padding-left: 8px; /* gap between input and button */
 }
 
 .add-gc {
