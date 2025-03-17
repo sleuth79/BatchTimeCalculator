@@ -209,7 +209,8 @@ export default {
   width: 90px;
   height: 36px; /* Fixed height */
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* Updated drop shadow to match gc selector boxes */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .time-input-note {
@@ -243,7 +244,7 @@ export default {
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .wait-toggle.on {
