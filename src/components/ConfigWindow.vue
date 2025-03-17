@@ -23,13 +23,12 @@
         </tbody>
       </table>
 
-      <div class="settings-modification-box">
-        <SettingsModification
-          :config="config"
-          :sortedEntries="sortedEntries"
-          @update-config="handleUpdateConfig"
-        />
-      </div>
+      <!-- Removed inner box wrapper -->
+      <SettingsModification
+        :config="config"
+        :sortedEntries="sortedEntries"
+        @update-config="handleUpdateConfig"
+      />
 
       <div class="revert-section">
         <button class="revert-button" @click="revertToDefaults">
@@ -209,17 +208,6 @@ export default {
   font-weight: bold;
   /* Adding text shadow for extra pop */
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Settings Modification Box */
-.settings-modification-box {
-  margin: 12px 0; /* Uniform top and bottom margin */
-  padding: 12px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  /* Drop shadow around the settings modification box */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Revert section styling */
