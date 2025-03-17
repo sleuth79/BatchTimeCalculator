@@ -279,7 +279,7 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Uniform element styling with drop shadow matching provided code */
+/* Uniform element styling with matching drop shadow */
 .input-cell input,
 .input-cell select,
 .button-cell button {
@@ -288,7 +288,8 @@ export default {
   font-size: 0.85rem;
   padding: 0 8px;
   box-sizing: border-box;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* Matching drop shadow to the container's */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Shared styling for inputs and selects */
@@ -310,7 +311,8 @@ button {
   width: 100%;
   padding: 0 8px;
   transition: background-color 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* Matching drop shadow to the container's */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
@@ -337,20 +339,20 @@ button:hover {
 }
 
 .label-cell {
-  width: 21.5%; /* Updated column width */
+  width: 21.5%;
   text-align: left;
   font-weight: bold;
 }
 
 .input-cell {
   width: 33.3%;
-  padding-right: 6px; /* Reduced gap */
+  padding-right: 6px;
 }
 
 .button-cell {
   width: 33.3%;
   text-align: center;
-  padding-left: 6px; /* Reduced gap */
+  padding-left: 6px;
 }
 
 .add-gc {
