@@ -210,7 +210,7 @@ export default {
   height: 36px; /* Fixed height */
   text-align: center;
   /* Updated drop shadow to match gc selector boxes */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.11);
 }
 
 .time-input-note {
