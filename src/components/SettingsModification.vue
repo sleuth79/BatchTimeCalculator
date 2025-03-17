@@ -269,6 +269,7 @@ export default {
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px; /* Rounded edges for the entire window */
 }
 
 /* Reduce top margin on headings */
@@ -278,7 +279,7 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Apply uniform height and styling similar to the reset button */
+/* Apply uniform height and drop shadow to inputs, selects, and buttons */
 .input-cell input,
 .input-cell select,
 .button-cell button {
@@ -287,6 +288,7 @@ export default {
   font-size: 0.85rem;
   padding: 0 8px;
   box-sizing: border-box;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Drop shadow similar to provided code */
 }
 
 /* Shared styling for inputs and selects */
@@ -298,7 +300,7 @@ select {
   border-radius: 4px;
 }
 
-/* Style for buttons to match the reset button style */
+/* Button styling to match the reset button style */
 button {
   border: 1px solid #ccc;
   background-color: var(--highlight-color, #007bff);
@@ -308,6 +310,7 @@ button {
   width: 100%;
   padding: 0 8px;
   transition: background-color 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Drop shadow */
 }
 
 button:hover {
@@ -324,7 +327,7 @@ button:hover {
   background-color: var(--highlight-hover, #0056b3);
 }
 
-/* Table layout remains the same */
+/* Table layout */
 .update-table {
   width: 100%;
   table-layout: fixed;
@@ -333,7 +336,7 @@ button:hover {
 }
 
 .label-cell {
-  width: 25%;
+  width: 22%; /* Adjusted from 25% to 22% */
   text-align: left;
   font-weight: bold;
 }
