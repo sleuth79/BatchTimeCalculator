@@ -140,7 +140,7 @@ export default {
           if (period === "AM" && hour === 12) hour = 0;
           if (hour < 16) {
             // Scenario 1: batch ends before 4:00 PM.
-            return `This batch ends at ${batchEndStr}`;
+            return `This Batch Ends at ${batchEndStr}`;
           }
         }
       }
