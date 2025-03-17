@@ -337,7 +337,7 @@ button:hover {
 }
 
 .label-cell {
-  width: 20%; /* Adjusted from 22% to 20% */
+  width: 21%; /* Adjusted from 20% to 21% */
   text-align: left;
   font-weight: bold;
 }
