@@ -265,62 +265,63 @@ export default {
   margin: 5px 0;
   padding: 8px 12px;
   border: 1px solid #ccc;
-  background-color: #fff; /* Changed from gray (#f8f8f8) to white */
+  background-color: #fff;
   font-family: 'Aptos', sans-serif;
   font-size: 0.9rem;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Apply a consistent height to inputs, selects, and buttons */
+/* Reduce top margin on headings */
+.settings-modification h3 {
+  margin: 4px 0 8px 0;
+  font-size: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Apply uniform height and styling similar to the reset button */
 .input-cell input,
 .input-cell select,
 .button-cell button {
-  height: 34px;      /* Fixed height for consistency */
+  height: 28px;
+  line-height: 28px;
+  font-size: 0.85rem;
+  padding: 0 8px;
   box-sizing: border-box;
 }
 
-/* Adjust the shared styling for inputs and selects */
+/* Shared styling for inputs and selects */
 input,
 select {
   width: 100%;
-  padding: 0 8px;    /* Adjust padding to work with the fixed height */
   margin: 2px 0;
-  font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-/* Adjust the buttons so they match the height of the inputs */
+/* Style for buttons to match the reset button style */
 button {
-  width: 100%;
-  padding: 0 12px;   /* Horizontal padding only */
+  border: 1px solid #ccc;
   background-color: var(--highlight-color, #007bff);
   color: var(--text-highlight, #fff);
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  border-radius: 4px;
+  width: 100%;
+  padding: 0 8px;
   transition: background-color 0.2s ease;
 }
 
-/* Ensure the hover state for buttons remains consistent */
 button:hover {
   background-color: var(--highlight-hover, #0056b3);
-  color: var(--text-highlight, #fff);
 }
 
+/* Specific styling for delete buttons */
 .delete-button {
-  background-color: var(--highlight-color);
+  background-color: var(--highlight-color, #007bff);
   color: var(--text-highlight, #fff);
 }
 
 .delete-button:hover {
-  background-color: var(--highlight-hover);
-  color: var(--text-highlight, #fff);
-}
-
-.add-gc button {
-  color: var(--text-highlight, #fff);
+  background-color: var(--highlight-hover, #0056b3);
 }
 
 /* Table layout remains the same */
@@ -347,7 +348,7 @@ button:hover {
 }
 
 .add-gc {
-  margin-top: 16px;
+  margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid #ccc;
 }
