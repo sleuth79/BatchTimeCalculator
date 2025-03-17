@@ -52,7 +52,6 @@
 
 <script>
 import { computed } from 'vue';
-import { useGcStore } from '../store';
 
 export default {
   name: 'StartTimeResults',
@@ -92,7 +91,7 @@ export default {
       return storedTime;
     });
 
-    // New computed property: only show detailed results if the start time is complete (HH:mm:ss)
+    // Only show detailed results if the start time is in HH:mm:ss format.
     const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
@@ -132,9 +131,36 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
+    // Modified computed property for batch end time.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
-      const batchEndStr = props.results.batchEndTime;
+      let batchEndStr = props.results.batchEndTime;
+      
+      // Extract the time portion (assumes format like "03:59:49 PM" or "15:59:49")
+      let timePart = batchEndStr.split(" ")[0]; // e.g., "03:59:49"
+      let period = "";
+      const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+      if (periodMatch) {
+        period = periodMatch[0].toUpperCase();
+      }
+      
+      const parts = timePart.split(":");
+      if (parts.length < 3) return batchEndStr;
+      
+      let hour = parseInt(parts[0], 10);
+      // Convert to 24-hour format if a period is provided
+      if (period === "PM" && hour < 12) {
+        hour += 12;
+      } else if (period === "AM" && hour === 12) {
+        hour = 0;
+      }
+      
+      // If the batch end time is before 4:00 PM, return the special message.
+      if (hour < 16) {
+        return "This Batch Ends Before 4:00 PM";
+      }
+      
+      // Otherwise, format as before.
       const startStr = displayBatchStartTime.value;
       if (!startStr) {
         return `${batchEndStr} (${currentDate.value})`;
