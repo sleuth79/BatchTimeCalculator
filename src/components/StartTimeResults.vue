@@ -112,13 +112,13 @@ export default {
       );
     });
 
-    // Modified computed property for closest position display:
-    // If the batch end time is before 4:00 PM, show "This Batch Ends Before 4:00 PM"
+    // Updated computed property for closest position display:
+    // If batchEndTime exists and is before 4:00 PM, display its actual time.
     const closestPositionDisplay = computed(() => {
       if (props.results.batchEndTime) {
-        // Assume batchEndTime is in a format like "03:59:49 PM" or "15:59:49"
+        // Assume batchEndTime is in a format like "02:21:33 PM" or "15:21:33"
         let batchEndStr = props.results.batchEndTime;
-        let timePart = batchEndStr.split(" ")[0]; // e.g., "03:59:49"
+        let timePart = batchEndStr.split(" ")[0]; // e.g., "02:21:33"
         let period = "";
         const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
         if (periodMatch) {
@@ -130,12 +130,13 @@ export default {
           // Convert to 24-hour format if period is provided.
           if (period === "PM" && hour < 12) hour += 12;
           if (period === "AM" && hour === 12) hour = 0;
+          // If the batch end time is before 4:00 PM, display its actual time.
           if (hour < 16) {
-            return "This Batch Ends Before 4:00 PM";
+            return `This batch ends at ${batchEndStr}`;
           }
         }
       }
-      // Fallback: use batch start time logic if batchEndTime is not available or not before 4:00 PM.
+      // Fallback: use batch start time logic if batchEndTime isn't before 4:00 PM.
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
         const parts = batchStart.split(":");
