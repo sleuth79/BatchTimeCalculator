@@ -98,9 +98,10 @@ export default {
     const handleUpdateConfig = async (updatedConfig) => {
       try {
         const plainConfig = JSON.parse(JSON.stringify(updatedConfig));
-        const updateUrl = window.location.hostname === "localhost"
-          ? "http://localhost:8888/.netlify/functions/update-config"
-          : "/.netlify/functions/update-config";
+        const updateUrl =
+          window.location.hostname === "localhost"
+            ? "http://localhost:8888/.netlify/functions/update-config"
+            : "/.netlify/functions/update-config";
         const response = await fetch(updateUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -126,7 +127,11 @@ export default {
 
     // Revert Configuration to Default Values
     const revertToDefaults = () => {
-      if (confirm("Revert all settings to defaults? This will completely erase the current config table and reset it to what it was at the time of creation. Suggest you record the current GC run times down before doing this. This action cannot be undone.")) {
+      if (
+        confirm(
+          "Revert all settings to defaults? This will completely erase the current config table and reset it to what it was at the time of creation. Suggest you record the current GC run times down before doing this. This action cannot be undone."
+        )
+      ) {
         config.value = JSON.parse(JSON.stringify(defaultConfig));
         handleUpdateConfig(config.value);
       }
@@ -183,14 +188,16 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Add drop shadow and slight elevation to the table */
+/* Config Table with rounded edges and matching drop shadow */
 .config-table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   margin-top: 8px;
   font-size: 0.85rem;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 8px; /* Rounded edges for the table */
+  overflow: hidden;  /* Ensures rounded edges are visible */
 }
 
 /* Style table cells */
