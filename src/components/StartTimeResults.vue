@@ -103,7 +103,29 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
+    // Modified isClosestPositionObject:
+    // If a batch end time exists and is before 4:00 PM, we force this to return false so that our 
+    // fallback message in closestPositionDisplay is used.
     const isClosestPositionObject = computed(() => {
+      if (props.results.batchEndTime) {
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0]; // e.g. "02:21:33" or "14:21:33"
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            // Batch ends before 4:00 PM, so don't treat closestPositionBefore4PM as an object.
+            return false;
+          }
+        }
+      }
       return (
         props.results &&
         props.results.closestPositionBefore4PM &&
@@ -113,12 +135,15 @@ export default {
     });
 
     // Updated computed property for closest position display:
-    // If batchEndTime exists and is before 4:00 PM, display its actual time.
+    // It handles four scenarios:
+    // 1. If batchEndTime is before 4:00 PM, display its actual time.
+    // 2. If the batch started exactly at 4:00 PM, display "This Batch Started At 4:00 PM".
+    // 3. If the batch started after 4:00 PM, display "This Batch Started After 4:00 PM".
+    // 4. Otherwise, fall back to the value computed by the store (which might be "No Sample Position Ends Before 4:00 PM").
     const closestPositionDisplay = computed(() => {
       if (props.results.batchEndTime) {
-        // Assume batchEndTime is in a format like "02:21:33 PM" or "15:21:33"
         let batchEndStr = props.results.batchEndTime;
-        let timePart = batchEndStr.split(" ")[0]; // e.g., "02:21:33"
+        let timePart = batchEndStr.split(" ")[0]; // e.g. "02:21:33"
         let period = "";
         const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
         if (periodMatch) {
@@ -127,16 +152,14 @@ export default {
         const parts = timePart.split(":");
         if (parts.length === 3) {
           let hour = parseInt(parts[0], 10);
-          // Convert to 24-hour format if period is provided.
           if (period === "PM" && hour < 12) hour += 12;
           if (period === "AM" && hour === 12) hour = 0;
-          // If the batch end time is before 4:00 PM, display its actual time.
           if (hour < 16) {
             return `This batch ends at ${batchEndStr}`;
           }
         }
       }
-      // Fallback: use batch start time logic if batchEndTime isn't before 4:00 PM.
+      // Fallback: check the batch start time to decide if it started at or after 4:00 PM.
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
         const parts = batchStart.split(":");
@@ -151,6 +174,7 @@ export default {
           }
         }
       }
+      // Scenario 4: no sample position ended before 4:00 PM.
       return props.results.closestPositionBefore4PM;
     });
 
