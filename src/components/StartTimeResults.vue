@@ -78,7 +78,7 @@ export default {
     },
   },
   setup(props) {
-    // A reactive property for the current date (for fallback)
+    // Reactive property for the current date (for fallback)
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
@@ -112,8 +112,30 @@ export default {
       );
     });
 
-    // Updated computed property for closest position display:
+    // Modified computed property for closest position display:
+    // If the batch end time is before 4:00 PM, show "This Batch Ends Before 4:00 PM"
     const closestPositionDisplay = computed(() => {
+      if (props.results.batchEndTime) {
+        // Assume batchEndTime is in a format like "03:59:49 PM" or "15:59:49"
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0]; // e.g., "03:59:49"
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          // Convert to 24-hour format if period is provided.
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            return "This Batch Ends Before 4:00 PM";
+          }
+        }
+      }
+      // Fallback: use batch start time logic if batchEndTime is not available or not before 4:00 PM.
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
       if (batchStart) {
         const parts = batchStart.split(":");
@@ -131,36 +153,10 @@ export default {
       return props.results.closestPositionBefore4PM;
     });
 
-    // Modified computed property for batch end time.
+    // Batch end time is still displayed in its heading without change.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
-      let batchEndStr = props.results.batchEndTime;
-      
-      // Extract the time portion (assumes format like "03:59:49 PM" or "15:59:49")
-      let timePart = batchEndStr.split(" ")[0]; // e.g., "03:59:49"
-      let period = "";
-      const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
-      if (periodMatch) {
-        period = periodMatch[0].toUpperCase();
-      }
-      
-      const parts = timePart.split(":");
-      if (parts.length < 3) return batchEndStr;
-      
-      let hour = parseInt(parts[0], 10);
-      // Convert to 24-hour format if a period is provided
-      if (period === "PM" && hour < 12) {
-        hour += 12;
-      } else if (period === "AM" && hour === 12) {
-        hour = 0;
-      }
-      
-      // If the batch end time is before 4:00 PM, return the special message.
-      if (hour < 16) {
-        return "This Batch Ends Before 4:00 PM";
-      }
-      
-      // Otherwise, format as before.
+      const batchEndStr = props.results.batchEndTime;
       const startStr = displayBatchStartTime.value;
       if (!startStr) {
         return `${batchEndStr} (${currentDate.value})`;
