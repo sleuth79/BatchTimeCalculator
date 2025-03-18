@@ -18,7 +18,7 @@
         <!-- Render wait row if present (only once) -->
         <tr v-if="runsHasWait">
           <td class="run-column">{{ waitRow.position }}</td>
-          <td>{{ waitRow.computedTitle }}</td>
+          <td>{{ waitRow.computedTitle || waitRow.title || '15-Min Wait' }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
@@ -142,8 +142,6 @@ export default {
     });
 
     // --- New: Compute which fixed run (ignoring the wait row) is the closest to 4:00 PM (but ends before)
-    // We'll assume that the formatted endTime strings can be parsed back into a Date.
-    // For simplicity, we assume today's date.
     function parseTimeStringToDate(timeStr) {
       // timeStr should be like "10:15:25 AM"
       const today = new Date();
@@ -165,7 +163,6 @@ export default {
       }
       return candidate;
     });
-    // Watch closestBefore4 and update the store (assuming an action setClosestPositionBefore4PM exists)
     watch(closestBefore4, (newVal) => {
       if (newVal) {
         gcStore.setClosestPositionBefore4PM(newVal.computedTitle);
