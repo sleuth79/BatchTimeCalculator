@@ -51,10 +51,10 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed } from "vue";
 
 export default {
-  name: 'StartTimeResults',
+  name: "StartTimeResults",
   props: {
     results: {
       type: Object,
@@ -103,7 +103,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // We now prioritize batch start time.
+    // --- Closest Position Feature Integration ---
     const closestPositionDisplay = computed(() => {
       // First, check the batch start time.
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
@@ -148,9 +148,7 @@ export default {
       return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
     });
 
-    // Modified isClosestPositionObject:
-    // If the batch end time exists and is before 4:00 PM, we force this to false
-    // so that our computed closestPositionDisplay is used.
+    // If the batch end time exists and is before 4:00 PM, force isClosestPositionObject to false.
     const isClosestPositionObject = computed(() => {
       if (props.results.batchEndTime) {
         let batchEndStr = props.results.batchEndTime;
@@ -178,7 +176,6 @@ export default {
       );
     });
 
-    // Batch end time is displayed as before.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
       const batchEndStr = props.results.batchEndTime;
