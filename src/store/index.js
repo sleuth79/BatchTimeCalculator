@@ -70,8 +70,6 @@ export const useGcStore = defineStore('gc', {
     startTimeResetCounter: 0,
     additionalRuns: null,
     miscRuns: 0,
-    // New property to store the closest position title (from the run table) before 4:00 PM.
-    closestPositionBefore4PM: null,
   }),
   actions: {
     async fetchGcData() {
@@ -109,8 +107,6 @@ export const useGcStore = defineStore('gc', {
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
       this.startTimeResetCounter++;
-      // Reset the closest position value as well.
-      this.closestPositionBefore4PM = null;
     },
     setSequentialFinalPosition(position) {
       this.sequentialFinalPosition = (this.sequentialFinalPosition === position) ? null : position;
@@ -136,10 +132,6 @@ export const useGcStore = defineStore('gc', {
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-    },
-    // New action to store the closest position title from the run table.
-    setClosestPositionBefore4PM(value) {
-      this.closestPositionBefore4PM = value;
     },
     calculateStartTimeBatch() {
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
