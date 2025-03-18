@@ -24,7 +24,6 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <label for="control1" class="control-label"></label>
             <input
               type="number"
               id="control1"
@@ -36,7 +35,6 @@
             />
           </div>
           <div class="control-group">
-            <label for="control2" class="control-label"></label>
             <input
               type="number"
               id="control2"
@@ -226,8 +224,6 @@ export default {
     });
 
     // Validation functions for controls on blur.
-    // They adjust the value to the nearest boundary if it falls outside the allowed range,
-    // and they also ensure that a value of 16 is never accepted.
     const validateControl1 = () => {
       let num = Number(localControl1.value);
       if (isNaN(num)) {
@@ -303,12 +299,15 @@ export default {
 .heading-batch,
 .heading-controls {
   flex: 1;
+  /* Ensure left alignment */
+  text-align: left;
 }
 .input-row {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
 }
+/* Batch time input styling remains unchanged */
 .batch-time-input {
   flex: 1;
   display: flex;
@@ -326,22 +325,20 @@ export default {
   color: #181818;
   font-weight: bold;
 }
+/* Controls inputs styling */
 .controls-inputs {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  /* Remove any left margin to align with header "Enter Controls:" text */
+  margin-left: 0;
+  gap: 10px;
 }
 .control-group {
+  /* No label offset; simply display the input */
   display: flex;
   align-items: center;
-  margin-right: 10px;
-}
-.control-label {
-  font-size: 0.8rem;
-  color: #181818;
-  font-weight: bold;
-  margin-right: 5px;
 }
 .start-time-input .control-input {
   width: 60px;
