@@ -302,7 +302,8 @@ export default {
   font-weight: bold;
   margin-right: 5px;
 }
-.control-input {
+/* Increased specificity for control boxes */
+.start-time-input .control-input {
   width: 60px;
   height: 36px;
   text-align: center;
@@ -336,3 +337,4 @@ label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
 </style>
+
