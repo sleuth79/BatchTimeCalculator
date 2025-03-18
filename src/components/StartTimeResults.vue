@@ -31,7 +31,7 @@
       Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }} ends at {{ results.closestPositionBefore4PM.endTime }}
+          {{ results.closestPositionBefore4PM.position }} runs from {{ displayBatchStartTime }} to {{ results.closestPositionBefore4PM.endTime }}
         </template>
         <template v-else>
           {{ closestPositionDisplay }}
