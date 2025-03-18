@@ -2,7 +2,7 @@
   <div class="run-table">
     <table>
       <thead>
-        <!-- Only display the Initial Batch header if computedRuns has entries -->
+        <!-- Only display the header if there are computed rows -->
         <template v-if="computedRuns.length > 0">
           <tr class="title-row">
             <th colspan="4" class="batch-header">Initial Batch</th>
@@ -16,21 +16,24 @@
         </template>
       </thead>
       <tbody>
-        <!-- Render the computed rows -->
         <tr v-for="(row, index) in computedRuns" :key="index">
-          <td class="run-column">{{ row.position || '-' }}</td>
+          <td class="run-column">
+            <!-- If the row is a control row, leave run number blank (or show a dash) -->
+            {{ row.position || '-' }}
+          </td>
           <td>{{ row.computedTitle }}</td>
           <td>{{ row.startTime }}</td>
           <td>{{ row.endTime }}</td>
         </tr>
-
-        <!-- (The sequential, additional, and delayed sections would follow a similar pattern.) -->
       </tbody>
     </table>
   </div>
 </template>
 
 <script>
+import { useGcStore } from '../store';
+import { formatTimeWithAmPmAndSeconds } from '../utils/utils.js';
+
 function parseRunTime(timeStr) {
   if (!timeStr) return 0;
   if (typeof timeStr === "number") return timeStr * 60000;
@@ -48,9 +51,6 @@ function parseRunTime(timeStr) {
   return 0;
 }
 
-import { useGcStore } from '../store';
-import { formatTimeWithAmPmAndSeconds } from '../utils/utils.js';
-
 export default {
   name: "RunTable",
   props: {
@@ -65,105 +65,123 @@ export default {
     return { gcStore };
   },
   computed: {
-    // Computed headings (as before)
+    // Compute control headings from the store values.
     initialControlHeading() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
-      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
-      const higher = Math.max(c1, c2);
-      return higher > 0 ? `Control - ${higher}` : "Initial Control";
+      // Higher number becomes the initial control heading.
+      const c1 = Number(this.gcStore.startTime.controls?.control1);
+      const c2 = Number(this.gcStore.startTime.controls?.control2);
+      const higher = Math.max(c1 || 0, c2 || 0);
+      return higher ? `Control - ${higher}` : "Initial Control";
     },
     finalControlHeading() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
-      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
-      const lower = Math.min(c1, c2);
-      return lower > 0 ? `Control - ${lower}` : "Final Control";
+      // Lower number becomes the final control heading.
+      const c1 = Number(this.gcStore.startTime.controls?.control1);
+      const c2 = Number(this.gcStore.startTime.controls?.control2);
+      const lower = Math.min(c1 || 0, c2 || 0);
+      return lower ? `Control - ${lower}` : "Final Control";
     },
-
     computedRuns() {
-      // Ensure both control values exist; otherwise, fall back to a default mapping.
+      // Separate the wait row from the normal runs.
+      let waitRow = null;
+      const nonWaitRuns = [];
+      for (const run of this.runs) {
+        if (String(run.position).toLowerCase() === 'wait') {
+          waitRow = run;
+        } else {
+          nonWaitRuns.push(run);
+        }
+      }
+      
+      // If control values aren’t set, just return the original order.
       const c1 = Number(this.gcStore.startTime.controls?.control1);
       const c2 = Number(this.gcStore.startTime.controls?.control2);
       if (!c1 || !c2) {
-        // Fallback: simply return the original runs mapped with existing titles.
-        return this.runs.map(run => ({
-            ...run,
-            computedTitle: run.computedTitle || run.position,
-        }));
+        return waitRow ? [waitRow, ...nonWaitRuns] : nonWaitRuns;
       }
       
-      // Determine control values.
+      // Determine the control values.
       const finalControl = Math.min(c1, c2);    // e.g., 11
       const initialControl = Math.max(c1, c2);   // e.g., 25
       
-      // Sort the runs by numeric position.
-      let runsSorted = this.runs.slice().sort((a, b) => Number(a.position) - Number(b.position));
-      
-      // Filter out runs whose positions equal the control values,
-      // and skip run 16 (as per earlier logic).
-      runsSorted = runsSorted.filter(run => {
+      // Filter out runs whose numeric positions equal either control value.
+      const filteredRuns = nonWaitRuns.filter(run => {
         const pos = Number(run.position);
-        return pos !== finalControl && pos !== initialControl && pos !== 16;
+        return pos !== finalControl && pos !== initialControl;
       });
+      
+      // Sort the remaining runs in ascending order.
+      filteredRuns.sort((a, b) => Number(a.position) - Number(b.position));
       
       const newRuns = [];
+      // Start with the wait row (if it exists).
+      if (waitRow) {
+        newRuns.push({
+          position: "wait",
+          computedTitle: "15-Min Wait",
+          startTime: waitRow.startTime || "",
+          endTime: waitRow.endTime || ""
+        });
+      }
       
-      // Insert a top control row with the initial control (higher number)
-      newRuns.push({
-        position: '',
-        computedTitle: `Control - ${initialControl}`,
-        startTime: '',  // Could later be computed or left blank
-        endTime: '',
-        isControl: true,
-      });
+      // Now, build the new order from the filtered runs.
+      // We assume the filteredRuns array (F) has the following order (example when controls are 11 and 25):
+      // F = [ pos 1, pos 2, pos 3, pos 4, pos 5, pos 6, pos 7, pos 8, pos 9, pos 10, pos 12, pos 13, pos 14, pos 15, pos 17, pos 18, pos 19, pos 20, pos 21, pos 22, pos 23, pos 24, pos 26, pos 27, pos 28, pos 29, pos 30, pos 31, pos 32 ]
       
-      // Iterate through the filtered runs and insert control rows after fixed boundaries.
-      for (let i = 0; i < runsSorted.length; i++) {
-        const run = runsSorted[i];
-        const pos = Number(run.position);
-        newRuns.push(run);
-        if (pos === 12) {
-          // Insert final control row (lower number) after run 12.
+      // Insert control rows at fixed F indices:
+      // - Insert a control row for the initial control (e.g., "Control - 25") at index 2.
+      // - Insert a control row for the final control (e.g., "Control - 11") after index 10.
+      // - Insert another initial control row after index 19.
+      // - Append a final control row at the end.
+      
+      for (let i = 0; i < filteredRuns.length; i++) {
+        // At F index 2, insert the initial control row.
+        if (i === 2) {
           newRuns.push({
-            position: '',
-            computedTitle: `Control - ${finalControl}`,
-            startTime: '',
-            endTime: '',
-            isControl: true,
+            position: "",
+            computedTitle: this.initialControlHeading,
+            startTime: "",
+            endTime: ""
           });
         }
-        if (pos === 22) {
-          // Insert initial control row (higher number) after run 22.
+        // Add the current run.
+        newRuns.push(filteredRuns[i]);
+        // At F index 10, insert the final control row.
+        if (i === 10) {
           newRuns.push({
-            position: '',
-            computedTitle: `Control - ${initialControl}`,
-            startTime: '',
-            endTime: '',
-            isControl: true,
+            position: "",
+            computedTitle: this.finalControlHeading,
+            startTime: "",
+            endTime: ""
+          });
+        }
+        // At F index 19, insert another initial control row.
+        if (i === 19) {
+          newRuns.push({
+            position: "",
+            computedTitle: this.initialControlHeading,
+            startTime: "",
+            endTime: ""
           });
         }
       }
       
-      // Insert a bottom control row with the final control.
+      // Finally, append a bottom row for the final control.
       newRuns.push({
-        position: '',
-        computedTitle: `Control - ${finalControl}`,
-        startTime: '',
-        endTime: '',
-        isControl: true,
+        position: "",
+        computedTitle: `Final ${this.finalControlHeading}`,
+        startTime: "",
+        endTime: ""
       });
       
       return newRuns;
     },
-
-    // (You would apply similar logic to sequentialRows if needed.)
+    
+    // The sequentialRows, additionalRows, and prebatchRows computed properties remain unchanged.
     sequentialRows() {
-      // Example: if you want sequential rows to follow similar insertion rules,
-      // you can mirror the logic from computedRuns using the sequential run data.
-      // For brevity, this example leaves it unchanged.
+      // (Leave as is or implement similar control-insertion logic if needed.)
       return [];
     },
-
-    // Other computed properties (additionalRows, prebatchRows, etc.) remain unchanged.
+    
     lastMainRunNumber() {
       if (this.sequentialRows.length) {
         const nonWaitRows = this.sequentialRows.filter(r => r.position !== 'Wait');
@@ -172,7 +190,6 @@ export default {
         }
       }
       if (this.computedRuns.length) {
-        // Find the last row with a numeric position.
         const numericRows = this.computedRuns.filter(r => r.position && !isNaN(Number(r.position)));
         if (numericRows.length) {
           return Number(numericRows[numericRows.length - 1].position);
@@ -180,7 +197,7 @@ export default {
       }
       return 0;
     },
-
+    
     additionalRows() {
       // (Unchanged from your existing code.)
       const { startTime, allGcData, selectedGc, timeDelayResults } = this.gcStore;
@@ -216,7 +233,7 @@ export default {
       }
       return rows;
     },
-
+    
     prebatchRows() {
       // (Unchanged from your existing code.)
       const { startTime, allGcData, selectedGc, timeDelayResults } = this.gcStore;
@@ -261,14 +278,14 @@ export default {
       }
       return rows;
     },
-
+    
     timeDelayRequired() {
       const { timeDelayResults } = this.gcStore;
       return timeDelayResults && timeDelayResults.timeDelayRequired
         ? timeDelayResults.timeDelayRequired
         : "";
     },
-
+    
     delayedRunSelected() {
       const { timeDelayResults } = this.gcStore;
       return (
@@ -294,7 +311,6 @@ export default {
   margin-top: 8px;
   font-size: 0.9rem;
 }
-/* Reduced vertical padding for table cells */
 .run-table th,
 .run-table td {
   padding: 4px 10px;
