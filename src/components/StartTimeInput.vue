@@ -24,7 +24,7 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <label for="control1" class="control-label">C1:</label>
+            <label for="control1" class="control-label">1:</label>
             <input
               type="number"
               id="control1"
@@ -35,7 +35,7 @@
             />
           </div>
           <div class="control-group">
-            <label for="control2" class="control-label">C2:</label>
+            <label for="control2" class="control-label">2:</label>
             <input
               type="number"
               id="control2"
