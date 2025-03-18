@@ -1,5 +1,5 @@
 <template>
-  <div class="run-table">
+  <div class="run-table" ref="tableRoot">
     <table>
       <thead>
         <template v-if="finalRows.length > 0">
@@ -15,15 +15,20 @@
         </template>
       </thead>
       <tbody>
-        <!-- If a wait row exists (first element has position "Wait"), render it once -->
-        <tr v-if="runsHasWait">
+        <!-- Render wait row if present (only once) -->
+        <tr v-if="runsHasWait" class="run-row wait-row" data-run-type="wait">
           <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render the fixed 33 runs -->
-        <tr v-for="(row, index) in fixedRows" :key="index">
+        <!-- Render the fixed 33 run rows -->
+        <tr
+          v-for="(row, index) in fixedRows"
+          :key="index"
+          class="run-row"
+          :data-end-time="row.endTime"
+        >
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
           <td>{{ row.startTime }}</td>
@@ -35,79 +40,61 @@
 </template>
 
 <script>
+import { onMounted, onUpdated, nextTick, computed } from "vue";
 import { useGcStore } from "../store";
 import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 
 export default {
   name: "RunTable",
   props: {
-    // runs is the array produced by your calculation,
-    // which might include a wait row at index 0 if wait15 is true.
+    // runs is expected to be an array that may include a wait row as its first element.
     runs: {
       type: Array,
       required: true,
-      default: () => [],
+      default: () => []
     }
   },
   setup(props) {
     const gcStore = useGcStore();
-    return { gcStore, props };
-  },
-  computed: {
-    // Check if the first row in runs is a wait row.
-    runsHasWait() {
+    const tableRoot = ref(null);
+
+    // Check if the first run in props is a wait row.
+    const runsHasWait = computed(() => {
       return (
-        this.runs.length > 0 &&
-        String(this.runs[0].position).toLowerCase() === "wait"
+        props.runs.length > 0 &&
+        String(props.runs[0].position).toLowerCase() === "wait"
       );
-    },
-    // Get the wait row if present.
-    waitRow() {
-      return this.runsHasWait ? this.runs[0] : null;
-    },
-    // The baseRuns array excludes the wait row (if present).
-    baseRuns() {
-      return this.runsHasWait ? this.runs.slice(1) : this.runs;
-    },
-    // Determine control values from the store.
-    initialControl() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1);
-      const c2 = Number(this.gcStore.startTime.controls?.control2);
+    });
+    const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
+    // baseRuns excludes the wait row (if present)
+    const baseRuns = computed(() => (runsHasWait.value ? props.runs.slice(1) : props.runs));
+
+    // Fixed 33-run ordering as before.
+    const initialControl = computed(() => {
+      const c1 = Number(gcStore.startTime.controls?.control1);
+      const c2 = Number(gcStore.startTime.controls?.control2);
       return Math.max(c1 || 0, c2 || 0);
-    },
-    finalControl() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1);
-      const c2 = Number(this.gcStore.startTime.controls?.control2);
+    });
+    const finalControl = computed(() => {
+      const c1 = Number(gcStore.startTime.controls?.control1);
+      const c2 = Number(gcStore.startTime.controls?.control2);
       return Math.min(c1 || 0, c2 || 0);
-    },
-    // Allowed positions: numbers from 3 to 32, excluding initialControl, finalControl, and 16.
-    allowedPositions() {
+    });
+    const allowedPositions = computed(() => {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
-        if (num === this.initialControl || num === this.finalControl || num === 16) continue;
+        if (num === initialControl.value || num === finalControl.value || num === 16) continue;
         positions.push(num);
       }
-      return positions; // Should be 27 numbers.
-    },
-    // Build exactly 33 fixed run rows (not including any wait row).
-    fixedRows() {
-      const totalFixed = 33; // Runs 1 to 33.
+      return positions;
+    });
+    const fixedRows = computed(() => {
+      const totalFixed = 33;
       const rows = [];
-      // We use the baseRuns array for run times.
-      // If a run is missing, default to empty times.
       const getRunTime = (i) => {
-        return this.baseRuns[i] ? this.baseRuns[i] : { startTime: "", endTime: "" };
+        return baseRuns.value[i] ? baseRuns.value[i] : { startTime: "", endTime: "" };
       };
-      // Helper: determine title based on fixed run number.
-      // Fixed rows:
-      // 1: "Blank" (capitalized)
-      // 2: "Argon Blank" (or "Methane Blank" based on GC type)
-      // 3: "Control - [initialControl]"
-      // 13: "Control - [finalControl]"
-      // 23: "Control - [initialControl]"
-      // 33: "Control - [finalControl]"
-      // Others: "Position [X]" where X comes from allowedPositions.
-      const gcType = (this.gcStore.allGcData[this.gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType) {
         if (runNumber === 1) {
           return "Blank";
@@ -122,62 +109,78 @@ export default {
         } else if (runNumber === 33) {
           return `Control - ${finalControl}`;
         } else {
-          // For non-control rows, assign a "Position" title.
-          // We know there are exactly 27 allowed positions.
           let posIndex;
           if (runNumber >= 4 && runNumber <= 12) {
-            posIndex = runNumber - 4; // indices 0 to 8
+            posIndex = runNumber - 4;
           } else if (runNumber >= 14 && runNumber <= 22) {
-            posIndex = (runNumber - 14) + 9; // indices 9 to 17
+            posIndex = (runNumber - 14) + 9;
           } else if (runNumber >= 24 && runNumber <= 32) {
-            posIndex = (runNumber - 24) + 18; // indices 18 to 26
+            posIndex = (runNumber - 24) + 18;
           }
           return posIndex !== undefined && posIndex < allowedPositions.length
             ? `Position ${allowedPositions[posIndex]}`
             : "";
         }
       }
-      
       for (let i = 1; i <= totalFixed; i++) {
         const runTimes = getRunTime(i - 1);
         rows.push({
           position: i,
-          computedTitle: getTitle(i, this.allowedPositions, this.initialControl, this.finalControl, gcType),
+          computedTitle: getTitle(i, allowedPositions.value, initialControl.value, finalControl.value, gcType),
           startTime: runTimes.startTime,
           endTime: runTimes.endTime
         });
       }
       return rows;
-    },
-    // finalRows combines the wait row (if any) with the 33 fixed rows.
-    finalRows() {
-      return this.runsHasWait ? [this.waitRow, ...this.fixedRows] : this.fixedRows;
-    },
-    
-    // (Other computed properties for sequentialRows, additionalRows, etc. remain unchanged.)
-    sequentialRows() {
-      return [];
-    },
-    additionalRows() {
-      return [];
-    },
-    prebatchRows() {
-      return [];
-    },
-    timeDelayRequired() {
-      const { timeDelayResults } = this.gcStore;
-      return timeDelayResults && timeDelayResults.timeDelayRequired
-        ? timeDelayResults.timeDelayRequired
-        : "";
-    },
-    delayedRunSelected() {
-      const { timeDelayResults } = this.gcStore;
-      return (
-        timeDelayResults &&
-        (timeDelayResults.prerunsDescription !== 'None' ||
-          Number(timeDelayResults.totalDelayedRuns) > 0)
-      );
+    });
+    const finalRows = computed(() => {
+      return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
+    });
+
+    // NEW: After the table is rendered, pull from the DOM the run row whose end time is the latest before 4:00 PM.
+    function updateClosestFromDOM() {
+      if (!tableRoot.value) return;
+      // Find all fixed run rows (exclude the wait row).
+      const rows = tableRoot.value.querySelectorAll("tr.run-row:not(.wait-row)");
+      const today = new Date();
+      const cutoff = new Date(`${today.toDateString()} 4:00:00 PM`);
+      let candidate = null;
+      rows.forEach(row => {
+        const endTimeStr = row.getAttribute("data-end-time");
+        if (!endTimeStr) return;
+        const endDate = new Date(`${today.toDateString()} ${endTimeStr}`);
+        if (endDate < cutoff) {
+          if (!candidate || endDate > new Date(`${today.toDateString()} ${candidate.endTime}`)) {
+            candidate = { row, endTime: endTimeStr };
+          }
+        }
+      });
+      if (candidate && candidate.row) {
+        // Get the run title from the candidate row.
+        const titleCell = candidate.row.querySelector("td:nth-child(2)");
+        if (titleCell && titleCell.textContent) {
+          // Call the store action to set this value.
+          gcStore.setClosestPositionBefore4PM(titleCell.textContent.trim());
+        }
+      }
     }
+
+    // Update after mounting and after each update.
+    onMounted(() => {
+      nextTick(updateClosestFromDOM);
+    });
+    onUpdated(() => {
+      nextTick(updateClosestFromDOM);
+    });
+
+    return {
+      gcStore,
+      finalRows,
+      runsHasWait,
+      waitRow,
+      fixedRows,
+      tableRoot
+    };
   }
 };
 </script>
