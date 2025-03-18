@@ -29,10 +29,10 @@
               type="number"
               id="control1"
               v-model.number="localControl1"
+              :min="control1Range.min"
+              :max="control1Range.max"
               @blur="validateControl1"
               class="control-input"
-              min="3"
-              max="32"
             />
           </div>
           <div class="control-group">
@@ -41,10 +41,10 @@
               type="number"
               id="control2"
               v-model.number="localControl2"
+              :min="control2Range.min"
+              :max="control2Range.max"
               @blur="validateControl2"
               class="control-input"
-              min="3"
-              max="32"
             />
           </div>
         </div>
@@ -163,7 +163,8 @@ export default {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
       if (parts.length !== 3) {
-        timeInputError.value = "Invalid format. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+        timeInputError.value =
+          "Invalid format. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
         return;
       }
       const [hour, minute, second] = parts.map(Number);
@@ -179,7 +180,8 @@ export default {
         second > 59
       ) {
         localBatchStartTime.value = "";
-        timeInputError.value = "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+        timeInputError.value =
+          "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
       }
     };
 
@@ -192,36 +194,78 @@ export default {
       recalculateResults();
     };
 
-    // --- New Local Control Inputs & Validation on Blur ---
+    // --- New Local Control Inputs & Dynamic Allowed Ranges ---
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
+    // Define allowed ranges:
+    // - If the other control is set, the current control's allowed range is the complementary set.
+    // - Otherwise, allow full range 3–32 (with 16 skipped in validation).
+    const control1Range = computed(() => {
+      const other = Number(localControl2.value);
+      if (!isNaN(other) && other !== 0) {
+        if (other >= 3 && other <= 15) {
+          return { min: 17, max: 32 };
+        } else if (other >= 17 && other <= 32) {
+          return { min: 3, max: 15 };
+        }
+      }
+      return { min: 3, max: 32 };
+    });
+
+    const control2Range = computed(() => {
+      const other = Number(localControl1.value);
+      if (!isNaN(other) && other !== 0) {
+        if (other >= 3 && other <= 15) {
+          return { min: 17, max: 32 };
+        } else if (other >= 17 && other <= 32) {
+          return { min: 3, max: 15 };
+        }
+      }
+      return { min: 3, max: 32 };
+    });
+
+    // Validation functions for controls on blur.
+    // They adjust the value to the nearest boundary if it falls outside the allowed range,
+    // and they also ensure that a value of 16 is never accepted.
     const validateControl1 = () => {
       let num = Number(localControl1.value);
-      if (isNaN(num) || num < 3) {
-        num = 3;
-      } else if (num > 32) {
-        num = 32;
-      } else if (num === 16) {
-        // Skip 16 – default to 17.
-        num = 17;
+      if (isNaN(num)) {
+        num = control1Range.value.min;
+      }
+      if (num === 16) {
+        num = control1Range.value.min;
+      }
+      if (num < control1Range.value.min) {
+        num = control1Range.value.min;
+      } else if (num > control1Range.value.max) {
+        num = control1Range.value.max;
       }
       localControl1.value = num;
-      gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: num };
+      gcStore.startTime.controls = {
+        ...gcStore.startTime.controls,
+        control1: num,
+      };
     };
 
     const validateControl2 = () => {
       let num = Number(localControl2.value);
-      if (isNaN(num) || num < 3) {
-        num = 3;
-      } else if (num > 32) {
-        num = 32;
-      } else if (num === 16) {
-        // Skip 16 – default to 17.
-        num = 17;
+      if (isNaN(num)) {
+        num = control2Range.value.min;
+      }
+      if (num === 16) {
+        num = control2Range.value.min;
+      }
+      if (num < control2Range.value.min) {
+        num = control2Range.value.min;
+      } else if (num > control2Range.value.max) {
+        num = control2Range.value.max;
       }
       localControl2.value = num;
-      gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: num };
+      gcStore.startTime.controls = {
+        ...gcStore.startTime.controls,
+        control2: num,
+      };
     };
 
     return {
@@ -237,9 +281,11 @@ export default {
       startTimeFinalPositionError,
       recalculateResults,
       showWaitInput,
-      // New control bindings
+      // Control bindings and dynamic ranges
       localControl1,
       localControl2,
+      control1Range,
+      control2Range,
       validateControl1,
       validateControl2,
     };
@@ -297,7 +343,6 @@ export default {
   font-weight: bold;
   margin-right: 5px;
 }
-/* Increased specificity for control boxes */
 .start-time-input .control-input {
   width: 60px;
   height: 36px;
