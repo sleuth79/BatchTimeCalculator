@@ -2,8 +2,8 @@
   <div class="run-table">
     <table>
       <thead>
-        <!-- Render header only if there are computed rows -->
-        <template v-if="computedRuns.length > 0">
+        <!-- Only display the header if there are computed rows -->
+        <template v-if="finalRows.length > 0">
           <tr class="title-row">
             <th colspan="4" class="batch-header">Initial Batch</th>
           </tr>
@@ -16,8 +16,15 @@
         </template>
       </thead>
       <tbody>
-        <!-- Render all 33 runs -->
-        <tr v-for="(row, index) in computedRuns" :key="index">
+        <!-- Render wait row if active -->
+        <tr v-if="gcStore.startTime.wait15">
+          <td class="run-column">wait</td>
+          <td>15-Min Wait</td>
+          <td>{{ waitStartTime }}</td>
+          <td>{{ waitEndTime }}</td>
+        </tr>
+        <!-- Render the 33 fixed runs -->
+        <tr v-for="(row, index) in finalRows" :key="index">
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
           <td>{{ row.startTime }}</td>
@@ -35,32 +42,39 @@ import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 export default {
   name: "RunTable",
   props: {
-    // Expect an array of run objects (ideally 33 items for the initial batch).
+    // Expect an array of run objects (ideally 33 items for the fixed ordering)
     runs: {
       type: Array,
       required: true,
       default: () => [],
     },
+    // Optionally, you can pass wait times as props.
+    waitStartTime: {
+      type: String,
+      default: ""
+    },
+    waitEndTime: {
+      type: String,
+      default: ""
+    }
   },
   setup() {
     const gcStore = useGcStore();
     return { gcStore };
   },
   computed: {
-    // Determine control values from the store.
+    // Determine the two control values from the store.
     initialControl() {
-      // Higher number becomes the initial control.
       const c1 = Number(this.gcStore.startTime.controls?.control1);
       const c2 = Number(this.gcStore.startTime.controls?.control2);
       return Math.max(c1 || 0, c2 || 0);
     },
     finalControl() {
-      // Lower number becomes the final control.
       const c1 = Number(this.gcStore.startTime.controls?.control1);
       const c2 = Number(this.gcStore.startTime.controls?.control2);
       return Math.min(c1 || 0, c2 || 0);
     },
-    // Build the allowed "pos" numbers from 3 to 32 excluding the control values and 16.
+    // Build the allowed positions: numbers from 3 to 32, excluding initialControl, finalControl, and 16.
     allowedPositions() {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
@@ -69,28 +83,29 @@ export default {
       }
       return positions; // Should have 27 numbers.
     },
-    computedRuns() {
-      const totalRuns = 33; // Always 33 rows.
+    // Compute the 33 fixed run rows.
+    fixedRows() {
+      const totalRuns = 33;
       const rows = [];
-      // Helper to retrieve run times from the runs prop; if missing, default to empty strings.
+      // Helper: retrieve run times from the runs prop (if available) or use empty strings.
       const getRunTime = (i) => {
         return this.runs[i] ? this.runs[i] : { startTime: "", endTime: "" };
       };
-      // Helper: given a run number, return the title.
-      // Fixed titles:
-      // Run 1: "blank"
-      // Run 2: "argon blank" (or "methane blank" based on GC type)
-      // Run 3: "Control - {initialControl}"
-      // Run 13: "Control - {finalControl}"
-      // Run 23: "Control - {initialControl}"
-      // Run 33: "Final Control - {finalControl}"
-      // For other runs, use allowedPositions.
+      // Helper function to compute a title for a given run number.
+      // Run numbers:
+      // 1: "Blank"
+      // 2: "Argon Blank" (or "Methane Blank" if not energy)
+      // 3: "Control - {initialControl}"
+      // 13: "Control - {finalControl}"
+      // 23: "Control - {initialControl}"
+      // 33: "Control - {finalControl}"
+      // All others: "Position {X}" where X is from allowedPositions.
       const gcType = (this.gcStore.allGcData[this.gcStore.selectedGc]?.type || "").trim().toLowerCase();
       function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType) {
         if (runNumber === 1) {
-          return "blank";
+          return "Blank";
         } else if (runNumber === 2) {
-          return gcType.includes("energy") ? "argon blank" : "methane blank";
+          return gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
         } else if (runNumber === 3) {
           return `Control - ${initialControl}`;
         } else if (runNumber === 13) {
@@ -98,22 +113,19 @@ export default {
         } else if (runNumber === 23) {
           return `Control - ${initialControl}`;
         } else if (runNumber === 33) {
-          return `Final Control - ${finalControl}`;
+          return `Control - ${finalControl}`;
         } else {
-          // Determine which group this run falls into.
+          // Determine which group the run falls into:
           let posIndex;
           if (runNumber >= 4 && runNumber <= 12) {
-            // 9 rows: indices 0..8
-            posIndex = runNumber - 4;
+            posIndex = runNumber - 4; // group 1: 9 items (indices 0..8)
           } else if (runNumber >= 14 && runNumber <= 22) {
-            // 9 rows: indices 9..17
-            posIndex = (runNumber - 14) + 9;
+            posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
           } else if (runNumber >= 24 && runNumber <= 32) {
-            // 9 rows: indices 18..26
-            posIndex = (runNumber - 24) + 18;
+            posIndex = (runNumber - 24) + 18; // group 3: indices 18..26
           }
           return posIndex !== undefined && posIndex < allowedPositions.length
-            ? `pos ${allowedPositions[posIndex]}`
+            ? `Position ${allowedPositions[posIndex]}`
             : "";
         }
       }
@@ -129,9 +141,25 @@ export default {
       }
       return rows;
     },
+    // If wait is active, prepend the wait row to the fixedRows.
+    finalRows() {
+      if (this.gcStore.startTime.wait15) {
+        return [
+          {
+            position: "wait",
+            computedTitle: "15-Min Wait",
+            startTime: this.waitStartTime,
+            endTime: this.waitEndTime
+          },
+          ...this.fixedRows
+        ];
+      } else {
+        return this.fixedRows;
+      }
+    },
     
+    // Other computed properties (sequentialRows, additionalRows, prebatchRows) can remain as before.
     sequentialRows() {
-      // (Implement similar ordering for sequential batch if needed.)
       return [];
     },
     additionalRows() {
