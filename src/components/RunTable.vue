@@ -109,6 +109,20 @@ export default {
     return { gcStore };
   },
   computed: {
+    // Compute headings for controls based on the store values.
+    initialControlHeading() {
+      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
+      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
+      const higher = Math.max(c1, c2);
+      return higher > 0 ? "Control - " + higher : "Initial Control";
+    },
+    finalControlHeading() {
+      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
+      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
+      const lower = Math.min(c1, c2);
+      return lower > 0 ? "Control - " + lower : "Final Control";
+    },
+
     computedRuns() {
       if (!this.gcStore.results || !this.gcStore.results.startTimeFinalPosition) {
         return [];
@@ -126,7 +140,7 @@ export default {
         }
         const numericPos = Number(posString);
         if (index === this.runs.length - 1) {
-          title = 'Final Control';
+          title = this.finalControlHeading;
         } else if (posString === 'wait') {
           title = '15-Min Wait';
         } else if (numericPos === 1) {
@@ -140,7 +154,7 @@ export default {
             title = 'Blank 2';
           }
         } else if (numericPos === 3) {
-          title = 'Initial Control';
+          title = this.initialControlHeading;
         } else {
           if (seq === 16) seq++; // skip 16 if needed
           title = 'Position ' + seq;
@@ -199,9 +213,9 @@ export default {
             computedTitle = 'Blank 2';
           }
         } else if (i === 2) {
-          computedTitle = "Initial Control";
+          computedTitle = this.initialControlHeading;
         } else if (i === totalNonWaitRows - 1) {
-          computedTitle = "Final Control";
+          computedTitle = this.finalControlHeading;
         } else {
           computedTitle = "Position " + i;
         }
