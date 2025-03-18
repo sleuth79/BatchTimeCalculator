@@ -297,6 +297,7 @@ export default {
 
 /* Right column for Controls */
 .controls-inputs {
+  height: 36px;
   flex: 1;
   display: flex;
   align-items: center;
