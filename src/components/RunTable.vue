@@ -2,7 +2,7 @@
   <div class="run-table">
     <table>
       <thead>
-        <!-- Only display the header if there are computed rows -->
+        <!-- Render header only if there are computed rows -->
         <template v-if="computedRuns.length > 0">
           <tr class="title-row">
             <th colspan="4" class="batch-header">Initial Batch</th>
@@ -16,7 +16,7 @@
         </template>
       </thead>
       <tbody>
-        <!-- Render the 33 runs -->
+        <!-- Render all 33 rows -->
         <tr v-for="(row, index) in computedRuns" :key="index">
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
@@ -29,13 +29,13 @@
 </template>
 
 <script>
-import { useGcStore } from '../store';
-import { formatTimeWithAmPmAndSeconds } from '../utils/utils.js';
+import { useGcStore } from "../store";
+import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 
 export default {
   name: "RunTable",
   props: {
-    // Expect an array of 33 run objects (already computed with start and end times)
+    // Expect an array of run objects (ideally of length 33) for start/end times.
     runs: {
       type: Array,
       required: true,
@@ -47,103 +47,106 @@ export default {
     return { gcStore };
   },
   computed: {
-    // Compute the control headings from the store values.
-    // The initial control is the higher number, the final control is the lower number.
+    // The two control values come from the store.
+    // The higher one is the "initial control" and the lower one is the "final control."
     initialControl() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
-      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
-      return Math.max(c1, c2);
+      const c1 = Number(this.gcStore.startTime.controls?.control1);
+      const c2 = Number(this.gcStore.startTime.controls?.control2);
+      return Math.max(c1 || 0, c2 || 0);
     },
     finalControl() {
-      const c1 = Number(this.gcStore.startTime.controls?.control1) || 0;
-      const c2 = Number(this.gcStore.startTime.controls?.control2) || 0;
-      return Math.min(c1, c2);
+      const c1 = Number(this.gcStore.startTime.controls?.control1);
+      const c2 = Number(this.gcStore.startTime.controls?.control2);
+      return Math.min(c1 || 0, c2 || 0);
+    },
+    // Build a fixed array of allowed "pos" numbers: from 3 to 32 except the control numbers.
+    allowedPositions() {
+      const positions = [];
+      for (let num = 3; num <= 32; num++) {
+        if (num === this.initialControl || num === this.finalControl) continue;
+        positions.push(num);
+      }
+      return positions; // length should be 27 if controls are within [3,32] and distinct.
     },
     computedRuns() {
-      // We assume that this.runs is an array of 33 run objects
-      // (each with computed startTime and endTime already).
-      // We create a new array of 33 rows where each row gets a fixed run number (1..33)
-      // and a title determined by its run number.
-      const totalRuns = 33;
-      // Helper: given a run number (1-indexed), return the title.
-      function getTitle(runNumber, initialControl, finalControl, gcType) {
-        // You can adjust the blank/argon blank titles based on gcType as needed.
-        switch (runNumber) {
-          case 1:
-            return "blank";
-          case 2:
-            return gcType.includes("energy") ? "argon blank" : "methane blank";
-          case 3:
-            return `Control - ${initialControl}`;
-          case 13:
-            return `Control - ${finalControl}`;
-          case 23:
-            return `Control - ${initialControl}`;
-          case 33:
-            return `Final Control - ${finalControl}`;
-          default:
-            // For non-control rows, use a mapping that adjusts for the inserted controls.
-            // The idea is that the "pos" number should equal:
-            // runNumber minus the number of control rows that appear before it.
-            let controlCount = 0;
-            if (runNumber > 3) controlCount++;
-            if (runNumber > 13) controlCount++;
-            if (runNumber > 23) controlCount++;
-            if (runNumber > 33) controlCount++; // not applicable for 33
-            // For run 4, for example, pos = 4 - 1 = 3.
-            // However, we want to preserve the special titles for run 1, 2, 3, 13, 23, 33.
-            // So for any run that is not one of these, the title is "pos " + (runNumber - controlCount).
-            return `pos ${runNumber - controlCount}`;
-        }
-      }
-      
-      // Determine gcType from the store data.
-      const gcType = (this.gcStore.allGcData[this.gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      
-      // Build a new array of 33 rows. We assume this.runs is already sorted in the desired order.
-      // If not, you might want to sort them.
-      // We'll map each run (by index) to a new object with fixed run number and computed title.
-      // If there is any discrepancy (e.g., if this.runs doesn't have 33 items),
-      // we fill in missing rows with empty times.
+      const totalRuns = 33; // Always 33 run rows (not counting the wait row).
       const rows = [];
-      for (let i = 0; i < totalRuns; i++) {
-        const runNumber = i + 1;
-        // Use the existing run from props if available.
-        const run = this.runs[i] || { startTime: "", endTime: "" };
+      // Helper: get run times from the runs prop; if missing, default to "".
+      const getRunTime = (i) => {
+        return this.runs[i] ? this.runs[i] : { startTime: "", endTime: "" };
+      };
+      // We'll assign titles based on fixed run numbers:
+      // Run 1: blank, Run 2: argon blank.
+      // Run 3: Control – {initialControl}
+      // Run 13: Control – {finalControl}
+      // Run 23: Control – {initialControl}
+      // Run 33: Final Control – {finalControl}
+      // For the other run numbers, assign a "pos" title using allowedPositions.
+      // The allowedPositions array has 27 numbers.
+      // Map the runs as:
+      // Runs 4–12 (indices 3 to 11) get allowedPositions[0..8]
+      // Runs 14–22 (indices 13 to 21) get allowedPositions[9..17]
+      // Runs 24–32 (indices 23 to 31) get allowedPositions[18..26]
+      for (let i = 1; i <= totalRuns; i++) {
+        let title = "";
+        if (i === 1) {
+          title = "blank";
+        } else if (i === 2) {
+          // For GC type, choose between "argon blank" or "methane blank"
+          const gcType = (this.gcStore.allGcData[this.gcStore.selectedGc]?.type || "").trim().toLowerCase();
+          title = gcType.includes("energy") ? "argon blank" : "methane blank";
+        } else if (i === 3) {
+          title = `Control - ${this.initialControl}`;
+        } else if (i === 13) {
+          title = `Control - ${this.finalControl}`;
+        } else if (i === 23) {
+          title = `Control - ${this.initialControl}`;
+        } else if (i === 33) {
+          title = `Final Control - ${this.finalControl}`;
+        } else {
+          // For non-control rows, determine which block they fall in.
+          let posIndex;
+          if (i >= 4 && i <= 12) {
+            posIndex = i - 4; // indices 0 to 8
+          } else if (i >= 14 && i <= 22) {
+            posIndex = (i - 14) + 9; // indices 9 to 17
+          } else if (i >= 24 && i <= 32) {
+            posIndex = (i - 24) + 18; // indices 18 to 26
+          }
+          // Use the allowedPositions array.
+          if (posIndex !== undefined && posIndex < this.allowedPositions.length) {
+            title = `pos ${this.allowedPositions[posIndex]}`;
+          } else {
+            title = "";
+          }
+        }
+        const runTimes = getRunTime(i - 1);
         rows.push({
-          position: runNumber,
-          computedTitle: getTitle(runNumber, this.initialControl, this.finalControl, gcType),
-          startTime: run.startTime || "",
-          endTime: run.endTime || ""
+          position: i,
+          computedTitle: title,
+          startTime: runTimes.startTime,
+          endTime: runTimes.endTime
         });
       }
       return rows;
     },
     
-    // The other computed properties (sequentialRows, additionalRows, prebatchRows, etc.)
-    // remain unchanged or can be updated similarly if you need to apply the same ordering.
+    // Other computed properties (sequentialRows, additionalRows, etc.) remain unchanged.
     sequentialRows() {
-      // (Implement similar ordering for sequential batch if needed.)
       return [];
     },
-    
     additionalRows() {
-      // (Leave unchanged for now.)
       return [];
     },
-    
     prebatchRows() {
-      // (Leave unchanged for now.)
       return [];
     },
-    
     timeDelayRequired() {
       const { timeDelayResults } = this.gcStore;
       return timeDelayResults && timeDelayResults.timeDelayRequired
         ? timeDelayResults.timeDelayRequired
         : "";
     },
-    
     delayedRunSelected() {
       const { timeDelayResults } = this.gcStore;
       return (
