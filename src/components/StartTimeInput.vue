@@ -30,7 +30,7 @@
               id="control1"
               v-model="control1"
               class="control-input"
-              min="1"
+              min="3"
               max="32"
             />
           </div>
@@ -41,7 +41,7 @@
               id="control2"
               v-model="control2"
               class="control-input"
-              min="1"
+              min="3"
               max="32"
             />
           </div>
@@ -200,9 +200,44 @@ export default {
       recalculateResults();
     };
 
-    // New reactive properties for Controls inputs, initialized as empty strings.
+    // Reactive properties for Controls, initialized as empty strings.
     const control1 = ref('');
     const control2 = ref('');
+
+    // Watchers to enforce allowed range (3-32) and skip 16.
+    const enforceControlConstraints = (controlRef, oldVal) => {
+      if (controlRef.value === '') return; // if empty, do nothing
+      let num = Number(controlRef.value);
+      if (isNaN(num)) return;
+      // Enforce range.
+      if (num < 3) {
+        controlRef.value = 3;
+        return;
+      }
+      if (num > 32) {
+        controlRef.value = 32;
+        return;
+      }
+      // Skip the disallowed value 16.
+      if (num === 16) {
+        // Determine direction based on previous value.
+        if (oldVal !== '' && Number(oldVal) < 16) {
+          controlRef.value = 17;
+        } else if (oldVal !== '' && Number(oldVal) > 16) {
+          controlRef.value = 15;
+        } else {
+          controlRef.value = 17;
+        }
+      }
+    };
+
+    watch(control1, (newVal, oldVal) => {
+      enforceControlConstraints(control1, oldVal);
+    });
+
+    watch(control2, (newVal, oldVal) => {
+      enforceControlConstraints(control2, oldVal);
+    });
 
     return {
       localBatchStartTime,
