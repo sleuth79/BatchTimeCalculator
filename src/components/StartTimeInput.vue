@@ -28,7 +28,8 @@
             <input
               type="number"
               id="control1"
-              v-model.number="control1"
+              v-model.number="localControl1"
+              @blur="validateControl1"
               class="control-input"
               min="3"
               max="32"
@@ -39,7 +40,8 @@
             <input
               type="number"
               id="control2"
-              v-model.number="control2"
+              v-model.number="localControl2"
+              @blur="validateControl2"
               class="control-input"
               min="3"
               max="32"
@@ -86,7 +88,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Bind Batch Start Time to the store.
+    // Batch Start Time binding
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -96,6 +98,7 @@ export default {
       },
     });
 
+    // Wait toggle binding
     const localWait15 = computed({
       get() {
         return gcStore.startTime.wait15;
@@ -115,7 +118,7 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Bind Final Position to the store.
+    // Final Position binding
     const finalPosition = ref(null);
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
@@ -189,48 +192,37 @@ export default {
       recalculateResults();
     };
 
-    // Computed properties for control inputs with constraint enforcement in the setter.
-    const control1 = computed({
-      get() {
-        return gcStore.startTime.controls?.control1 ?? "";
-      },
-      set(val) {
-        let num = Number(val);
-        if (isNaN(num)) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: "" };
-        } else if (num < 3) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 3 };
-        } else if (num > 32) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 32 };
-        } else if (num === 16) {
-          // Skip 16 – default to 17.
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 17 };
-        } else {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: num };
-        }
-      }
-    });
+    // --- New Local Control Inputs & Validation on Blur ---
+    const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
+    const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
-    const control2 = computed({
-      get() {
-        return gcStore.startTime.controls?.control2 ?? "";
-      },
-      set(val) {
-        let num = Number(val);
-        if (isNaN(num)) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: "" };
-        } else if (num < 3) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 3 };
-        } else if (num > 32) {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 32 };
-        } else if (num === 16) {
-          // Skip 16 – default to 17.
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 17 };
-        } else {
-          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: num };
-        }
+    const validateControl1 = () => {
+      let num = Number(localControl1.value);
+      if (isNaN(num) || num < 3) {
+        num = 3;
+      } else if (num > 32) {
+        num = 32;
+      } else if (num === 16) {
+        // Skip 16 – default to 17.
+        num = 17;
       }
-    });
+      localControl1.value = num;
+      gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: num };
+    };
+
+    const validateControl2 = () => {
+      let num = Number(localControl2.value);
+      if (isNaN(num) || num < 3) {
+        num = 3;
+      } else if (num > 32) {
+        num = 32;
+      } else if (num === 16) {
+        // Skip 16 – default to 17.
+        num = 17;
+      }
+      localControl2.value = num;
+      gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: num };
+    };
 
     return {
       isLoading,
@@ -245,8 +237,11 @@ export default {
       startTimeFinalPositionError,
       recalculateResults,
       showWaitInput,
-      control1,
-      control2,
+      // New control bindings
+      localControl1,
+      localControl2,
+      validateControl1,
+      validateControl2,
     };
   },
 };
@@ -337,4 +332,3 @@ label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
 </style>
-
