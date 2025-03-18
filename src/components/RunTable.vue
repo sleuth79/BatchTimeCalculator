@@ -1,5 +1,5 @@
 <template>
-  <div class="run-table" ref="tableRoot">
+  <div class="run-table">
     <table>
       <thead>
         <template v-if="finalRows.length > 0">
@@ -16,19 +16,14 @@
       </thead>
       <tbody>
         <!-- Render wait row if present (only once) -->
-        <tr v-if="runsHasWait" class="run-row wait-row" data-run-type="wait">
+        <tr v-if="runsHasWait">
           <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
         <!-- Render the fixed 33 run rows -->
-        <tr
-          v-for="(row, index) in fixedRows"
-          :key="index"
-          class="run-row"
-          :data-end-time="row.endTime"
-        >
+        <tr v-for="(row, index) in fixedRows" :key="index">
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
           <td>{{ row.startTime }}</td>
@@ -40,14 +35,14 @@
 </template>
 
 <script>
-import { onMounted, onUpdated, nextTick, computed } from "vue";
+import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 
 export default {
   name: "RunTable",
   props: {
-    // runs is expected to be an array that may include a wait row as its first element.
+    // The runs prop is expected to include the wait row (if active) as the first element.
     runs: {
       type: Array,
       required: true,
@@ -56,7 +51,6 @@ export default {
   },
   setup(props) {
     const gcStore = useGcStore();
-    const tableRoot = ref(null);
 
     // Check if the first run in props is a wait row.
     const runsHasWait = computed(() => {
@@ -69,7 +63,7 @@ export default {
     // baseRuns excludes the wait row (if present)
     const baseRuns = computed(() => (runsHasWait.value ? props.runs.slice(1) : props.runs));
 
-    // Fixed 33-run ordering as before.
+    // Determine control values from the store.
     const initialControl = computed(() => {
       const c1 = Number(gcStore.startTime.controls?.control1);
       const c2 = Number(gcStore.startTime.controls?.control2);
@@ -80,21 +74,29 @@ export default {
       const c2 = Number(gcStore.startTime.controls?.control2);
       return Math.min(c1 || 0, c2 || 0);
     });
+
+    // Build allowed positions: numbers from 3 to 32, excluding initialControl, finalControl, and 16.
     const allowedPositions = computed(() => {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
-        if (num === initialControl.value || num === finalControl.value || num === 16) continue;
+        if (num === initialControl.value || num === finalControl.value || num === 16)
+          continue;
         positions.push(num);
       }
-      return positions;
+      return positions; // should have 27 numbers
     });
+
+    // Build fixedRows: exactly 33 rows (runs 1–33)
     const fixedRows = computed(() => {
       const totalFixed = 33;
       const rows = [];
+      // Helper: get run times from baseRuns if available.
       const getRunTime = (i) => {
         return baseRuns.value[i] ? baseRuns.value[i] : { startTime: "", endTime: "" };
       };
+      // Get GC type (for blank titles)
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      // Helper function to assign a title based on fixed run number.
       function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType) {
         if (runNumber === 1) {
           return "Blank";
@@ -111,11 +113,11 @@ export default {
         } else {
           let posIndex;
           if (runNumber >= 4 && runNumber <= 12) {
-            posIndex = runNumber - 4;
+            posIndex = runNumber - 4; // group 1: indices 0..8
           } else if (runNumber >= 14 && runNumber <= 22) {
-            posIndex = (runNumber - 14) + 9;
+            posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
           } else if (runNumber >= 24 && runNumber <= 32) {
-            posIndex = (runNumber - 24) + 18;
+            posIndex = (runNumber - 24) + 18; // group 3: indices 18..26
           }
           return posIndex !== undefined && posIndex < allowedPositions.length
             ? `Position ${allowedPositions[posIndex]}`
@@ -133,53 +135,49 @@ export default {
       }
       return rows;
     });
+
+    // finalRows combines the wait row (if any) with the fixed 33 rows.
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
 
-    // NEW: After the table is rendered, pull from the DOM the run row whose end time is the latest before 4:00 PM.
-    function updateClosestFromDOM() {
-      if (!tableRoot.value) return;
-      // Find all fixed run rows (exclude the wait row).
-      const rows = tableRoot.value.querySelectorAll("tr.run-row:not(.wait-row)");
+    // --- New: Compute which fixed run (ignoring the wait row) is the closest to 4:00 PM (but ends before)
+    // We'll assume that the formatted endTime strings can be parsed back into a Date.
+    // For simplicity, we assume today's date.
+    function parseTimeStringToDate(timeStr) {
+      // timeStr should be like "10:15:25 AM"
+      const today = new Date();
+      return new Date(`${today.toDateString()} ${timeStr}`);
+    }
+    const closestBefore4 = computed(() => {
       const today = new Date();
       const cutoff = new Date(`${today.toDateString()} 4:00:00 PM`);
       let candidate = null;
-      rows.forEach(row => {
-        const endTimeStr = row.getAttribute("data-end-time");
-        if (!endTimeStr) return;
-        const endDate = new Date(`${today.toDateString()} ${endTimeStr}`);
+      // Iterate only over fixedRows (ignoring wait row)
+      for (const row of fixedRows.value) {
+        if (!row.endTime) continue;
+        const endDate = parseTimeStringToDate(row.endTime);
         if (endDate < cutoff) {
-          if (!candidate || endDate > new Date(`${today.toDateString()} ${candidate.endTime}`)) {
-            candidate = { row, endTime: endTimeStr };
+          if (!candidate || endDate > parseTimeStringToDate(candidate.endTime)) {
+            candidate = row;
           }
         }
-      });
-      if (candidate && candidate.row) {
-        // Get the run title from the candidate row.
-        const titleCell = candidate.row.querySelector("td:nth-child(2)");
-        if (titleCell && titleCell.textContent) {
-          // Call the store action to set this value.
-          gcStore.setClosestPositionBefore4PM(titleCell.textContent.trim());
-        }
       }
-    }
-
-    // Update after mounting and after each update.
-    onMounted(() => {
-      nextTick(updateClosestFromDOM);
+      return candidate;
     });
-    onUpdated(() => {
-      nextTick(updateClosestFromDOM);
-    });
+    // Watch closestBefore4 and update the store (assuming an action setClosestPositionBefore4PM exists)
+    watch(closestBefore4, (newVal) => {
+      if (newVal) {
+        gcStore.setClosestPositionBefore4PM(newVal.computedTitle);
+      }
+    }, { immediate: true });
 
     return {
       gcStore,
       finalRows,
       runsHasWait,
       waitRow,
-      fixedRows,
-      tableRoot
+      fixedRows
     };
   }
 };
