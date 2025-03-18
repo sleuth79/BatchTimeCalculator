@@ -24,22 +24,22 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <label for="control1" class="control-label">1:</label>
+            <label for="control1" class="control-label">C1:</label>
             <input
               type="number"
               id="control1"
-              v-model="control1"
+              v-model.number="control1"
               class="control-input"
               min="3"
               max="32"
             />
           </div>
           <div class="control-group">
-            <label for="control2" class="control-label">2:</label>
+            <label for="control2" class="control-label">C2:</label>
             <input
               type="number"
               id="control2"
-              v-model="control2"
+              v-model.number="control2"
               class="control-input"
               min="3"
               max="32"
@@ -48,7 +48,7 @@
         </div>
       </div>
       
-      <!-- Existing Additional Inputs -->
+      <!-- Additional Inputs -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label>15-Minute Wait:</label>
         <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
@@ -86,7 +86,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time from store.
+    // Bind Batch Start Time to the store.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -98,7 +98,7 @@ export default {
 
     const localWait15 = computed({
       get() {
-        return gcStore.startTime.wait15 || false;
+        return gcStore.startTime.wait15;
       },
       set(val) {
         gcStore.setWait15(val);
@@ -115,7 +115,7 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Reactive variable for Final Position.
+    // Bind Final Position to the store.
     const finalPosition = ref(null);
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
@@ -144,7 +144,7 @@ export default {
       timeInputError.value = "";
     });
 
-    // Formats the time input to HH:mm:ss.
+    // Format and validate the time input.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
@@ -164,7 +164,6 @@ export default {
       }
     };
 
-    // Validates the HH:mm:ss input.
     const validateTimeInput = () => {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
@@ -200,16 +199,37 @@ export default {
       recalculateResults();
     };
 
-    // Reactive properties for Controls, initialized as empty strings.
-    const control1 = ref('');
-    const control2 = ref('');
+    // Bind the control values to the store.
+    // (Make sure your store initializes startTime.controls with control1 and control2.)
+    const control1 = computed({
+      get() {
+        return gcStore.startTime.controls?.control1 || "";
+      },
+      set(val) {
+        gcStore.startTime.controls = {
+          ...gcStore.startTime.controls,
+          control1: val
+        };
+      },
+    });
 
-    // Watchers to enforce allowed range (3-32) and skip 16.
+    const control2 = computed({
+      get() {
+        return gcStore.startTime.controls?.control2 || "";
+      },
+      set(val) {
+        gcStore.startTime.controls = {
+          ...gcStore.startTime.controls,
+          control2: val
+        };
+      },
+    });
+
+    // Enforce constraints for control values: allowed range 3–32 and skip 16.
     const enforceControlConstraints = (controlRef, oldVal) => {
-      if (controlRef.value === '') return; // if empty, do nothing
+      if (controlRef.value === "") return;
       let num = Number(controlRef.value);
       if (isNaN(num)) return;
-      // Enforce range.
       if (num < 3) {
         controlRef.value = 3;
         return;
@@ -218,12 +238,10 @@ export default {
         controlRef.value = 32;
         return;
       }
-      // Skip the disallowed value 16.
       if (num === 16) {
-        // Determine direction based on previous value.
-        if (oldVal !== '' && Number(oldVal) < 16) {
+        if (oldVal !== "" && Number(oldVal) < 16) {
           controlRef.value = 17;
-        } else if (oldVal !== '' && Number(oldVal) > 16) {
+        } else if (oldVal !== "" && Number(oldVal) > 16) {
           controlRef.value = 15;
         } else {
           controlRef.value = 17;
@@ -240,17 +258,18 @@ export default {
     });
 
     return {
-      localBatchStartTime,
-      localWait15,
-      startTimeFinalPositionError,
-      timeInputError,
       isLoading,
+      localBatchStartTime,
       formatTimeInput,
-      allowedFinalPositions,
-      recalculateResults,
-      showWaitInput,
+      validateTimeInput,
+      timeInputError,
+      localWait15,
       setWait15,
       finalPosition,
+      allowedFinalPositions,
+      startTimeFinalPositionError,
+      recalculateResults,
+      showWaitInput,
       control1,
       control2,
     };
@@ -284,7 +303,7 @@ export default {
 }
 .batch-time-input input {
   width: 100px;
-  height: 40px;
+  height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
@@ -297,7 +316,6 @@ export default {
 
 /* Right column for Controls */
 .controls-inputs {
-  height: 36px;
   flex: 1;
   display: flex;
   align-items: center;

@@ -50,6 +50,11 @@ export const useGcStore = defineStore('gc', {
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
+      // New controls property for storing C1 and C2:
+      controls: {
+        control1: null,
+        control2: null,
+      },
     },
     lastStartTimeInputs: null,
     sequentialFinalPosition: null,
@@ -94,6 +99,10 @@ export const useGcStore = defineStore('gc', {
         wait15: selectedGcType === "Energy",
         finalPosition: null,
         batchEndTime: null,
+        controls: {
+          control1: null,
+          control2: null,
+        },
       };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
@@ -116,6 +125,13 @@ export const useGcStore = defineStore('gc', {
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
+    },
+    // New actions for control values:
+    setControl1(value) {
+      this.startTime.controls.control1 = value;
+    },
+    setControl2(value) {
+      this.startTime.controls.control2 = value;
     },
     calculateStartTimeBatch() {
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
