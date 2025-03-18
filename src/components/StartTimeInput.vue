@@ -24,7 +24,7 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <label for="control1" class="control-label">C1:</label>
+            <label for="control1" class="control-label">1:</label>
             <input
               type="number"
               id="control1"
@@ -35,7 +35,7 @@
             />
           </div>
           <div class="control-group">
-            <label for="control2" class="control-label">C2:</label>
+            <label for="control2" class="control-label">2:</label>
             <input
               type="number"
               id="control2"
@@ -122,17 +122,14 @@ export default {
       recalculateResults();
     });
 
-    watch(
-      () => gcStore.selectedGc,
-      (newGc) => {
-        if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
-          localWait15.value = true;
-        } else if (newGc && gcStore.allGcData[newGc]?.type === "Sulphur") {
-          localWait15.value = false;
-        }
-        recalculateResults();
+    watch(() => gcStore.selectedGc, (newGc) => {
+      if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
+        localWait15.value = true;
+      } else if (newGc && gcStore.allGcData[newGc]?.type === "Sulphur") {
+        localWait15.value = false;
       }
-    );
+      recalculateResults();
+    });
 
     watch(localBatchStartTime, () => {
       recalculateResults();
@@ -148,12 +145,7 @@ export default {
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
       if (value.length > 4) {
-        value =
-          value.slice(0, 2) +
-          ":" +
-          value.slice(2, 4) +
-          ":" +
-          value.slice(4, 6);
+        value = value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
       } else if (value.length > 2) {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
@@ -168,8 +160,7 @@ export default {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
       if (parts.length !== 3) {
-        timeInputError.value =
-          "Invalid format. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+        timeInputError.value = "Invalid format. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
         return;
       }
       const [hour, minute, second] = parts.map(Number);
@@ -185,8 +176,7 @@ export default {
         second > 59
       ) {
         localBatchStartTime.value = "";
-        timeInputError.value =
-          "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+        timeInputError.value = "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
       }
     };
 
@@ -199,62 +189,47 @@ export default {
       recalculateResults();
     };
 
-    // Bind the control values to the store.
-    // (Make sure your store initializes startTime.controls with control1 and control2.)
+    // Computed properties for control inputs with constraint enforcement in the setter.
     const control1 = computed({
       get() {
-        return gcStore.startTime.controls?.control1 || "";
+        return gcStore.startTime.controls?.control1 ?? "";
       },
       set(val) {
-        gcStore.startTime.controls = {
-          ...gcStore.startTime.controls,
-          control1: val
-        };
-      },
+        let num = Number(val);
+        if (isNaN(num)) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: "" };
+        } else if (num < 3) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 3 };
+        } else if (num > 32) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 32 };
+        } else if (num === 16) {
+          // Skip 16 – default to 17.
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: 17 };
+        } else {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control1: num };
+        }
+      }
     });
 
     const control2 = computed({
       get() {
-        return gcStore.startTime.controls?.control2 || "";
+        return gcStore.startTime.controls?.control2 ?? "";
       },
       set(val) {
-        gcStore.startTime.controls = {
-          ...gcStore.startTime.controls,
-          control2: val
-        };
-      },
-    });
-
-    // Enforce constraints for control values: allowed range 3–32 and skip 16.
-    const enforceControlConstraints = (controlRef, oldVal) => {
-      if (controlRef.value === "") return;
-      let num = Number(controlRef.value);
-      if (isNaN(num)) return;
-      if (num < 3) {
-        controlRef.value = 3;
-        return;
-      }
-      if (num > 32) {
-        controlRef.value = 32;
-        return;
-      }
-      if (num === 16) {
-        if (oldVal !== "" && Number(oldVal) < 16) {
-          controlRef.value = 17;
-        } else if (oldVal !== "" && Number(oldVal) > 16) {
-          controlRef.value = 15;
+        let num = Number(val);
+        if (isNaN(num)) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: "" };
+        } else if (num < 3) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 3 };
+        } else if (num > 32) {
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 32 };
+        } else if (num === 16) {
+          // Skip 16 – default to 17.
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: 17 };
         } else {
-          controlRef.value = 17;
+          gcStore.startTime.controls = { ...gcStore.startTime.controls, control2: num };
         }
       }
-    };
-
-    watch(control1, (newVal, oldVal) => {
-      enforceControlConstraints(control1, oldVal);
-    });
-
-    watch(control2, (newVal, oldVal) => {
-      enforceControlConstraints(control2, oldVal);
     });
 
     return {
@@ -288,14 +263,11 @@ export default {
 .heading-controls {
   flex: 1;
 }
-
 .input-row {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
 }
-
-/* Left column for Batch Start Time */
 .batch-time-input {
   flex: 1;
   display: flex;
@@ -313,8 +285,6 @@ export default {
   color: #181818;
   font-weight: bold;
 }
-
-/* Right column for Controls */
 .controls-inputs {
   flex: 1;
   display: flex;
@@ -338,8 +308,6 @@ export default {
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
-
-/* Existing Additional Inputs */
 .input-group.wait-input {
   display: flex;
   align-items: center;
