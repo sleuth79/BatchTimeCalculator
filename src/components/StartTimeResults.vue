@@ -27,9 +27,16 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <p v-if="showDetailedResults && closestPositionFromStore && displayFinalPosition">
+    <p v-if="showDetailedResults && (results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
       Closest Position Before 4:00 PM:
-      <span class="result-value">{{ closestPositionFromStore }}</span>
+      <span class="result-value">
+        <template v-if="isClosestPositionObject">
+          {{ results.closestPositionBefore4PM.position }} ends at {{ results.closestPositionBefore4PM.endTime }}
+        </template>
+        <template v-else>
+          {{ closestPositionDisplay }}
+        </template>
+      </span>
     </p>
     <div
       v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
@@ -44,11 +51,10 @@
 </template>
 
 <script>
-import { computed } from "vue";
-import { useGcStore } from "../store";
+import { computed } from 'vue';
 
 export default {
-  name: "StartTimeResults",
+  name: 'StartTimeResults',
   props: {
     results: {
       type: Object,
@@ -72,8 +78,7 @@ export default {
     },
   },
   setup(props) {
-    const gcStore = useGcStore();
-
+    // Reactive property for the current date (for fallback)
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
@@ -86,6 +91,7 @@ export default {
       return storedTime;
     });
 
+    // Only show detailed results if the start time is in HH:mm:ss format.
     const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
@@ -97,9 +103,82 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Here we pull the closest position from the store
-    const closestPositionFromStore = computed(() => gcStore.closestPositionBefore4PM);
+    // We now prioritize batch start time.
+    const closestPositionDisplay = computed(() => {
+      // First, check the batch start time.
+      const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
+      if (batchStart) {
+        const parts = batchStart.split(":");
+        if (parts.length === 3) {
+          const hour = parseInt(parts[0], 10);
+          const minute = parseInt(parts[1], 10);
+          const second = parseInt(parts[2], 10);
+          // Scenario 3: batch started exactly at 4:00 PM.
+          if (hour === 16 && minute === 0 && second === 0) {
+            return "This Batch Started At 4:00 PM";
+          }
+          // Scenario 2: batch started after 4:00 PM.
+          if (hour > 16) {
+            return "This Batch Started After 4:00 PM";
+          }
+        }
+      }
+      // Only if batch start is before 4:00 PM do we check the batch end time.
+      if (props.results.batchEndTime) {
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0]; // e.g., "02:21:33" or "11:54:37"
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          // Convert to 24‑hour format if necessary.
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            // Scenario 1: batch ends before 4:00 PM.
+            return `This Batch ends at ${batchEndStr}`;
+          }
+        }
+      }
+      // Scenario 4: fallback.
+      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
+    });
 
+    // Modified isClosestPositionObject:
+    // If the batch end time exists and is before 4:00 PM, we force this to false
+    // so that our computed closestPositionDisplay is used.
+    const isClosestPositionObject = computed(() => {
+      if (props.results.batchEndTime) {
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0];
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            return false;
+          }
+        }
+      }
+      return (
+        props.results &&
+        props.results.closestPositionBefore4PM &&
+        typeof props.results.closestPositionBefore4PM === "object" &&
+        props.results.closestPositionBefore4PM.position !== undefined
+      );
+    });
+
+    // Batch end time is displayed as before.
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
       const batchEndStr = props.results.batchEndTime;
@@ -162,15 +241,20 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
+    // Always show headings for start time and final position.
+    const showStartTimeFinalPosition = computed(() => true);
+
     return {
       currentDate,
       displayBatchStartTime,
       displayFinalPosition,
       displayTotalRuns,
       additionalRunsExistBool,
-      closestPositionFromStore,
+      isClosestPositionObject,
+      closestPositionDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
+      showStartTimeFinalPosition,
       showDetailedResults,
     };
   },
