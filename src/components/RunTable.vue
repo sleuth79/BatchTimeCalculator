@@ -63,7 +63,11 @@ export default {
     // baseRuns excludes the wait row (if present)
     const baseRuns = computed(() => (runsHasWait.value ? props.runs.slice(1) : props.runs));
 
-    // Determine control values from the store.
+    // Use the final position from the GC store.
+    const finalPositionStore = computed(() => gcStore.startTime.finalPosition);
+
+    // Build allowed positions: numbers from 3 to 32, excluding the controls and 16.
+    // (This remains unchanged.)
     const initialControl = computed(() => {
       const c1 = Number(gcStore.startTime.controls?.control1);
       const c2 = Number(gcStore.startTime.controls?.control2);
@@ -74,8 +78,6 @@ export default {
       const c2 = Number(gcStore.startTime.controls?.control2);
       return Math.min(c1 || 0, c2 || 0);
     });
-
-    // Build allowed positions: numbers from 3 to 32, excluding initialControl, finalControl, and 16.
     const allowedPositions = computed(() => {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
@@ -86,10 +88,10 @@ export default {
       return positions; // should have 27 numbers
     });
 
-    // Determine the total fixed rows.
-    // If final control is 32 (full batch), then total rows are 33; otherwise, total rows become 32.
+    // Determine total fixed rows:
+    // If final position is 32 (full batch), then total rows are 33; otherwise, 32.
     const totalFixed = computed(() => {
-      return finalControl.value === 32 ? 33 : 32;
+      return finalPositionStore.value === 32 ? 33 : 32;
     });
 
     // Helper function to assign a title based on fixed run number.
@@ -148,7 +150,7 @@ export default {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
 
-    // --- New: Compute which fixed run (ignoring the wait row) is the closest to 4:00 PM (but ends before)
+    // --- Compute which fixed run (ignoring the wait row) is the closest to 4:00 PM (but ends before) ---
     function parseTimeStringToDate(timeStr) {
       // timeStr should be like "10:15:25 AM"
       const today = new Date();
