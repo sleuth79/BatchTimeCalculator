@@ -4,7 +4,14 @@
       <div
         v-for="position in allowedPositions"
         :key="position"
-        :class="['grid-item', { selected: isSelected(position), 'full-tile': position === 32 }]"
+        :class="[
+          'grid-item',
+          { 
+            selected: isSelected(position), 
+            disabled: isDisabled(position),
+            'full-tile': position === 32 
+          }
+        ]"
         @click="selectPosition(position)"
       >
         {{ position === 32 ? '32 - Full Batch' : position }}
@@ -43,7 +50,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // Compute the current selected position based on the mode.
+    // Compute the currently selected position based on the mode.
     const selectedPosition = computed(() => {
       if (props.mode === 'start-time') {
         return gcStore.startTime.finalPosition;
@@ -53,15 +60,26 @@ export default {
       return null;
     });
 
-    // Return true if the given position matches the current selection.
-    const isSelected = (position) => {
-      return position === selectedPosition.value;
-    };
+    // Compute disabled positions based on the control values in the store.
+    const disabledPositions = computed(() => {
+      const controls = gcStore.startTime.controls;
+      let disabled = [];
+      if (controls) {
+        if (controls.control1) disabled.push(controls.control1);
+        if (controls.control2) disabled.push(controls.control2);
+      }
+      return disabled;
+    });
 
-    // When a position is clicked, toggle it off if already selected.
+    const isSelected = (position) => position === selectedPosition.value;
+
+    const isDisabled = (position) => disabledPositions.value.includes(position);
+
+    // Prevent selection if a position is disabled.
     const selectPosition = (position) => {
+      if (isDisabled(position)) return; // Do nothing if disabled
+
       if (selectedPosition.value === position) {
-        // Toggling off: set selection to null.
         if (props.mode === 'start-time') {
           gcStore.setStartTimeFinalPosition(null);
           gcStore.calculateStartTimeBatch();
@@ -70,7 +88,6 @@ export default {
           emit('update:modelValue', null);
         }
       } else {
-        // Set the new selection.
         if (props.mode === 'start-time') {
           gcStore.setStartTimeFinalPosition(position);
           gcStore.calculateStartTimeBatch();
@@ -83,6 +100,7 @@ export default {
 
     return {
       isSelected,
+      isDisabled,
       selectPosition,
     };
   },
@@ -112,7 +130,7 @@ export default {
   font-size: 14px;
   border-radius: 5px;
   transition: background-color 0.3s ease, color 0.3s ease;
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1); /* Added drop shadow */
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
 .grid-item:hover {
@@ -122,6 +140,14 @@ export default {
 .grid-item.selected {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
+}
+
+/* Disabled positions appear grey and non-clickable */
+.grid-item.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 /* "Full" tile spans four columns */
