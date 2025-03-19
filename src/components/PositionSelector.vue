@@ -51,36 +51,23 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    // Compute the current selected position based on the mode.
-    const selectedPosition = computed(() => {
-      if (props.mode === 'start-time') {
-        // Here you might use the passed modelValue or an external store.
-        return props.modelValue;
-      } else if (props.mode === 'sequential') {
-        // For sequential mode, you might handle it differently.
-        return props.modelValue;
-      }
-      return null;
-    });
+    // Use modelValue as the current selected position.
+    const selectedPosition = computed(() => props.modelValue);
 
-    // Check if a position should be disabled.
+    // Check if the position should be disabled based on the passed prop.
     const isDisabled = (position) => props.disabledPositions.includes(position);
 
     const isSelected = (position) => position === selectedPosition.value;
 
-    // Prevent selection if a position is disabled.
+    // When a position is clicked, do nothing if it's disabled.
     const selectPosition = (position) => {
       if (isDisabled(position)) return; // Do nothing if disabled
 
       if (selectedPosition.value === position) {
-        // Toggling off: set selection to null.
-        if (props.mode === 'start-time') {
-          emit('update:modelValue', null);
-        } else if (props.mode === 'sequential') {
-          emit('update:modelValue', null);
-        }
+        // Toggle off selection.
+        emit('update:modelValue', null);
       } else {
-        // Set the new selection.
+        // Set new selection.
         emit('update:modelValue', position);
       }
     };

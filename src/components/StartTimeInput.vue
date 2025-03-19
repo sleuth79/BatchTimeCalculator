@@ -80,7 +80,13 @@ import PositionSelector from "./PositionSelector.vue";
 export default {
   name: "StartTimeInput",
   components: { PositionSelector },
-  setup() {
+  props: {
+    disabledPositions: {
+      type: Array,
+      default: () => []
+    }
+  },
+  setup(props) {
     const gcStore = useGcStore();
     const timeInputError = ref("");
     const startTimeFinalPositionError = ref("");
@@ -193,13 +199,11 @@ export default {
       recalculateResults();
     };
 
-    // --- New Local Control Inputs & Dynamic Allowed Ranges ---
+    // --- Local Control Inputs & Dynamic Allowed Ranges ---
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
     // Define allowed ranges:
-    // - If the other control is set, the current control's allowed range is the complementary set.
-    // - Otherwise, allow full range 3–32 (with 16 skipped in validation).
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -265,13 +269,8 @@ export default {
       };
     };
 
-    // New computed property to determine which positions should be disabled
-    const disabledPositions = computed(() => {
-      const disabled = [];
-      if (localControl1.value) disabled.push(Number(localControl1.value));
-      if (localControl2.value) disabled.push(Number(localControl2.value));
-      return disabled;
-    });
+    // Instead of computing disabledPositions locally, we now use the prop passed from the parent.
+    // You can reference it as "props.disabledPositions".
 
     return {
       isLoading,
@@ -293,7 +292,7 @@ export default {
       control2Range,
       validateControl1,
       validateControl2,
-      disabledPositions,
+      disabledPositions: props.disabledPositions
     };
   },
 };

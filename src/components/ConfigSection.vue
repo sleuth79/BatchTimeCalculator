@@ -13,13 +13,15 @@
         <!-- Always render start-time input components -->
         <start-time-input
           :selected-gc="selectedGc"
+          :disabledPositions="disabledPositions"  
           @update-results="handleUpdateResults"
         />
-        <TimeDelayInput
+        <time-delay-input
           :batch1EndTime="batch1EndTime"
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
           :gcType="gcType"
+          :disabledPositions="disabledPositions"  
           @update-time-delay="handleUpdateTimeDelay"
         />
       </div>
@@ -89,6 +91,16 @@ export default {
     );
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
+    // Compute the disabled positions based on control values stored in the store.
+    const disabledPositions = computed(() => {
+      const disabled = [];
+      if (gcStore.startTime.controls.control1)
+        disabled.push(Number(gcStore.startTime.controls.control1));
+      if (gcStore.startTime.controls.control2)
+        disabled.push(Number(gcStore.startTime.controls.control2));
+      return disabled;
+    });
+
     // Reset function now always calls resetStartTime since only one mode is supported.
     const resetInputs = () => {
       gcStore.resetStartTime();
@@ -107,6 +119,7 @@ export default {
       gcType,
       handleUpdateTimeDelay,
       resetInputs,
+      disabledPositions, // Make sure to return the computed disabled positions.
     };
   },
 };
