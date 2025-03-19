@@ -22,8 +22,8 @@
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render fixed run rows -->
-        <tr v-for="(row, index) in finalRows" :key="index" v-if="row.position !== 'Wait'">
+        <!-- Render fixed run rows (sequential numbering with computed titles) -->
+        <tr v-for="(row, index) in fixedRows" :key="index">
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
           <td>{{ row.startTime }}</td>
@@ -42,7 +42,7 @@ import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 export default {
   name: "RunTable",
   props: {
-    // The runs prop may include a wait row (if active) as its first element.
+    // The runs prop is expected to include a wait row (if active) as the first element.
     runs: {
       type: Array,
       required: true,
@@ -52,7 +52,7 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Determine if the first run is a wait row.
+    // Determine if the first row is a wait row.
     const runsHasWait = computed(() => {
       return (
         props.runs.length > 0 &&
@@ -67,7 +67,7 @@ export default {
 
     // Final sample position from the store.
     const finalPositionStore = computed(() => Number(gcStore.startTime.finalPosition));
-    // Full batch flag: true when final position equals 32.
+    // Full batch flag: true if final position equals 32.
     const isFullBatch = computed(() => finalPositionStore.value === 32);
 
     // Get raw control values from the store.
@@ -77,9 +77,9 @@ export default {
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // In full batches we want four control labels:
-    // “Initial Control” and “3rd Control” show the larger value;
-    // “2nd Control” and “Final Control” show the smaller value.
+    // For full batches we want four control labels:
+    // "Initial Control" and "3rd Control" use the larger value,
+    // "2nd Control" and "Final Control" use the smaller value.
     const computedControls = computed(() => {
       return {
         initial: initialControlRaw.value,
@@ -89,8 +89,7 @@ export default {
       };
     });
 
-    // Allowed sample positions:
-    // Numbers 3 to 32, excluding the two control numbers (initialControlRaw and finalControlRaw) and 16.
+    // Allowed sample positions: numbers 3 to 32 excluding the raw control values and 16.
     const allowedPositions = computed(() => {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
@@ -101,86 +100,64 @@ export default {
       return positions;
     });
 
-    // Determine total fixed run rows (the total count in the run table, excluding the wait row).
-    // For a full batch (finalPosition 32): fixedRows = 33.
-    // For a non-full batch: fixedRows = finalPositionStore + 1.
+    // Determine total fixed rows (the total length of the "position order").
+    // For full batch: always 33.
+    // For non-full batch: final position + 1.
     const totalFixed = computed(() => {
       const fp = finalPositionStore.value;
       return isNaN(fp) || fp < 3 ? 33 : isFullBatch.value ? 33 : fp + 1;
     });
 
-    // Now, generate the run titles (the “position order”) independent of the run number.
-    // We define two cases:
-    // • Full batch (fp === 32): Insert four control markers at fixed "position order" slots:
-    //   - After the first two titles ("Blank", "Argon Blank"), insert:
-    //       position order: 3 → "Initial Control - [initial]"
-    //       positions 4–12 → sample positions (sequentially from allowedPositions)
-    //       position 13 → "2nd Control - [final]"
-    //       positions 14–22 → sample positions
-    //       position 23 → "3rd Control - [initial]"
-    //       positions 24–32 → sample positions
-    //       position 33 → "Final Control - [final]"
-    // • Non-full batch: Only two fixed titles at the start and a final control:
-    //   - Position 1: "Blank"
-    //   - Position 2: "Argon Blank" (or Methane Blank)
-    //   - Positions 3 to (totalFixed - 1): Sample positions (sequentially from allowedPositions)
-    //   - Position totalFixed: "Final Control - [final]"
-    function getTitle(runNumber, allowedPositions, computedControls, gcType, totalFixedValue) {
-      if (runNumber === 1) {
-        return "Blank";
-      }
-      if (runNumber === 2) {
-        return gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
-      }
-      if (isFullBatch.value) {
-        // Full batch: four control markers.
-        if (runNumber === 3) {
-          return `Initial Control - ${computedControls.initial}`;
-        } else if (runNumber === 13) {
-          return `2nd Control - ${computedControls.second}`;
-        } else if (runNumber === 23) {
-          return `3rd Control - ${computedControls.third}`;
-        } else if (runNumber === totalFixedValue) {
-          return `Final Control - ${computedControls.final}`;
-        } else {
-          // For sample positions, we must skip the control slots.
-          let posIndex;
-          if (runNumber >= 4 && runNumber <= 12) {
-            posIndex = runNumber - 4; // group 1: 0...8
-          } else if (runNumber >= 14 && runNumber <= 22) {
-            posIndex = (runNumber - 14) + 9; // group 2
-          } else if (runNumber >= 24 && runNumber < totalFixedValue) {
-            posIndex = (runNumber - 24) + 18; // group 3
-          }
-          return posIndex !== undefined && posIndex < allowedPositions.length
-            ? `Position ${allowedPositions[posIndex]}`
-            : "";
-        }
-      } else {
-        // Non-full batch: no intermediate controls.
-        if (runNumber < totalFixedValue) {
-          const posIndex = runNumber - 3; // sample positions start at run 3.
-          return posIndex < allowedPositions.length
-            ? `Position ${allowedPositions[posIndex]}`
-            : "";
-        }
-        if (runNumber === totalFixedValue) {
-          return `Final Control - ${computedControls.final}`;
-        }
-      }
-      return "";
-    }
-
-    // Build the fixedRows array (the run titles with associated run order).
-    const fixedRows = computed(() => {
-      const total = totalFixed.value;
-      const rows = [];
+    // Compute the position order (the run titles) independently of run numbers.
+    const positionOrder = computed(() => {
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      for (let i = 1; i <= total; i++) {
-        const runTimes = baseRuns.value[i - 1] || { startTime: "", endTime: "" };
+      if (isFullBatch.value) {
+        // Full batch: 33 positions with four control markers.
+        const order = [];
+        order.push("Blank");
+        order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
+        order.push(`Initial Control - ${computedControls.value.initial}`);
+        // Next 9 sample positions (positions 4 to 12):
+        for (let i = 0; i < 9; i++) {
+          order.push(`Position ${allowedPositions.value[i]}`);
+        }
+        order.push(`2nd Control - ${computedControls.value.second}`);
+        // Next 9 sample positions (positions 14 to 22):
+        for (let i = 9; i < 18; i++) {
+          order.push(`Position ${allowedPositions.value[i]}`);
+        }
+        order.push(`3rd Control - ${computedControls.value.third}`);
+        // Next 9 sample positions (positions 24 to 32):
+        for (let i = 18; i < 27; i++) {
+          order.push(`Position ${allowedPositions.value[i]}`);
+        }
+        order.push(`Final Control - ${computedControls.value.final}`);
+        return order; // length should be 33.
+      } else {
+        // Non-full batch: total positions = finalPositionStore + 1.
+        const total = totalFixed.value;
+        const order = [];
+        order.push("Blank");
+        order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
+        // For sample positions, we need (total - 2) samples.
+        for (let i = 0; i < total - 2; i++) {
+          order.push(`Position ${allowedPositions.value[i]}`);
+        }
+        order.push(`Final Control - ${computedControls.value.final}`);
+        return order; // length = total.
+      }
+    });
+
+    // Build fixedRows using the computed positionOrder.
+    const fixedRows = computed(() => {
+      const order = positionOrder.value;
+      const rows = [];
+      for (let i = 0; i < order.length; i++) {
+        // Use baseRuns if available; otherwise default blank times.
+        const runTimes = baseRuns.value[i] || { startTime: "", endTime: "" };
         rows.push({
-          position: i,
-          computedTitle: getTitle(i, allowedPositions.value, computedControls.value, gcType, total),
+          position: i + 1, // runs are sequentially numbered.
+          computedTitle: order[i],
           startTime: runTimes.startTime,
           endTime: runTimes.endTime
         });
@@ -188,12 +165,12 @@ export default {
       return rows;
     });
 
-    // The finalRows includes the wait row (if any) at the top.
+    // The finalRows include the wait row (if any) at the top.
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
 
-    // (Optional) Compute which fixed row is closest to 4:00 PM.
+    // (Optional) Compute which fixed run is closest to 4:00 PM.
     function parseTimeStringToDate(timeStr) {
       const today = new Date();
       return new Date(`${today.toDateString()} ${timeStr}`);
