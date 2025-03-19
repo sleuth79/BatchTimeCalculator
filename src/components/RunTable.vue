@@ -22,7 +22,7 @@
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render the fixed 33 run rows -->
+        <!-- Render the fixed run rows -->
         <tr v-for="(row, index) in fixedRows" :key="index">
           <td class="run-column">{{ row.position }}</td>
           <td>{{ row.computedTitle }}</td>
@@ -86,9 +86,44 @@ export default {
       return positions; // should have 27 numbers
     });
 
-    // Build fixedRows: exactly 33 rows (runs 1–33)
+    // Determine the total fixed rows.
+    // If final control is 32 (full batch), then total rows are 33; otherwise, total rows become 32.
+    const totalFixed = computed(() => {
+      return finalControl.value === 32 ? 33 : 32;
+    });
+
+    // Helper function to assign a title based on fixed run number.
+    function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType, totalFixedValue) {
+      if (runNumber === 1) {
+        return "Blank";
+      } else if (runNumber === 2) {
+        return gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
+      } else if (runNumber === 3) {
+        return `Control - ${initialControl}`;
+      } else if (runNumber === 13) {
+        return `Control - ${finalControl}`;
+      } else if (runNumber === 23) {
+        return `Control - ${initialControl}`;
+      } else if (runNumber === totalFixedValue) {
+        return `Control - ${finalControl}`;
+      } else {
+        let posIndex;
+        if (runNumber >= 4 && runNumber <= 12) {
+          posIndex = runNumber - 4; // group 1: indices 0..8
+        } else if (runNumber >= 14 && runNumber <= 22) {
+          posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
+        } else if (runNumber >= 24 && runNumber < totalFixedValue) {
+          posIndex = (runNumber - 24) + 18; // group 3: indices 18..(total-2)
+        }
+        return posIndex !== undefined && posIndex < allowedPositions.length
+          ? `Position ${allowedPositions[posIndex]}`
+          : "";
+      }
+    }
+
+    // Build fixedRows: exactly totalFixed rows.
     const fixedRows = computed(() => {
-      const totalFixed = 33;
+      const total = totalFixed.value;
       const rows = [];
       // Helper: get run times from baseRuns if available.
       const getRunTime = (i) => {
@@ -96,39 +131,11 @@ export default {
       };
       // Get GC type (for blank titles)
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      // Helper function to assign a title based on fixed run number.
-      function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType) {
-        if (runNumber === 1) {
-          return "Blank";
-        } else if (runNumber === 2) {
-          return gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
-        } else if (runNumber === 3) {
-          return `Control - ${initialControl}`;
-        } else if (runNumber === 13) {
-          return `Control - ${finalControl}`;
-        } else if (runNumber === 23) {
-          return `Control - ${initialControl}`;
-        } else if (runNumber === 33) {
-          return `Control - ${finalControl}`;
-        } else {
-          let posIndex;
-          if (runNumber >= 4 && runNumber <= 12) {
-            posIndex = runNumber - 4; // group 1: indices 0..8
-          } else if (runNumber >= 14 && runNumber <= 22) {
-            posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
-          } else if (runNumber >= 24 && runNumber <= 32) {
-            posIndex = (runNumber - 24) + 18; // group 3: indices 18..26
-          }
-          return posIndex !== undefined && posIndex < allowedPositions.length
-            ? `Position ${allowedPositions[posIndex]}`
-            : "";
-        }
-      }
-      for (let i = 1; i <= totalFixed; i++) {
+      for (let i = 1; i <= total; i++) {
         const runTimes = getRunTime(i - 1);
         rows.push({
           position: i,
-          computedTitle: getTitle(i, allowedPositions.value, initialControl.value, finalControl.value, gcType),
+          computedTitle: getTitle(i, allowedPositions.value, initialControl.value, finalControl.value, gcType, total),
           startTime: runTimes.startTime,
           endTime: runTimes.endTime
         });
@@ -136,7 +143,7 @@ export default {
       return rows;
     });
 
-    // finalRows combines the wait row (if any) with the fixed 33 rows.
+    // finalRows combines the wait row (if any) with the fixed run rows.
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
