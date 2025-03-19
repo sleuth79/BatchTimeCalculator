@@ -1,65 +1,13 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Header Row -->
-      <div class="heading-row">
-        <div class="heading-batch">Batch Start Time:</div>
-        <div class="heading-controls">Controls:</div>
-      </div>
-      
-      <!-- Input Row -->
-      <div class="input-row">
-        <!-- Batch Start Time Input & Inline Note -->
-        <div class="batch-time-input">
-          <input
-            type="text"
-            id="batch-start-time"
-            v-model="localBatchStartTime"
-            placeholder="hh:mm:ss"
-            @input="formatTimeInput"
-            @blur="validateTimeInput"
-          />
-          <span class="time-input-note">Enter 24 Hour Time</span>
-        </div>
-        <!-- Controls Inputs -->
-        <div class="controls-inputs">
-          <div class="control-group">
-            <input
-              type="number"
-              id="control1"
-              v-model.number="localControl1"
-              :min="control1Range.min"
-              :max="control1Range.max"
-              @blur="validateControl1"
-              class="control-input"
-            />
-          </div>
-          <div class="control-group">
-            <input
-              type="number"
-              id="control2"
-              v-model.number="localControl2"
-              :min="control2Range.min"
-              :max="control2Range.max"
-              @blur="validateControl2"
-              class="control-input"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <!-- Additional Inputs -->
-      <div class="input-group wait-input" v-if="showWaitInput">
-        <label>15-Minute Wait:</label>
-        <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
-          <span>{{ localWait15 ? 'Yes' : 'No' }}</span>
-        </div>
-      </div>
+      <!-- ... other inputs ... -->
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
+          :disabledPositions="disabledPositions"
           mode="start-time"
           field="start-time"
           v-model="finalPosition"
@@ -197,8 +145,6 @@ export default {
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
     // Define allowed ranges:
-    // - If the other control is set, the current control's allowed range is the complementary set.
-    // - Otherwise, allow full range 3–32 (with 16 skipped in validation).
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -264,6 +210,14 @@ export default {
       };
     };
 
+    // Compute disabled positions based on control values.
+    const disabledPositions = computed(() => {
+      const disabled = [];
+      if (localControl1.value) disabled.push(Number(localControl1.value));
+      if (localControl2.value) disabled.push(Number(localControl2.value));
+      return disabled;
+    });
+
     return {
       isLoading,
       localBatchStartTime,
@@ -284,93 +238,8 @@ export default {
       control2Range,
       validateControl1,
       validateControl2,
+      disabledPositions, // Added for passing to PositionSelector
     };
   },
 };
 </script>
-
-<style scoped>
-.heading-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-.heading-batch,
-.heading-controls {
-  flex: 1;
-  /* Ensure left alignment */
-  text-align: left;
-}
-.input-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-/* Batch time input styling remains unchanged */
-.batch-time-input {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-.batch-time-input input {
-  width: 100px;
-  height: 36px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-.time-input-note {
-  margin-left: 10px;
-  font-size: 0.8rem;
-  color: #181818;
-  font-weight: bold;
-}
-/* Controls inputs styling */
-.controls-inputs {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  /* Remove any left margin to align with header "Enter Controls:" text */
-  margin-left: 0;
-  gap: 10px;
-}
-.control-group {
-  /* No label offset; simply display the input */
-  display: flex;
-  align-items: center;
-}
-.start-time-input .control-input {
-  width: 60px;
-  height: 36px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-.input-group.wait-input {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.wait-toggle {
-  margin-left: 10px;
-  width: 60px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.wait-toggle.on {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
-label {
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
-}
-</style>

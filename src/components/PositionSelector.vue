@@ -7,7 +7,7 @@
         :class="[
           'grid-item',
           { 
-            selected: isSelected(position), 
+            selected: isSelected(position),
             disabled: isDisabled(position),
             'full-tile': position === 32 
           }
@@ -22,7 +22,6 @@
 
 <script>
 import { computed } from 'vue';
-import { useGcStore } from '../store';
 
 export default {
   name: 'PositionSelector',
@@ -30,6 +29,10 @@ export default {
     allowedPositions: {
       type: Array,
       required: true,
+    },
+    disabledPositions: {
+      type: Array,
+      default: () => [],
     },
     mode: {
       type: String,
@@ -48,53 +51,37 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    const gcStore = useGcStore();
-
-    // Compute the currently selected position based on the mode.
+    // Compute the current selected position based on the mode.
     const selectedPosition = computed(() => {
       if (props.mode === 'start-time') {
-        return gcStore.startTime.finalPosition;
+        // Here you might use the passed modelValue or an external store.
+        return props.modelValue;
       } else if (props.mode === 'sequential') {
-        return gcStore.sequentialFinalPosition;
+        // For sequential mode, you might handle it differently.
+        return props.modelValue;
       }
       return null;
     });
 
-    // Compute disabled positions based on the control values in the store.
-    const disabledPositions = computed(() => {
-      const controls = gcStore.startTime.controls;
-      let disabled = [];
-      if (controls) {
-        if (controls.control1) disabled.push(controls.control1);
-        if (controls.control2) disabled.push(controls.control2);
-      }
-      return disabled;
-    });
+    // Check if a position should be disabled.
+    const isDisabled = (position) => props.disabledPositions.includes(position);
 
     const isSelected = (position) => position === selectedPosition.value;
-
-    const isDisabled = (position) => disabledPositions.value.includes(position);
 
     // Prevent selection if a position is disabled.
     const selectPosition = (position) => {
       if (isDisabled(position)) return; // Do nothing if disabled
 
       if (selectedPosition.value === position) {
+        // Toggling off: set selection to null.
         if (props.mode === 'start-time') {
-          gcStore.setStartTimeFinalPosition(null);
-          gcStore.calculateStartTimeBatch();
+          emit('update:modelValue', null);
         } else if (props.mode === 'sequential') {
-          gcStore.setSequentialFinalPosition(null);
           emit('update:modelValue', null);
         }
       } else {
-        if (props.mode === 'start-time') {
-          gcStore.setStartTimeFinalPosition(position);
-          gcStore.calculateStartTimeBatch();
-        } else if (props.mode === 'sequential') {
-          gcStore.setSequentialFinalPosition(position);
-          emit('update:modelValue', position);
-        }
+        // Set the new selection.
+        emit('update:modelValue', position);
       }
     };
 
@@ -142,7 +129,7 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Disabled positions appear grey and non-clickable */
+/* Disabled positions appear greyed out and non-clickable */
 .grid-item.disabled {
   background-color: #ccc;
   cursor: not-allowed;
