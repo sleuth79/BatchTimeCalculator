@@ -52,7 +52,7 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Check if the first run in props is a wait row.
+    // Determine whether the first row is a wait row.
     const runsHasWait = computed(() => {
       return (
         props.runs.length > 0 &&
@@ -63,10 +63,10 @@ export default {
     // baseRuns excludes the wait row (if present)
     const baseRuns = computed(() => (runsHasWait.value ? props.runs.slice(1) : props.runs));
 
-    // Use the final position from the store.
+    // Use the final position from the GC store.
     const finalPositionStore = computed(() => Number(gcStore.startTime.finalPosition));
 
-    // Determine allowed positions based on control values.
+    // Compute allowed positions (for labeling the normal runs).
     const initialControl = computed(() => {
       const c1 = Number(gcStore.startTime.controls?.control1);
       const c2 = Number(gcStore.startTime.controls?.control2);
@@ -84,18 +84,24 @@ export default {
           continue;
         positions.push(num);
       }
-      return positions; // should have 27 numbers in full batch
+      return positions;
     });
 
-    // Dynamically determine the total fixed rows.
-    // (Total fixed rows = final position + 1, so if final position is 32 then total fixed rows is 33;
-    // if final position is 27 then total fixed rows is 28.)
+    // Dynamically compute total fixed rows as (final position + 1).
+    // For example, if final position is 32, total fixed rows = 33; if final position is 23, total fixed rows = 24.
     const totalFixed = computed(() => {
       const fp = finalPositionStore.value;
       return isNaN(fp) || fp < 3 ? 33 : fp + 1;
     });
 
-    // Helper function to assign a title based on run number.
+    // Helper function to assign a run title.
+    // In this version, we want:
+    // - Row 1: "Blank"
+    // - Row 2: "Argon Blank" (or "Methane Blank")
+    // - Row 3: Control - initialControl
+    // - Row 13: Control - finalControl
+    // - The final row (row === totalFixed): Control - finalControl
+    // All other rows: "Position X" (using allowedPositions) 
     function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType, totalFixedValue) {
       if (runNumber === 1) {
         return "Blank";
@@ -105,18 +111,15 @@ export default {
         return `Control - ${initialControl}`;
       } else if (runNumber === 13) {
         return `Control - ${finalControl}`;
-      } else if (runNumber === 23) {
-        return `Control - ${initialControl}`;
       } else if (runNumber === totalFixedValue) {
         return `Control - ${finalControl}`;
       } else {
+        // For all other rows, assign a position label.
         let posIndex;
-        if (runNumber >= 4 && runNumber <= 12) {
+        if (runNumber >= 4 && runNumber < 13) {
           posIndex = runNumber - 4; // group 1: indices 0..8
-        } else if (runNumber >= 14 && runNumber <= 22) {
-          posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
-        } else if (runNumber >= 24 && runNumber < totalFixedValue) {
-          posIndex = (runNumber - 24) + 18; // group 3: indices 18..(total-2)
+        } else if (runNumber > 13 && runNumber < totalFixedValue) {
+          posIndex = (runNumber - 14) + 9; // group 2: indices 9..
         }
         return posIndex !== undefined && posIndex < allowedPositions.length
           ? `Position ${allowedPositions[posIndex]}`
@@ -146,14 +149,13 @@ export default {
       return rows;
     });
 
-    // finalRows combines the wait row (if any) with the fixed run rows.
+    // Combine wait row (if any) with fixedRows.
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
 
-    // --- Compute the fixed run that is closest to 4:00 PM (ignoring the wait row) ---
+    // --- (Optional) Compute the fixed run closest to 4:00 PM (ignoring the wait row) ---
     function parseTimeStringToDate(timeStr) {
-      // Assumes timeStr is like "10:15:25 AM"
       const today = new Date();
       return new Date(`${today.toDateString()} ${timeStr}`);
     }
@@ -161,7 +163,6 @@ export default {
       const today = new Date();
       const cutoff = new Date(`${today.toDateString()} 4:00:00 PM`);
       let candidate = null;
-      // Iterate only over fixedRows (ignoring wait row)
       for (const row of fixedRows.value) {
         if (!row.endTime) continue;
         const endDate = parseTimeStringToDate(row.endTime);
