@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 
 export default {
   name: 'PositionSelector',
@@ -51,18 +51,24 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    // Debug: log disabledPositions to verify they are being passed
-    console.log("PositionSelector disabledPositions:", props.disabledPositions);
+    // Log the initial disabledPositions value
+    console.log("PositionSelector disabledPositions on setup:", props.disabledPositions);
     
-    // Use modelValue as the current selected position.
+    // Watch for changes in disabledPositions so we can debug updates.
+    watch(() => props.disabledPositions, (newVal) => {
+      console.log("PositionSelector disabledPositions changed:", newVal);
+    }, { deep: true });
+    
+    // Use the passed modelValue as the current selected position.
     const selectedPosition = computed(() => props.modelValue);
 
-    // Check if the position should be disabled based on the passed prop.
+    // Returns true if the position is in the disabledPositions array.
     const isDisabled = (position) => props.disabledPositions.includes(position);
 
+    // Returns true if the position is currently selected.
     const isSelected = (position) => position === selectedPosition.value;
 
-    // When a position is clicked, do nothing if it's disabled.
+    // On click, if not disabled, toggle the selection.
     const selectPosition = (position) => {
       if (isDisabled(position)) return; // Do nothing if disabled
 
@@ -70,7 +76,7 @@ export default {
         // Toggle off selection.
         emit('update:modelValue', null);
       } else {
-        // Set new selection.
+        // Set the new selection.
         emit('update:modelValue', position);
       }
     };
