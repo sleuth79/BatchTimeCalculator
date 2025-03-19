@@ -13,7 +13,7 @@
         <!-- Always render start-time input components -->
         <start-time-input
           :selected-gc="selectedGc"
-          :disabledPositions="disabledPositions"  
+          :disabledPositions="disabledPositions"
           @update-results="handleUpdateResults"
         />
         <time-delay-input
@@ -21,7 +21,7 @@
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
           :gcType="gcType"
-          :disabledPositions="disabledPositions"  
+          :disabledPositions="disabledPositions"
           @update-time-delay="handleUpdateTimeDelay"
         />
       </div>
@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useGcStore } from '../store';
 import GcSelector from './GcSelector.vue';
 import StartTimeInput from './StartTimeInput.vue';
@@ -82,29 +82,41 @@ export default {
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
     );
-    const gcRuntime = computed(() =>
-      gcStore.selectedGc &&
-      gcStore.allGcData[gcStore.selectedGc] &&
-      gcStore.allGcData[gcStore.selectedGc].runTime
-        ? gcStore.allGcData[gcStore.selectedGc].runTime
-        : 18.91
-    );
+    const gcRuntime = computed(() => {
+      if (
+        gcStore.selectedGc &&
+        gcStore.allGcData[gcStore.selectedGc] &&
+        gcStore.allGcData[gcStore.selectedGc].runTime
+      ) {
+        return gcStore.allGcData[gcStore.selectedGc].runTime;
+      }
+      return 18.91;
+    });
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Compute the disabled positions based on control values stored in the store.
+    // Compute the disabled positions based on the control values stored in the store.
     const disabledPositions = computed(() => {
-      const disabled = [];
-      if (gcStore.startTime.controls.control1)
-        disabled.push(Number(gcStore.startTime.controls.control1));
-      if (gcStore.startTime.controls.control2)
-        disabled.push(Number(gcStore.startTime.controls.control2));
-      return disabled;
+      const ctrl1 = gcStore.startTime.controls.control1;
+      const ctrl2 = gcStore.startTime.controls.control2;
+      const arr = [];
+      if (ctrl1 !== null && ctrl1 !== undefined) {
+        arr.push(Number(ctrl1));
+      }
+      if (ctrl2 !== null && ctrl2 !== undefined) {
+        arr.push(Number(ctrl2));
+      }
+      console.log("ConfigSection disabledPositions computed:", arr);
+      return arr;
     });
 
-    // Reset function now always calls resetStartTime since only one mode is supported.
+    // Watch the computed disabledPositions so we can see when they change.
+    watch(disabledPositions, (newVal) => {
+      console.log("ConfigSection disabledPositions changed:", newVal);
+    });
+
+    // Reset function now always calls resetStartTime.
     const resetInputs = () => {
       gcStore.resetStartTime();
-      // Optionally, reset the GC selector:
       gcStore.setSelectedGc(null);
     };
 
@@ -119,7 +131,7 @@ export default {
       gcType,
       handleUpdateTimeDelay,
       resetInputs,
-      disabledPositions, // Make sure to return the computed disabled positions.
+      disabledPositions,
     };
   },
 };
@@ -165,7 +177,7 @@ export default {
 
 /* Reset button container: no extra left margin */
 .reset-button-container {
-  padding-bottom: 2px; /* small spacing between button and pinned box */
+  padding-bottom: 2px;
 }
 
 /* Reset button styled to match the GC selector boxes */
@@ -189,7 +201,7 @@ export default {
 .other-batch-types-box {
   background-color: #fff;
   border: 1px solid #ccc;
-  border-top: 1px solid #ccc; /* ensures the top line is visible */
+  border-top: 1px solid #ccc;
   padding: 5px;
   font-size: 0.85rem;
   border-radius: 4px;
