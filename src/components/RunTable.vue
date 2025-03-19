@@ -1,33 +1,31 @@
 <template>
   <div class="run-table">
     <table>
-      <thead>
-        <template v-if="finalRows.length > 0">
-          <tr class="title-row">
-            <th colspan="4" class="batch-header">Initial Batch</th>
-          </tr>
-          <tr class="header-row">
-            <th class="run-column">Run</th>
-            <th>Run Title</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-          </tr>
-        </template>
+      <thead v-if="positionOrder.length > 0">
+        <tr class="title-row">
+          <th colspan="4" class="batch-header">Initial Batch</th>
+        </tr>
+        <tr class="header-row">
+          <th class="run-column">Run</th>
+          <th>Run Title</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+        </tr>
       </thead>
       <tbody>
-        <!-- Render wait row if active -->
+        <!-- Wait row, if active -->
         <tr v-if="runsHasWait">
           <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle || waitRow.title || '15-Min Wait' }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render fixed run rows (sequential numbering with computed titles) -->
-        <tr v-for="(row, index) in fixedRows" :key="index">
-          <td class="run-column">{{ row.position }}</td>
-          <td>{{ row.computedTitle }}</td>
-          <td>{{ row.startTime }}</td>
-          <td>{{ row.endTime }}</td>
+        <!-- Render fixed run rows sequentially from the positionOrder -->
+        <tr v-for="(title, index) in positionOrder" :key="index">
+          <td class="run-column">{{ index + (runsHasWait ? 2 : 1) }}</td>
+          <td>{{ title }}</td>
+          <td>{{ (baseRuns[index] && baseRuns[index].startTime) || "" }}</td>
+          <td>{{ (baseRuns[index] && baseRuns[index].endTime) || "" }}</td>
         </tr>
       </tbody>
     </table>
@@ -42,7 +40,7 @@ import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 export default {
   name: "RunTable",
   props: {
-    // The runs prop is expected to include a wait row (if active) as the first element.
+    // The runs prop may include a wait row as the first element.
     runs: {
       type: Array,
       required: true,
@@ -52,7 +50,7 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Determine if the first row is a wait row.
+    // Determine if the first run is a wait row.
     const runsHasWait = computed(() => {
       return (
         props.runs.length > 0 &&
@@ -60,26 +58,26 @@ export default {
       );
     });
     const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-    // Exclude the wait row for the rest.
+    // The remaining runs (if any) – we won’t use these to determine position order.
     const baseRuns = computed(() =>
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // Final sample position from the store.
-    const finalPositionStore = computed(() => Number(gcStore.startTime.finalPosition));
-    // Full batch flag: true if final position equals 32.
-    const isFullBatch = computed(() => finalPositionStore.value === 32);
+    // Get final sample position from the store.
+    const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
+    // Flag: full batch if final position equals 32.
+    const isFullBatch = computed(() => finalPosition.value === 32);
 
-    // Get raw control values from the store.
+    // Get raw control values.
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
     const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
-    // Define initial (larger) and final (smaller) controls.
+    // Define initial (larger) and final (smaller) control numbers.
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // For full batches we want four control labels:
-    // "Initial Control" and "3rd Control" use the larger value,
-    // "2nd Control" and "Final Control" use the smaller value.
+    // In our design for full batches we want four control labels:
+    // "Initial Control" and "3rd Control" will both show the larger control,
+    // "2nd Control" and "Final Control" will both show the smaller control.
     const computedControls = computed(() => {
       return {
         initial: initialControlRaw.value,
@@ -89,83 +87,86 @@ export default {
       };
     });
 
-    // Allowed sample positions: numbers 3 to 32 excluding the raw control values and 16.
-    const allowedPositions = computed(() => {
-      const positions = [];
+    // Build allowed positions arrays.
+    // For full batch, use numbers from 3 to 32.
+    const fullAllowed = computed(() => {
+      const arr = [];
       for (let num = 3; num <= 32; num++) {
         if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16)
           continue;
-        positions.push(num);
+        arr.push(num);
       }
-      return positions;
+      return arr; // typically 27 numbers
+    });
+    // For non-full batch, use numbers from 3 up to the finalPosition.
+    const nonFullAllowed = computed(() => {
+      const arr = [];
+      for (let num = 3; num <= finalPosition.value; num++) {
+        if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16)
+          continue;
+        arr.push(num);
+      }
+      return arr;
     });
 
-    // Determine total fixed rows (the total length of the "position order").
-    // For full batch: always 33.
-    // For non-full batch: final position + 1.
-    const totalFixed = computed(() => {
-      const fp = finalPositionStore.value;
-      return isNaN(fp) || fp < 3 ? 33 : isFullBatch.value ? 33 : fp + 1;
-    });
-
-    // Compute the position order (the run titles) independently of run numbers.
+    // Now build the positionOrder array (the run titles) independent of run numbers.
     const positionOrder = computed(() => {
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       if (isFullBatch.value) {
-        // Full batch: 33 positions with four control markers.
+        // Full batch: always 33 entries.
         const order = [];
         order.push("Blank");
         order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
         order.push(`Initial Control - ${computedControls.value.initial}`);
-        // Next 9 sample positions (positions 4 to 12):
+        // Next 9 sample positions.
         for (let i = 0; i < 9; i++) {
-          order.push(`Position ${allowedPositions.value[i]}`);
+          order.push(`Position ${fullAllowed.value[i] || ""}`);
         }
         order.push(`2nd Control - ${computedControls.value.second}`);
-        // Next 9 sample positions (positions 14 to 22):
+        // Next 9 sample positions.
         for (let i = 9; i < 18; i++) {
-          order.push(`Position ${allowedPositions.value[i]}`);
+          order.push(`Position ${fullAllowed.value[i] || ""}`);
         }
         order.push(`3rd Control - ${computedControls.value.third}`);
-        // Next 9 sample positions (positions 24 to 32):
+        // Next 9 sample positions.
         for (let i = 18; i < 27; i++) {
-          order.push(`Position ${allowedPositions.value[i]}`);
+          order.push(`Position ${fullAllowed.value[i] || ""}`);
         }
         order.push(`Final Control - ${computedControls.value.final}`);
-        return order; // length should be 33.
+        return order; // length 33.
       } else {
-        // Non-full batch: total positions = finalPositionStore + 1.
-        const total = totalFixed.value;
+        // Non-full batch: total positions = finalPosition + 1.
+        const total = finalPosition.value + 1; // e.g., if finalPosition=31 then total=32.
         const order = [];
         order.push("Blank");
         order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-        // For sample positions, we need (total - 2) samples.
-        for (let i = 0; i < total - 2; i++) {
-          order.push(`Position ${allowedPositions.value[i]}`);
+        // Number of sample positions = total - 3.
+        const sampleCount = total - 3;
+        const allowed = nonFullAllowed.value;
+        for (let i = 0; i < sampleCount; i++) {
+          order.push(`Position ${allowed[i] || ""}`);
         }
         order.push(`Final Control - ${computedControls.value.final}`);
-        return order; // length = total.
+        return order; // length equals total.
       }
     });
 
-    // Build fixedRows using the computed positionOrder.
+    // Finally, our fixedRows are built from the positionOrder array.
+    // The run number will be the index+1 (after the wait row, if any).
     const fixedRows = computed(() => {
-      const order = positionOrder.value;
-      const rows = [];
-      for (let i = 0; i < order.length; i++) {
-        // Use baseRuns if available; otherwise default blank times.
-        const runTimes = baseRuns.value[i] || { startTime: "", endTime: "" };
-        rows.push({
-          position: i + 1, // runs are sequentially numbered.
-          computedTitle: order[i],
-          startTime: runTimes.startTime,
-          endTime: runTimes.endTime
-        });
-      }
-      return rows;
+      return positionOrder.value.map((title, idx) => {
+        // Use baseRuns[idx] if available for start/end times.
+        const times = baseRuns.value[idx] || { startTime: "", endTime: "" };
+        return {
+          position: idx + 1,
+          computedTitle: title,
+          startTime: times.startTime,
+          endTime: times.endTime
+        };
+      });
     });
 
-    // The finalRows include the wait row (if any) at the top.
+    // Our finalRows include the wait row at the top (if active).
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
@@ -198,10 +199,12 @@ export default {
 
     return {
       gcStore,
+      positionOrder,
       finalRows,
       runsHasWait,
       waitRow,
-      fixedRows
+      fixedRows,
+      baseRuns
     };
   }
 };
