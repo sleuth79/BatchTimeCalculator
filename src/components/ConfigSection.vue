@@ -72,7 +72,6 @@ export default {
       gcStore.results = results;
     };
 
-    // Handler for Time Delay components
     const handleUpdateTimeDelay = (data) => {
       gcStore.timeDelayResults = data;
     };
@@ -94,7 +93,7 @@ export default {
     });
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Compute the disabled positions based on the control values stored in the store.
+    // Compute the disabled positions based on the control values in the store.
     const disabledPositions = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -109,12 +108,12 @@ export default {
       return arr;
     });
 
-    // Watch the computed disabledPositions so we can see when they change.
+    // Watch for changes in disabledPositions.
     watch(disabledPositions, (newVal) => {
       console.log("ConfigSection disabledPositions changed:", newVal);
-    });
+    }, { deep: true });
 
-    // Reset function now always calls resetStartTime.
+    // Reset function: resets both the start-time and GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
@@ -167,7 +166,6 @@ export default {
   margin-bottom: 60px;
 }
 
-/* Sticky container for the reset button and the pinned box */
 .sticky-bottom-container {
   position: sticky;
   bottom: 0;
@@ -175,12 +173,10 @@ export default {
   flex-direction: column;
 }
 
-/* Reset button container: no extra left margin */
 .reset-button-container {
   padding-bottom: 2px;
 }
 
-/* Reset button styled to match the GC selector boxes */
 .reset-button-container button {
   border: 1px solid #ccc;
   padding: 0 8px;
@@ -197,7 +193,6 @@ export default {
   background-color: var(--highlight-color-hover, #218838);
 }
 
-/* Pinned box styling with visible top border */
 .other-batch-types-box {
   background-color: #fff;
   border: 1px solid #ccc;
