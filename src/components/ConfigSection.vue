@@ -76,7 +76,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Props for TimeDelayInput components.
+    // Props for the TimeDelayInput component.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -93,7 +93,7 @@ export default {
     });
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Compute the disabled positions based on control values from the store.
+    // Compute disabledPositions from the store's control values.
     const disabledPositions = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -108,7 +108,7 @@ export default {
       return arr;
     });
 
-    // Watch for changes and log them.
+    // Watch for changes in disabledPositions.
     watch(
       disabledPositions,
       (newVal) => {
@@ -117,7 +117,7 @@ export default {
       { deep: true }
     );
 
-    // Reset function: reset start-time and GC selection.
+    // Reset function: resets both the start-time inputs and the GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
@@ -141,7 +141,6 @@ export default {
 </script>
 
 <style scoped>
-/* Overall container styling */
 .config-section {
   background-color: #fff;
   padding: 0 10px 10px 10px;
