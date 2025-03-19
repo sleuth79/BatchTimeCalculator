@@ -13,15 +13,16 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Wait row, if present -->
+        <!-- Wait row if active -->
         <tr v-if="runsHasWait">
           <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render fixed run rows (sequential run numbers from 1 to totalPositions) -->
+        <!-- Render run rows from positionOrder -->
         <tr v-for="(title, idx) in positionOrder" :key="idx">
+          <!-- Run numbers are sequential regardless of wait row -->
           <td class="run-column">{{ idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
@@ -49,24 +50,28 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Determine if the first row is a wait row.
+    // Check if the first row is a wait row.
     const runsHasWait = computed(() =>
       props.runs.length > 0 &&
       String(props.runs[0].position).toLowerCase() === "wait"
     );
     const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-    // Base runs exclude the wait row.
+    // Base runs: exclude the wait row.
     const baseRuns = computed(() =>
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // Final sample position from store.
+    // Final sample position from the store.
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
-    // Total positions = finalPosition + 1 (if finalPosition is 32 then total = 33).
-    const totalPositions = computed(() => {
-      if (isNaN(finalPosition.value) || finalPosition.value < 1) return 33;
-      return finalPosition.value === 32 ? 33 : finalPosition.value + 1;
-    });
+    // For non-full batches, totalPositions = finalPosition.
+    // For a full batch (finalPosition === 32), totalPositions = 33.
+    const totalPositions = computed(() =>
+      isNaN(finalPosition.value) || finalPosition.value < 1
+        ? 33
+        : finalPosition.value === 32
+        ? 33
+        : finalPosition.value
+    );
     // Full batch flag.
     const isFullBatch = computed(() => finalPosition.value === 32);
 
@@ -76,9 +81,9 @@ export default {
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // For labeling, we want four control labels:
-    // "1st Control" and "3rd Control" will show the larger (initial) control,
-    // "2nd Control" and "4th Control" will show the smaller (final) control.
+    // Rename controls as 1st, 2nd, 3rd, and 4th:
+    // 1st and 3rd use the larger (initial) control,
+    // 2nd and 4th use the smaller (final) control.
     const computedControls = computed(() => ({
       first: initialControlRaw.value,
       second: finalControlRaw.value,
@@ -86,43 +91,42 @@ export default {
       fourth: finalControlRaw.value
     }));
 
-    // Compute allowed sample positions using the full range 3 to 32.
-    // Exclude the raw control numbers and 16.
+    // Build allowed sample positions using the full range 3–32.
+    // Exclude the two raw control numbers and 16.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
         if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16) continue;
         arr.push(num);
       }
-      return arr; // This array will always be 27 elements long.
+      return arr; // always 27 elements
     });
 
-    // Build the positionOrder array (the run titles) of length totalPositions.
+    // Build the positionOrder array (run titles) of length totalPositions.
     const positionOrder = computed(() => {
       const total = totalPositions.value;
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      // Create an array of length total.
       const order = new Array(total).fill("");
-      // Fixed entries:
+      // Fixed titles:
       order[0] = "Blank";
       order[1] = gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
       if (total > 2) order[2] = `1st Control - ${computedControls.value.first}`;
       if (total > 12) order[12] = `2nd Control - ${computedControls.value.second}`;
       if (total > 22) order[22] = `3rd Control - ${computedControls.value.third}`;
-      // For the final control marker, only force it if there's at least one sample slot
-      // after the last forced control marker. Otherwise, omit it.
+      // Insert 4th Control only if there’s room after index 22.
       if (total > 24) order[total - 1] = `4th Control - ${computedControls.value.fourth}`;
-      // Fill remaining indices with sample positions from sampleAllowed.
+      // Fill in the rest from sampleAllowed.
       let pointer = 0;
       for (let i = 0; i < total; i++) {
         if (order[i] !== "") continue;
-        // Only assign if we have a sample value.
         order[i] = `Position ${sampleAllowed.value[pointer] || ""}`;
         pointer++;
       }
       return order;
     });
 
-    // fixedRows: Pair each title in positionOrder with a sequential run number.
+    // fixedRows: assign sequential run numbers (starting at 1) with titles from positionOrder.
     const fixedRows = computed(() =>
       positionOrder.value.map((title, idx) => ({
         position: idx + 1,
@@ -132,7 +136,7 @@ export default {
       }))
     );
 
-    // finalRows: Prepend the wait row if it exists.
+    // finalRows: prepend wait row if it exists.
     const finalRows = computed(() =>
       runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value
     );
