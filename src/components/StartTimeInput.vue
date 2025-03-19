@@ -203,7 +203,7 @@ export default {
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
-    // Define allowed ranges:
+    // Define allowed ranges for controls.
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -247,6 +247,7 @@ export default {
         ...gcStore.startTime.controls,
         control1: num,
       };
+      console.log("validateControl1 - localControl1:", localControl1.value, "Store.control1:", gcStore.startTime.controls.control1);
     };
 
     const validateControl2 = () => {
@@ -267,11 +268,21 @@ export default {
         ...gcStore.startTime.controls,
         control2: num,
       };
+      console.log("validateControl2 - localControl2:", localControl2.value, "Store.control2:", gcStore.startTime.controls.control2);
     };
 
-    // Instead of computing disabledPositions locally, we now use the prop passed from the parent.
-    // You can reference it as "props.disabledPositions".
+    // Watch the store's control values for debugging.
+    watch(
+      () => gcStore.startTime.controls,
+      (newControls) => {
+        console.log("Store controls updated:", newControls);
+      },
+      { deep: true }
+    );
 
+    // Instead of computing disabledPositions locally, we use the prop from the parent.
+    // You can access it as props.disabledPositions.
+    // For convenience, we return it as "disabledPositions".
     return {
       isLoading,
       localBatchStartTime,
