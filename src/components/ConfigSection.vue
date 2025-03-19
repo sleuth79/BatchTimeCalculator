@@ -117,7 +117,7 @@ export default {
       { deep: true }
     );
 
-    // Reset function: reset both the start-time and the GC selection.
+    // Reset function: resets both start-time inputs and the GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
@@ -150,36 +150,30 @@ export default {
   box-sizing: border-box;
   margin-top: 0;
 }
-
 .config-section h1 {
   margin-top: 0 !important;
   margin-bottom: 5px;
 }
-
 .config-container {
   display: flex;
   flex-direction: column;
   position: relative;
 }
-
 .scrollable-content {
   flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
   margin-bottom: 60px;
 }
-
 .sticky-bottom-container {
   position: sticky;
   bottom: 0;
   display: flex;
   flex-direction: column;
 }
-
 .reset-button-container {
   padding-bottom: 2px;
 }
-
 .reset-button-container button {
   border: 1px solid #ccc;
   padding: 0 8px;
@@ -195,7 +189,6 @@ export default {
 .reset-button-container button:hover {
   background-color: var(--highlight-color-hover, #218838);
 }
-
 .other-batch-types-box {
   background-color: #fff;
   border: 1px solid #ccc;

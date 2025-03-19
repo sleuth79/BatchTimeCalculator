@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { computed, watch } from 'vue';
+import { computed, watch, watchEffect } from 'vue';
 
 export default {
   name: 'PositionSelector',
@@ -52,20 +52,24 @@ export default {
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     console.log("PositionSelector disabledPositions on setup:", props.disabledPositions);
-    // Watch for changes to disabledPositions.
+    
+    // Use watchEffect to log updates on disabledPositions.
+    watchEffect(() => {
+      console.log("PositionSelector disabledPositions updated (watchEffect):", props.disabledPositions);
+    });
+
+    // Additionally, use a watcher.
     watch(
       () => props.disabledPositions,
-      (newVal) => {
-        console.log("PositionSelector disabledPositions changed:", newVal);
+      (newVal, oldVal) => {
+        console.log("PositionSelector disabledPositions changed from", oldVal, "to", newVal);
       },
       { deep: true }
     );
     
     const selectedPosition = computed(() => props.modelValue);
-
     const isDisabled = (position) => props.disabledPositions.includes(position);
     const isSelected = (position) => position === selectedPosition.value;
-
     const selectPosition = (position) => {
       if (isDisabled(position)) return;
       if (selectedPosition.value === position) {
@@ -90,14 +94,12 @@ export default {
   justify-content: flex-start !important;
   margin-bottom: 0px;
 }
-
 .grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
   gap: 5px;
   width: 100%;
 }
-
 .grid-item {
   border: 1px solid #ccc;
   padding: 5px;
@@ -109,23 +111,19 @@ export default {
   transition: background-color 0.3s ease, color 0.3s ease;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
-
 .grid-item:hover {
   background-color: #f0f0f0;
 }
-
 .grid-item.selected {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
 }
-
 .grid-item.disabled {
   background-color: #ccc;
   cursor: not-allowed;
   pointer-events: none;
   opacity: 0.6;
 }
-
 .grid-item.full-tile {
   grid-column: span 4;
 }
