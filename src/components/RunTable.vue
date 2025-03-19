@@ -15,7 +15,7 @@
         </template>
       </thead>
       <tbody>
-        <!-- Wait row, if present -->
+        <!-- Wait row (if active) -->
         <tr v-if="runsHasWait">
           <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle || waitRow.title || '15-Min Wait' }}</td>
@@ -42,7 +42,7 @@ import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 export default {
   name: "RunTable",
   props: {
-    // Expects runs array; if a wait row is active it is the first element.
+    // Expects an array of run objects; if a wait row is active, it is the first element.
     runs: {
       type: Array,
       required: true,
@@ -52,7 +52,7 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Check if the first run is a wait row.
+    // Determine if the first row is a wait row.
     const runsHasWait = computed(() => {
       return (
         props.runs.length > 0 &&
@@ -60,47 +60,37 @@ export default {
       );
     });
     const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-    // Exclude wait row for fixed rows.
+    // Exclude the wait row for fixed rows.
     const baseRuns = computed(() =>
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
     // Final position from the store.
     const finalPositionStore = computed(() => Number(gcStore.startTime.finalPosition));
-    // A flag: full batch if final position equals 32.
+    // Full batch flag: true when final position equals 32.
     const isFullBatch = computed(() => finalPositionStore.value === 32);
 
-    // User-entered controls (we have two control fields).
+    // Get raw control values.
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
     const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
-    // Define initial control as the larger and final control as the smaller.
+    // Define initial control as the larger value and final control as the smaller.
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // Compute four control values by equally spacing between the initial and final.
-    // If one or both are missing, fallback to using the raw values.
+    // Compute four control values.
+    // For labeling purposes, we want:
+    // - "Initial" and "3rd" to show the larger value.
+    // - "2nd" and "Final" to show the smaller value.
     const computedControls = computed(() => {
-      const init = initialControlRaw.value;
-      const fin = finalControlRaw.value;
-      if (!init || !fin) {
-        return {
-          initial: init,
-          second: init,
-          third: fin,
-          final: fin
-        };
-      }
-      const diff = init - fin;
-      const segment = diff / 3;
       return {
-        initial: init,
-        second: Math.round(init - segment),
-        third: Math.round(init - 2 * segment),
-        final: fin
+        initial: initialControlRaw.value,
+        second: finalControlRaw.value,
+        third: initialControlRaw.value,
+        final: finalControlRaw.value
       };
     });
 
-    // Allowed positions: numbers 3–32 excluding the user controls and 16.
+    // Allowed positions: numbers from 3 to 32 excluding the two control values and 16.
     const allowedPositions = computed(() => {
       const positions = [];
       for (let num = 3; num <= 32; num++) {
@@ -111,25 +101,22 @@ export default {
       return positions;
     });
 
-    // Determine total fixed rows.
-    // For a full batch, we want 33 rows; for non-full batches, use final position + 1.
+    // Compute total fixed rows.
+    // For full batch: always 33 rows.
+    // For non-full batch: total fixed rows = final position + 1.
     const totalFixed = computed(() => {
       const fp = finalPositionStore.value;
       return isNaN(fp) || fp < 3 ? 33 : isFullBatch.value ? 33 : fp + 1;
     });
 
     // Helper function to assign run titles.
-    // For a full batch, we want four control rows:
-    //   Row 1: "Blank"
-    //   Row 2: "Argon Blank" (or "Methane Blank")
-    //   Row 3: Control – computedControls.initial
-    //   Rows 4–12: Position labels
-    //   Row 13: Control – computedControls.second
-    //   Rows 14–22: Position labels
-    //   Row 23: Control – computedControls.third
-    //   Rows 24–32: Position labels
-    //   Row 33: Control – computedControls.final
-    // For non-full batches, only the last row is control.
+    // For full batches, we want four control rows:
+    //   Row 3: "Initial Control - [number]"  
+    //   Row 13: "2nd Control - [number]"  
+    //   Row 23: "3rd Control - [number]"  
+    //   Row 33: "Final Control - [number]"
+    // Other rows get "Position ..." labels.
+    // For non-full batches, only the final row is control.
     function getTitle(runNumber, allowedPositions, computedControls, gcType, totalFixedValue) {
       if (runNumber === 1) {
         return "Blank";
@@ -139,47 +126,49 @@ export default {
       }
       if (isFullBatch.value) {
         if (runNumber === 3) {
-          return `Control - ${computedControls.initial}`;
+          return `Initial Control - ${computedControls.initial}`;
         } else if (runNumber === 13) {
-          return `Control - ${computedControls.second}`;
+          return `2nd Control - ${computedControls.second}`;
         } else if (runNumber === 23) {
-          return `Control - ${computedControls.third}`;
+          return `3rd Control - ${computedControls.third}`;
         } else if (runNumber === totalFixedValue) {
-          return `Control - ${computedControls.final}`;
+          return `Final Control - ${computedControls.final}`;
         } else {
-          // For position rows: we assign based on groups.
+          // For non-control rows, assign position labels.
           let posIndex;
           if (runNumber >= 4 && runNumber <= 12) {
-            posIndex = runNumber - 4; // group 1 (indices 0..8)
+            posIndex = runNumber - 4; // group 1: indices 0..8
           } else if (runNumber >= 14 && runNumber <= 22) {
-            posIndex = (runNumber - 14) + 9; // group 2 (indices 9..17)
+            posIndex = (runNumber - 14) + 9; // group 2: indices 9..17
           } else if (runNumber >= 24 && runNumber < totalFixedValue) {
-            posIndex = (runNumber - 24) + 18; // group 3 (indices 18..(total-2))
+            posIndex = (runNumber - 24) + 18; // group 3: indices 18..(total-2)
           }
           return posIndex !== undefined && posIndex < allowedPositions.length
             ? `Position ${allowedPositions[posIndex]}`
             : "";
         }
       } else {
-        // Non-full batch: rows 1 & 2 fixed; rows 3 to (totalFixed - 1) are positions; last row is control.
+        // For non-full batches, only the final row is control.
         if (runNumber >= 3 && runNumber < totalFixedValue) {
           const posIndex = runNumber - 3;
           return posIndex < allowedPositions.length ? `Position ${allowedPositions[posIndex]}` : "";
         }
         if (runNumber === totalFixedValue) {
-          return `Control - ${computedControls.final}`;
+          return `Final Control - ${computedControls.final}`;
         }
       }
       return "";
     }
 
-    // Build the fixedRows array.
+    // Build fixedRows.
     const fixedRows = computed(() => {
       const total = totalFixed.value;
       const rows = [];
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       for (let i = 1; i <= total; i++) {
-        const runTimes = baseRuns.value[i - 1] ? baseRuns.value[i - 1] : { startTime: "", endTime: "" };
+        const runTimes = baseRuns.value[i - 1]
+          ? baseRuns.value[i - 1]
+          : { startTime: "", endTime: "" };
         rows.push({
           position: i,
           computedTitle: getTitle(i, allowedPositions.value, computedControls.value, gcType, total),
@@ -190,7 +179,7 @@ export default {
       return rows;
     });
 
-    // Combine wait row (if present) with fixed rows.
+    // Combine wait row (if any) with fixedRows.
     const finalRows = computed(() => {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
