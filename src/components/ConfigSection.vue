@@ -76,7 +76,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Compute properties for Time Delay component props.
+    // Props for TimeDelayInput components.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -93,27 +93,31 @@ export default {
     });
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Compute the disabled positions based on the control values in the store.
+    // Compute the disabled positions based on control values from the store.
     const disabledPositions = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
       const arr = [];
-      if (ctrl1 !== null && ctrl1 !== undefined) {
+      if (ctrl1 !== null && ctrl1 !== undefined && ctrl1 !== '') {
         arr.push(Number(ctrl1));
       }
-      if (ctrl2 !== null && ctrl2 !== undefined) {
+      if (ctrl2 !== null && ctrl2 !== undefined && ctrl2 !== '') {
         arr.push(Number(ctrl2));
       }
       console.log("ConfigSection disabledPositions computed:", arr);
       return arr;
     });
 
-    // Watch for changes in disabledPositions.
-    watch(disabledPositions, (newVal) => {
-      console.log("ConfigSection disabledPositions changed:", newVal);
-    }, { deep: true });
+    // Watch for changes and log them.
+    watch(
+      disabledPositions,
+      (newVal) => {
+        console.log("ConfigSection disabledPositions changed:", newVal);
+      },
+      { deep: true }
+    );
 
-    // Reset function: resets both the start-time and GC selection.
+    // Reset function: reset start-time and GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
