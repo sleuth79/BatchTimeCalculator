@@ -51,32 +51,26 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    // Log the initial disabledPositions value
     console.log("PositionSelector disabledPositions on setup:", props.disabledPositions);
+    // Watch for changes to disabledPositions.
+    watch(
+      () => props.disabledPositions,
+      (newVal) => {
+        console.log("PositionSelector disabledPositions changed:", newVal);
+      },
+      { deep: true }
+    );
     
-    // Watch for changes in disabledPositions so we can debug updates.
-    watch(() => props.disabledPositions, (newVal) => {
-      console.log("PositionSelector disabledPositions changed:", newVal);
-    }, { deep: true });
-    
-    // Use the passed modelValue as the current selected position.
     const selectedPosition = computed(() => props.modelValue);
 
-    // Returns true if the position is in the disabledPositions array.
     const isDisabled = (position) => props.disabledPositions.includes(position);
-
-    // Returns true if the position is currently selected.
     const isSelected = (position) => position === selectedPosition.value;
 
-    // On click, if not disabled, toggle the selection.
     const selectPosition = (position) => {
-      if (isDisabled(position)) return; // Do nothing if disabled
-
+      if (isDisabled(position)) return;
       if (selectedPosition.value === position) {
-        // Toggle off selection.
         emit('update:modelValue', null);
       } else {
-        // Set the new selection.
         emit('update:modelValue', position);
       }
     };
@@ -125,7 +119,6 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Disabled positions appear greyed out and non-clickable */
 .grid-item.disabled {
   background-color: #ccc;
   cursor: not-allowed;
@@ -133,7 +126,6 @@ export default {
   opacity: 0.6;
 }
 
-/* "Full" tile spans four columns */
 .grid-item.full-tile {
   grid-column: span 4;
 }

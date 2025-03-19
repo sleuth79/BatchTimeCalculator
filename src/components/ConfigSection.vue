@@ -76,7 +76,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Props for the TimeDelayInput component.
+    // Props for the TimeDelayInput components.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -117,7 +117,7 @@ export default {
       { deep: true }
     );
 
-    // Reset function: resets both the start-time inputs and the GC selection.
+    // Reset function: reset both the start-time and the GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
