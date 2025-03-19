@@ -51,6 +51,9 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
+    // Debug: log disabledPositions to verify they are being passed
+    console.log("PositionSelector disabledPositions:", props.disabledPositions);
+    
     // Use modelValue as the current selected position.
     const selectedPosition = computed(() => props.modelValue);
 
