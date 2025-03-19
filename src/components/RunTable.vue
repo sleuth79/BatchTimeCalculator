@@ -63,11 +63,10 @@ export default {
     // baseRuns excludes the wait row (if present)
     const baseRuns = computed(() => (runsHasWait.value ? props.runs.slice(1) : props.runs));
 
-    // Use the final position from the GC store.
-    const finalPositionStore = computed(() => gcStore.startTime.finalPosition);
+    // Use the final position from the store.
+    const finalPositionStore = computed(() => Number(gcStore.startTime.finalPosition));
 
-    // Build allowed positions: numbers from 3 to 32, excluding the controls and 16.
-    // (This remains unchanged.)
+    // Determine allowed positions based on control values.
     const initialControl = computed(() => {
       const c1 = Number(gcStore.startTime.controls?.control1);
       const c2 = Number(gcStore.startTime.controls?.control2);
@@ -85,16 +84,18 @@ export default {
           continue;
         positions.push(num);
       }
-      return positions; // should have 27 numbers
+      return positions; // should have 27 numbers in full batch
     });
 
-    // Determine total fixed rows:
-    // If final position is 32 (full batch), then total rows are 33; otherwise, 32.
+    // Dynamically determine the total fixed rows.
+    // (Total fixed rows = final position + 1, so if final position is 32 then total fixed rows is 33;
+    // if final position is 27 then total fixed rows is 28.)
     const totalFixed = computed(() => {
-      return finalPositionStore.value === 32 ? 33 : 32;
+      const fp = finalPositionStore.value;
+      return isNaN(fp) || fp < 3 ? 33 : fp + 1;
     });
 
-    // Helper function to assign a title based on fixed run number.
+    // Helper function to assign a title based on run number.
     function getTitle(runNumber, allowedPositions, initialControl, finalControl, gcType, totalFixedValue) {
       if (runNumber === 1) {
         return "Blank";
@@ -150,9 +151,9 @@ export default {
       return runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value;
     });
 
-    // --- Compute which fixed run (ignoring the wait row) is the closest to 4:00 PM (but ends before) ---
+    // --- Compute the fixed run that is closest to 4:00 PM (ignoring the wait row) ---
     function parseTimeStringToDate(timeStr) {
-      // timeStr should be like "10:15:25 AM"
+      // Assumes timeStr is like "10:15:25 AM"
       const today = new Date();
       return new Date(`${today.toDateString()} ${timeStr}`);
     }
