@@ -108,8 +108,8 @@ export default {
       if (total > 2) order[2] = `1st Control - ${computedControls.value.first}`;
       if (total >= 23) {
         if (total > 12) order[12] = `2nd Control - ${computedControls.value.second}`;
-        // Force the 3rd control at index 22 (so that it comes after sample position 22).
-        if (total > 22) order[22] = `3rd Control - ${computedControls.value.third}`;
+        // Force the 3rd control at index 21 so it comes after sample position 22.
+        if (total > 22) order[21] = `3rd Control - ${computedControls.value.third}`;
         if (total > 24) order[total - 1] = `4th Control - ${computedControls.value.fourth}`;
       } else {
         // For non-full batches, force the last entry as the final control.
