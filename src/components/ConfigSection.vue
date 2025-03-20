@@ -21,7 +21,8 @@
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
           :gcType="gcType"
-          :disabledPositions="[...disabledPositions]" 
+          :disabledPositions="[...disabledPositions]"
+          :key="JSON.stringify(disabledPositions)"
           @update-time-delay="handleUpdateTimeDelay"
         />
       </div>
@@ -76,7 +77,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Props for TimeDelayInput components.
+    // Props for the TimeDelayInput components.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -108,7 +109,7 @@ export default {
       return arr;
     });
 
-    // Watch for changes.
+    // Watch for changes in disabledPositions.
     watch(
       disabledPositions,
       (newVal) => {
@@ -117,6 +118,7 @@ export default {
       { deep: true }
     );
 
+    // Reset function: resets both start-time inputs and GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
