@@ -3,10 +3,10 @@
     <table v-if="positionOrder.length">
       <thead>
         <tr class="title-row">
-          <th colspan="4" class="batch-header">Initial Batch</th>
+          <!-- Adjusted colspan from 4 to 3 -->
+          <th colspan="3" class="batch-header">Initial Batch</th>
         </tr>
         <tr class="header-row">
-          <th class="run-column">Run</th>
           <th>Run Title</th>
           <th>Start Time</th>
           <th>End Time</th>
@@ -15,14 +15,12 @@
       <tbody>
         <!-- Wait row if present -->
         <tr v-if="runsHasWait">
-          <td class="run-column">{{ waitRow.position }}</td>
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
         <!-- Render run rows using computed positionOrder -->
         <tr v-for="(title, idx) in positionOrder" :key="idx">
-          <td class="run-column">{{ idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>
@@ -87,7 +85,8 @@ export default {
       fourth: finalControlRaw.value
     }));
 
-    // Build allowed sample positions from numbers 3 to 32, excluding the two control numbers and 16.
+    // Build allowed sample positions from numbers 3 to 32,
+    // excluding the two control numbers and 16.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
@@ -108,8 +107,8 @@ export default {
       if (total > 2) order[2] = `1st Control - ${computedControls.value.first}`;
       if (total >= 23) {
         if (total > 12) order[12] = `2nd Control - ${computedControls.value.second}`;
-        // Force the 3rd control at index 21 so it comes after sample position 22.
-        if (total > 22) order[21] = `3rd Control - ${computedControls.value.third}`;
+        // Force the 3rd control at index 22 so that it comes after sample "Position 22"
+        if (total > 22) order[22] = `3rd Control - ${computedControls.value.third}`;
         if (total > 24) order[total - 1] = `4th Control - ${computedControls.value.fourth}`;
       } else {
         // For non-full batches, force the last entry as the final control.
@@ -126,10 +125,9 @@ export default {
       return order;
     });
 
-    // fixedRows: pair each title in positionOrder with a sequential run number.
+    // fixedRows: pair each title in positionOrder with start/end times.
     const fixedRows = computed(() =>
       positionOrder.value.map((title, idx) => ({
-        position: idx + 1,
         computedTitle: title,
         startTime: (baseRuns.value[idx] && baseRuns.value[idx].startTime) || "",
         endTime: (baseRuns.value[idx] && baseRuns.value[idx].endTime) || ""
@@ -198,9 +196,6 @@ export default {
   padding: 4px 10px;
   border: none;
   text-align: center;
-}
-.run-column {
-  width: 80px;
 }
 .title-row .batch-header,
 .header-row {
