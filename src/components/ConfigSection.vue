@@ -13,7 +13,7 @@
         <!-- Always render start-time input components -->
         <start-time-input
           :selected-gc="selectedGc"
-          :disabledPositions="disabledPositions"
+          :disabledPositions="[...disabledPositions]"
           @update-results="handleUpdateResults"
         />
         <time-delay-input
@@ -21,7 +21,7 @@
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
           :gcType="gcType"
-          :disabledPositions="disabledPositions"
+          :disabledPositions="[...disabledPositions]" 
           @update-time-delay="handleUpdateTimeDelay"
         />
       </div>
@@ -76,7 +76,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Props for the TimeDelayInput components.
+    // Props for TimeDelayInput components.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -108,7 +108,7 @@ export default {
       return arr;
     });
 
-    // Watch for changes in disabledPositions.
+    // Watch for changes.
     watch(
       disabledPositions,
       (newVal) => {
@@ -117,7 +117,6 @@ export default {
       { deep: true }
     );
 
-    // Reset function: resets both start-time inputs and the GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       gcStore.setSelectedGc(null);
