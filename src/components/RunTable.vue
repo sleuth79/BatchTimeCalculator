@@ -3,7 +3,7 @@
     <table v-if="positionOrder.length">
       <thead>
         <tr class="title-row">
-          <!-- Adjusted colspan from 4 to 3 -->
+          <!-- Adjust colspan to match the columns -->
           <th colspan="3" class="batch-header">Initial Batch</th>
         </tr>
         <tr class="header-row">
@@ -13,13 +13,13 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Wait row if present -->
+        <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render run rows using computed positionOrder -->
+        <!-- Render the computed rows -->
         <tr v-for="(title, idx) in positionOrder" :key="idx">
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
@@ -57,17 +57,8 @@ export default {
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // Final sample position from the store.
+    // Get final sample position from the store.
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
-    // Total positions:
-    // For non-full batches (finalPosition < 23): total = finalPosition.
-    // For full batches (finalPosition === 32) or finalPosition ≥ 23: total = finalPosition + 1.
-    const totalPositions = computed(() => {
-      if (isNaN(finalPosition.value) || finalPosition.value < 1) return 33;
-      return finalPosition.value < 23 ? finalPosition.value : finalPosition.value + 1;
-    });
-    // Full batch flag.
-    const isFullBatch = computed(() => finalPosition.value === 32);
 
     // Raw control values.
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
@@ -75,9 +66,7 @@ export default {
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // Rename controls as "1st Control", "2nd Control", "3rd Control", and "4th Control"
-    // where 1st and 3rd use the larger (initial) control,
-    // 2nd and 4th use the smaller (final) control.
+    // Rename controls.
     const computedControls = computed(() => ({
       first: initialControlRaw.value,
       second: finalControlRaw.value,
@@ -85,59 +74,77 @@ export default {
       fourth: finalControlRaw.value
     }));
 
-    // Build allowed sample positions from numbers 3 to 32,
-    // excluding the two control numbers and 16.
+    // Build allowed sample positions from 3 to 32, excluding the two control numbers and 16.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
         if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16) continue;
         arr.push(num);
       }
-      return arr; // always 27 elements
+      return arr; // typically 27 elements
     });
 
-    // Build the positionOrder array.
-    const positionOrder = computed(() => {
-      const total = totalPositions.value;
-      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      const order = new Array(total).fill("");
-      // Fixed entries:
-      order[0] = "Blank";
-      order[1] = gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
-      if (total > 2) order[2] = `1st Control - ${computedControls.value.first}`;
-      if (total >= 23) {
-        if (total > 12) order[12] = `2nd Control - ${computedControls.value.second}`;
-        // Force the 3rd control at index 22 so that it comes after sample "Position 22"
-        if (total > 22) order[22] = `3rd Control - ${computedControls.value.third}`;
-        if (total > 24) order[total - 1] = `4th Control - ${computedControls.value.fourth}`;
+    // A helper function to generate the final order.
+    // In a full batch (finalPosition >= 23) we want:
+    //   Blank, Argon/Methane Blank, 1st Control,
+    //   then a first group of samples,
+    //   then 2nd Control,
+    //   then a second group of samples,
+    //   then (dynamically) insert 3rd Control immediately after the sample labeled "Position 22",
+    //   then the remaining samples,
+    //   then 4th Control at the end.
+    // For non-full batches, we just append all samples then a final control.
+    function generatePositionOrder(finalPos, controls, samples, gcType) {
+      let order = [];
+      // Fixed header rows:
+      order.push("Blank");
+      order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
+      order.push(`1st Control - ${controls.first}`);
+      
+      if (finalPos >= 23) {
+        // Define group sizes (these numbers mimic the original fixed positions).
+        const group1Count = 9;
+        const group2Count = 9;
+        // Add first group of sample positions.
+        for (let i = 0; i < group1Count && i < samples.length; i++) {
+          order.push(`Position ${samples[i]}`);
+        }
+        // Add 2nd Control.
+        order.push(`2nd Control - ${controls.second}`);
+        // Add second group of sample positions.
+        for (let i = group1Count; i < group1Count + group2Count && i < samples.length; i++) {
+          order.push(`Position ${samples[i]}`);
+        }
+        // Insert 3rd Control immediately after the sample labeled "Position 22" if found.
+        const indexOf22 = order.findIndex(item => item === "Position 22");
+        if (indexOf22 !== -1) {
+          order.splice(indexOf22 + 1, 0, `3rd Control - ${controls.third}`);
+        } else {
+          // If "Position 22" isn’t in the current order, push 3rd Control now.
+          order.push(`3rd Control - ${controls.third}`);
+        }
+        // Add any remaining sample positions.
+        for (let i = group1Count + group2Count; i < samples.length; i++) {
+          order.push(`Position ${samples[i]}`);
+        }
+        // Add 4th Control at the end.
+        order.push(`4th Control - ${controls.fourth}`);
       } else {
-        // For non-full batches, force the last entry as the final control.
-        if (total > 12) order[12] = `2nd Control - ${computedControls.value.second}`;
-        order[total - 1] = `3rd Control - ${computedControls.value.third}`;
-      }
-      // Fill remaining indices with sample positions.
-      let pointer = 0;
-      for (let i = 0; i < total; i++) {
-        if (order[i] !== "") continue;
-        order[i] = `Position ${sampleAllowed.value[pointer] || ""}`;
-        pointer++;
+        // For non-full batches, simply add all sample positions then the final control.
+        for (let i = 0; i < samples.length; i++) {
+          order.push(`Position ${samples[i]}`);
+        }
+        order.push(`3rd Control - ${controls.third}`);
       }
       return order;
+    }
+
+    // Compute the final ordering using the helper.
+    const positionOrder = computed(() => {
+      const fp = finalPosition.value;
+      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      return generatePositionOrder(fp, computedControls.value, sampleAllowed.value, gcType);
     });
-
-    // fixedRows: pair each title in positionOrder with start/end times.
-    const fixedRows = computed(() =>
-      positionOrder.value.map((title, idx) => ({
-        computedTitle: title,
-        startTime: (baseRuns.value[idx] && baseRuns.value[idx].startTime) || "",
-        endTime: (baseRuns.value[idx] && baseRuns.value[idx].endTime) || ""
-      }))
-    );
-
-    // finalRows: if a wait row exists, prepend it.
-    const finalRows = computed(() =>
-      runsHasWait.value ? [waitRow.value, ...fixedRows.value] : fixedRows.value
-    );
 
     // (Optional) Compute which fixed row is closest to 4:00 PM.
     function parseTimeStringToDate(timeStr) {
@@ -148,7 +155,8 @@ export default {
       const today = new Date();
       const cutoff = new Date(`${today.toDateString()} 4:00:00 PM`);
       let candidate = null;
-      for (const row of fixedRows.value) {
+      // Use baseRuns (which are the rows excluding the wait row)
+      for (const row of baseRuns.value) {
         if (!row.endTime) continue;
         const endDate = parseTimeStringToDate(row.endTime);
         if (endDate < cutoff) {
@@ -168,10 +176,8 @@ export default {
     return {
       gcStore,
       positionOrder,
-      finalRows,
       runsHasWait,
       waitRow,
-      fixedRows,
       baseRuns
     };
   }
