@@ -3,7 +3,6 @@
     <table v-if="positionOrder.length">
       <thead>
         <tr class="title-row">
-          <!-- Adjust colspan to match the columns -->
           <th colspan="3" class="batch-header">Initial Batch</th>
         </tr>
         <tr class="header-row">
@@ -46,116 +45,142 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // Check if the first row is a wait row.
+    // 1. Identify if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
       props.runs.length > 0 &&
       String(props.runs[0].position).toLowerCase() === "wait"
     );
     const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-    // Base runs exclude the wait row.
+
+    // 2. Base runs = everything except the wait row (if present).
     const baseRuns = computed(() =>
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // Get final sample position from the store.
+    // 3. finalPosition from store
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
 
-    // Raw control values.
+    // 4. Control values from store (larger = "first"/"third", smaller = "second"/"fourth")
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
     const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
     const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // Rename controls.
+    // For clarity, you can keep these or use them directly.
     const computedControls = computed(() => ({
-      first: initialControlRaw.value,
-      second: finalControlRaw.value,
-      third: initialControlRaw.value,
-      fourth: finalControlRaw.value
+      first: initialControlRaw.value,   // bigger
+      second: finalControlRaw.value,   // smaller
+      third: initialControlRaw.value,  // bigger
+      fourth: finalControlRaw.value    // smaller
     }));
 
-    // Build allowed sample positions from 3 to 32, excluding the two control numbers and 16.
+    // 5. Build the “master” list of allowed sample positions (3..32),
+    //    excluding control numbers and 16. We'll then filter by finalPosition.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
         if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16) continue;
         arr.push(num);
       }
-      return arr; // typically 27 elements
+      return arr;
     });
 
-    // A helper function to generate the final order.
-    // In a full batch (finalPosition >= 23) we want:
-    //   Blank, Argon/Methane Blank, 1st Control,
-    //   then a first group of samples,
-    //   then 2nd Control,
-    //   then a second group of samples,
-    //   then (dynamically) insert 3rd Control immediately after the sample labeled "Position 22",
-    //   then the remaining samples,
-    //   then 4th Control at the end.
-    // For non-full batches, we just append all samples then a final control.
-    function generatePositionOrder(finalPos, controls, samples, gcType) {
-      let order = [];
-      // Fixed header rows:
+    // 6. Helper to build the final run order.
+    function generatePositionOrder(finalPos, controls, allSamples, gcType) {
+      // Prepare a fresh array to hold the final run titles.
+      const order = [];
+
+      // Always start with:
       order.push("Blank");
       order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
       order.push(`1st Control - ${controls.first}`);
-      
-      if (finalPos >= 23) {
-        // Define group sizes (these numbers mimic the original fixed positions).
-        const group1Count = 9;
-        const group2Count = 9;
-        // Add first group of sample positions.
-        for (let i = 0; i < group1Count && i < samples.length; i++) {
-          order.push(`Position ${samples[i]}`);
+
+      // Filter the “allowed” samples to only those ≤ finalPosition.
+      const samples = allSamples.filter(n => n <= finalPos);
+
+      // If finalPos < 23, we do a simpler approach:
+      if (finalPos < 23) {
+        // Just add all sample positions
+        for (const s of samples) {
+          order.push(`Position ${s}`);
         }
-        // Add 2nd Control.
-        order.push(`2nd Control - ${controls.second}`);
-        // Add second group of sample positions.
-        for (let i = group1Count; i < group1Count + group2Count && i < samples.length; i++) {
-          order.push(`Position ${samples[i]}`);
-        }
-        // Insert 3rd Control immediately after the sample labeled "Position 22" if found.
-        const indexOf22 = order.findIndex(item => item === "Position 22");
-        if (indexOf22 !== -1) {
-          order.splice(indexOf22 + 1, 0, `3rd Control - ${controls.third}`);
-        } else {
-          // If "Position 22" isn’t in the current order, push 3rd Control now.
-          order.push(`3rd Control - ${controls.third}`);
-        }
-        // Add any remaining sample positions.
-        for (let i = group1Count + group2Count; i < samples.length; i++) {
-          order.push(`Position ${samples[i]}`);
-        }
-        // Add 4th Control at the end.
-        order.push(`4th Control - ${controls.fourth}`);
-      } else {
-        // For non-full batches, simply add all sample positions then the final control.
-        for (let i = 0; i < samples.length; i++) {
-          order.push(`Position ${samples[i]}`);
-        }
+        // Then the "3rd Control"
         order.push(`3rd Control - ${controls.third}`);
+        return order;
       }
+
+      // Otherwise, finalPos >= 23 => we do the "full" approach:
+      //  a) group1 = positions ≤ 12
+      //  b) group2 = positions 13..22
+      //  c) group3 = positions > 22
+
+      const group1 = samples.filter(n => n <= 12);
+      const group2 = samples.filter(n => n >= 13 && n <= 22);
+      const group3 = samples.filter(n => n > 22);
+
+      // a) Add group1
+      for (const s of group1) {
+        order.push(`Position ${s}`);
+      }
+
+      // b) Insert 2nd control if we have group2 or finalPos >= 13
+      //    (At this point, finalPos is definitely >= 23, so we do want 2nd control.)
+      order.push(`2nd Control - ${controls.second}`);
+
+      // c) Add group2
+      for (const s of group2) {
+        order.push(`Position ${s}`);
+      }
+
+      // d) Insert 3rd control after "Position 22" if that exists
+      const thirdLabel = `3rd Control - ${controls.third}`;
+      const indexOf22 = order.indexOf("Position 22");
+
+      if (indexOf22 !== -1) {
+        // Insert immediately after "Position 22"
+        order.splice(indexOf22 + 1, 0, thirdLabel);
+      } else if (controls.third === 22) {
+        // If the bigger control is 22, that means "Position 22" doesn't exist.
+        // So try to place it after "Position 21" if that exists:
+        const indexOf21 = order.indexOf("Position 21");
+        if (indexOf21 !== -1) {
+          order.splice(indexOf21 + 1, 0, thirdLabel);
+        } else {
+          // else just push at the end
+          order.push(thirdLabel);
+        }
+      } else {
+        // If we don't find "Position 22" for some reason, just push the 3rd control at the end of group2
+        order.push(thirdLabel);
+      }
+
+      // e) Add group3
+      for (const s of group3) {
+        order.push(`Position ${s}`);
+      }
+
+      // f) Finally, 4th Control at the end
+      order.push(`4th Control - ${controls.fourth}`);
+
       return order;
     }
 
-    // Compute the final ordering using the helper.
+    // 7. positionOrder is our main computed property that the table uses
     const positionOrder = computed(() => {
       const fp = finalPosition.value;
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       return generatePositionOrder(fp, computedControls.value, sampleAllowed.value, gcType);
     });
 
-    // (Optional) Compute which fixed row is closest to 4:00 PM.
+    // 8. (Optional) “closestBefore4” logic is unchanged
     function parseTimeStringToDate(timeStr) {
       const today = new Date();
       return new Date(`${today.toDateString()} ${timeStr}`);
     }
+
     const closestBefore4 = computed(() => {
-      const today = new Date();
-      const cutoff = new Date(`${today.toDateString()} 4:00:00 PM`);
+      const cutoff = new Date(`${new Date().toDateString()} 4:00:00 PM`);
       let candidate = null;
-      // Use baseRuns (which are the rows excluding the wait row)
       for (const row of baseRuns.value) {
         if (!row.endTime) continue;
         const endDate = parseTimeStringToDate(row.endTime);
@@ -167,6 +192,7 @@ export default {
       }
       return candidate;
     });
+
     watch(closestBefore4, (newVal) => {
       if (newVal) {
         gcStore.setClosestPositionBefore4PM(newVal.computedTitle);
