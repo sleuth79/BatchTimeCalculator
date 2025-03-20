@@ -24,24 +24,26 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
+            <!-- Changed from @blur to @input so validation runs immediately -->
             <input
               type="number"
               id="control1"
               v-model.number="localControl1"
               :min="control1Range.min"
               :max="control1Range.max"
-              @blur="validateControl1"
+              @input="validateControl1"
               class="control-input"
             />
           </div>
           <div class="control-group">
+            <!-- Changed from @blur to @input -->
             <input
               type="number"
               id="control2"
               v-model.number="localControl2"
               :min="control2Range.min"
               :max="control2Range.max"
-              @blur="validateControl2"
+              @input="validateControl2"
               class="control-input"
             />
           </div>
@@ -270,7 +272,7 @@ export default {
       console.log("validateControl2 - localControl2:", localControl2.value, "Store.control2:", gcStore.startTime.controls.control2);
     };
 
-    // Instead of computing disabledPositions locally, we wrap the incoming prop in a computed for reactivity.
+    // Wrap the incoming disabledPositions prop in a computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     return {
