@@ -57,10 +57,11 @@
       </div>
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
+        <!-- Pass a new array instance using spread so reactivity is triggered -->
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
-          :disabledPositions="disabledPositions"
+          :disabledPositions="[...disabledPositions]"
           mode="start-time"
           field="start-time"
           v-model="finalPosition"
@@ -203,7 +204,6 @@ export default {
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
-    // Define allowed ranges for controls.
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -228,7 +228,6 @@ export default {
       return { min: 3, max: 32 };
     });
 
-    // Validation functions for controls on blur.
     const validateControl1 = () => {
       let num = Number(localControl1.value);
       if (isNaN(num)) {
@@ -271,18 +270,9 @@ export default {
       console.log("validateControl2 - localControl2:", localControl2.value, "Store.control2:", gcStore.startTime.controls.control2);
     };
 
-    // Watch the store's control values for debugging.
-    watch(
-      () => gcStore.startTime.controls,
-      (newControls) => {
-        console.log("Store controls updated:", newControls);
-      },
-      { deep: true }
-    );
+    // Instead of computing disabledPositions locally, we wrap the incoming prop in a computed for reactivity.
+    const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // Instead of computing disabledPositions locally, we use the prop from the parent.
-    // You can access it as props.disabledPositions.
-    // For convenience, we return it as "disabledPositions".
     return {
       isLoading,
       localBatchStartTime,
@@ -303,7 +293,7 @@ export default {
       control2Range,
       validateControl1,
       validateControl2,
-      disabledPositions: props.disabledPositions
+      disabledPositions: disabledPositionsComputed
     };
   },
 };
@@ -319,7 +309,6 @@ export default {
 .heading-batch,
 .heading-controls {
   flex: 1;
-  /* Ensure left alignment */
   text-align: left;
 }
 .input-row {
@@ -327,7 +316,6 @@ export default {
   align-items: center;
   margin-bottom: 15px;
 }
-/* Batch time input styling remains unchanged */
 .batch-time-input {
   flex: 1;
   display: flex;
@@ -345,18 +333,15 @@ export default {
   color: #181818;
   font-weight: bold;
 }
-/* Controls inputs styling */
 .controls-inputs {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* Remove any left margin to align with header "Enter Controls:" text */
   margin-left: 0;
   gap: 10px;
 }
 .control-group {
-  /* No label offset; simply display the input */
   display: flex;
   align-items: center;
 }
