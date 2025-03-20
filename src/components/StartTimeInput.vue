@@ -15,7 +15,7 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hh:mm:ss"
+            placeholder="hh:mm"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
@@ -24,7 +24,6 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <!-- Use debounced validation on input -->
             <input
               type="number"
               id="control1"
@@ -36,7 +35,6 @@
             />
           </div>
           <div class="control-group">
-            <!-- Use debounced validation on input -->
             <input
               type="number"
               id="control2"
@@ -59,7 +57,6 @@
       </div>
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
-        <!-- Pass a new array instance using spread so reactivity is triggered -->
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
@@ -166,14 +163,12 @@ export default {
     // Format and validate the time input.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
-      if (value.length > 4) {
-        value = value.slice(0, 2) + ":" + value.slice(2, 4) + ":" + value.slice(4, 6);
-      } else if (value.length > 2) {
+      if (value.length > 2) {
         value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
-      localBatchStartTime.value = value.slice(0, 8);
+      localBatchStartTime.value = value.slice(0, 5);
       timeInputError.value = "";
-      if (localBatchStartTime.value.length >= 7) {
+      if (localBatchStartTime.value.length >= 5) {
         validateTimeInput();
       }
     };
@@ -181,26 +176,23 @@ export default {
     const validateTimeInput = () => {
       const timeString = localBatchStartTime.value;
       const parts = timeString.split(":");
-      if (parts.length !== 3) {
+      if (parts.length !== 2) {
         timeInputError.value =
-          "Invalid format. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+          "Invalid format. Enter time as hh:mm, with a 0 in front, such as 09:30.";
         return;
       }
-      const [hour, minute, second] = parts.map(Number);
+      const [hour, minute] = parts.map(Number);
       if (
         isNaN(hour) ||
         isNaN(minute) ||
-        isNaN(second) ||
         hour < 0 ||
         hour > 23 ||
         minute < 0 ||
-        minute > 59 ||
-        second < 0 ||
-        second > 59
+        minute > 59
       ) {
         localBatchStartTime.value = "";
         timeInputError.value =
-          "Invalid time. Enter time as hh:mm:ss, with a 0 in front, such as 09:30:00.";
+          "Invalid time. Enter time as hh:mm, with a 0 in front, such as 09:30.";
       }
     };
 
@@ -303,14 +295,12 @@ export default {
       startTimeFinalPositionError,
       recalculateResults,
       showWaitInput,
-      // Control bindings and dynamic ranges
       localControl1,
       localControl2,
       control1Range,
       control2Range,
       validateControl1,
       validateControl2,
-      // Use debounced validations
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
