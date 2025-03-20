@@ -388,4 +388,9 @@ export default {
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
+.heading-batch,
+.heading-controls {
+  font-size: 1rem; /* Match the label font size */
+  /* You can also inherit the font size from the parent if that's preferred */
+}
 </style>

@@ -88,18 +88,17 @@ export default {
       // Filter the allowed sample positions so we only keep ≤ finalPos.
       const samples = sampleAllowed.value.filter(n => n <= finalPos);
 
-      // SCENARIO A: finalPos < 13 => no 2nd/4th control
+      // SCENARIO A: finalPos < 13 => only one control row (2nd control)
       if (finalPos < 13) {
-        // Just all samples, then 3rd control (the bigger control).
+        // Add all sample positions, then append the 2nd Control (using the smaller control)
         for (const s of samples) {
           order.push(`Position ${s}`);
         }
-        order.push(`3rd Control - ${biggerControl.value}`);
+        order.push(`2nd Control - ${smallerControl.value}`);
         return order;
       }
 
-      // SCENARIO B: 13 <= finalPos < 23 => we do want a 2nd control after position 12
-      // but we do NOT do the full “split at 22” approach, nor do we add a 4th control.
+      // SCENARIO B: 13 <= finalPos < 23 => add a 2nd control after position 12, then the 3rd control at the end.
       if (finalPos < 23) {
         // Group1 = positions ≤ 12
         const group1 = samples.filter(n => n <= 12);
@@ -124,10 +123,7 @@ export default {
         return order;
       }
 
-      // SCENARIO C: finalPos >= 23 => the full approach
-      // group1 = positions ≤ 12
-      // group2 = 13..22
-      // group3 = > 22
+      // SCENARIO C: finalPos >= 23 => full approach with groups and two control insertions.
       const group1 = samples.filter(n => n <= 12);
       const group2 = samples.filter(n => n >= 13 && n <= 22);
       const group3 = samples.filter(n => n > 22);
