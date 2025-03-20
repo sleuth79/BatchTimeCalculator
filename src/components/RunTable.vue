@@ -3,9 +3,11 @@
     <table v-if="positionOrder.length">
       <thead>
         <tr class="title-row">
-          <th colspan="3" class="batch-header">Initial Batch</th>
+          <!-- Increase colspan to account for the new "Run" column -->
+          <th colspan="4" class="batch-header">Initial Batch</th>
         </tr>
         <tr class="header-row">
+          <th>Run</th>
           <th>Run Title</th>
           <th>Start Time</th>
           <th>End Time</th>
@@ -14,12 +16,15 @@
       <tbody>
         <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
+          <td>1</td>
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
         <!-- Render the computed rows -->
         <tr v-for="(title, idx) in positionOrder" :key="idx">
+          <!-- If wait row exists, numbering starts at 2 for computed rows -->
+          <td>{{ runsHasWait ? idx + 2 : idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>

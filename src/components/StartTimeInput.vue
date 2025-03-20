@@ -390,7 +390,7 @@ label {
 }
 .heading-batch,
 .heading-controls {
-  font-size: 1rem; /* Match the label font size */
+  font-size: 1.2rem; /* Match the label font size */
   /* You can also inherit the font size from the parent if that's preferred */
 }
 </style>
