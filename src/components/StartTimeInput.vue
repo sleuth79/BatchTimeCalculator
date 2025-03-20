@@ -332,7 +332,7 @@ export default {
   align-items: center;
 }
 .batch-time-input input {
-  width: 100px;
+  width: 75px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);

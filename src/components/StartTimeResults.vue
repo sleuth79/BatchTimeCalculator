@@ -92,8 +92,9 @@ export default {
       return storedTime;
     });
 
+    // Updated to match hh:mm instead of hh:mm:ss
     const showDetailedResults = computed(() => {
-      return /^\d{2}:\d{2}:\d{2}$/.test(displayBatchStartTime.value);
+      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
     const displayFinalPosition = computed(() => {
