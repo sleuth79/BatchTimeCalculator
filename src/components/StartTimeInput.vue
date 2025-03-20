@@ -24,26 +24,26 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <!-- Using @input for immediate update -->
+            <!-- Use debounced validation on input -->
             <input
               type="number"
               id="control1"
               v-model.number="localControl1"
               :min="control1Range.min"
               :max="control1Range.max"
-              @input="validateControl1"
+              @input="debouncedValidateControl1"
               class="control-input"
             />
           </div>
           <div class="control-group">
-            <!-- Using @input for immediate update -->
+            <!-- Use debounced validation on input -->
             <input
               type="number"
               id="control2"
               v-model.number="localControl2"
               :min="control2Range.min"
               :max="control2Range.max"
-              @input="validateControl2"
+              @input="debouncedValidateControl2"
               class="control-input"
             />
           </div>
@@ -59,6 +59,7 @@
       </div>
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
+        <!-- Pass a new array instance using spread so reactivity is triggered -->
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
@@ -79,14 +80,25 @@ import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
 
+// Simple debounce utility function.
+function debounce(fn, delay = 300) {
+  let timeoutID;
+  return function(...args) {
+    clearTimeout(timeoutID);
+    timeoutID = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
 export default {
   name: "StartTimeInput",
   components: { PositionSelector },
   props: {
     disabledPositions: {
       type: Array,
-      default: () => [],
-    },
+      default: () => []
+    }
   },
   setup(props) {
     const gcStore = useGcStore();
@@ -125,29 +137,27 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Use the store getter to compute final positions.
-    const computedFinalPositions = computed(() => gcStore.finalPositions);
-    // Watch the computed getter and update the local finalPosition binding.
+    // Final Position binding
     const finalPosition = ref(null);
-    watch(computedFinalPositions, (newVal) => {
-      finalPosition.value = newVal.finalPosition;
-      // Optionally, clear error messages or recalc results here
+    watch(finalPosition, (newVal) => {
+      gcStore.startTime.finalPosition = newVal;
+      recalculateResults();
     });
 
-    // When the selected GC changes, recalc results.
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
         localWait15.value = true;
       } else if (newGc && gcStore.allGcData[newGc]?.type === "Sulphur") {
         localWait15.value = false;
       }
+      recalculateResults();
     });
 
     watch(localBatchStartTime, () => {
-      // Optionally recalc here if needed
+      recalculateResults();
     });
     watch(localWait15, () => {
-      // Optionally recalc here if needed
+      recalculateResults();
     });
     watch(() => gcStore.startTimeResetCounter, () => {
       timeInputError.value = "";
@@ -194,8 +204,6 @@ export default {
       }
     };
 
-    // You can call the store calculation if needed.
-    // For example:
     const recalculateResults = () => {
       gcStore.calculateStartTimeBatch();
     };
@@ -233,7 +241,6 @@ export default {
       return { min: 3, max: 32 };
     });
 
-    // Update validation on input.
     const validateControl1 = () => {
       let num = Number(localControl1.value);
       if (isNaN(num)) {
@@ -276,7 +283,11 @@ export default {
       console.log("validateControl2 - localControl2:", localControl2.value);
     };
 
-    // For the disabled positions, we simply use the prop from the parent.
+    // Create debounced versions of the validation functions.
+    const debouncedValidateControl1 = debounce(validateControl1, 300);
+    const debouncedValidateControl2 = debounce(validateControl2, 300);
+
+    // Expose the parent's disabledPositions prop via computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     return {
@@ -299,6 +310,9 @@ export default {
       control2Range,
       validateControl1,
       validateControl2,
+      // Use debounced validations
+      debouncedValidateControl1,
+      debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
     };
   },
