@@ -45,7 +45,7 @@ export default {
   setup(props) {
     const gcStore = useGcStore();
 
-    // 1. Identify if there's a "Wait" row at the top.
+    // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
       props.runs.length > 0 &&
       String(props.runs[0].position).toLowerCase() === "wait"
@@ -60,60 +60,74 @@ export default {
     // 3. finalPosition from store
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
 
-    // 4. Control values from store (larger = "first"/"third", smaller = "second"/"fourth")
+    // 4. Control values from store
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
     const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
-    const initialControlRaw = computed(() => Math.max(c1.value || 0, c2.value || 0));
-    const finalControlRaw = computed(() => Math.min(c1.value || 0, c2.value || 0));
+    const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
+    const smallerControl = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // For clarity, you can keep these or use them directly.
-    const computedControls = computed(() => ({
-      first: initialControlRaw.value,   // bigger
-      second: finalControlRaw.value,   // smaller
-      third: initialControlRaw.value,  // bigger
-      fourth: finalControlRaw.value    // smaller
-    }));
-
-    // 5. Build the “master” list of allowed sample positions (3..32),
-    //    excluding control numbers and 16. We'll then filter by finalPosition.
+    // 5. Build a “master” list of allowed sample positions (3..32), excluding
+    //    the control numbers themselves and 16.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
-        if (num === initialControlRaw.value || num === finalControlRaw.value || num === 16) continue;
+        if (num === biggerControl.value || num === smallerControl.value || num === 16) continue;
         arr.push(num);
       }
       return arr;
     });
 
-    // 6. Helper to build the final run order.
-    function generatePositionOrder(finalPos, controls, allSamples, gcType) {
-      // Prepare a fresh array to hold the final run titles.
+    // 6. Helper to build the final run order with three scenarios.
+    function generatePositionOrder(finalPos, gcType) {
+      // Start with the fixed header rows:
       const order = [];
-
-      // Always start with:
       order.push("Blank");
       order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-      order.push(`1st Control - ${controls.first}`);
+      order.push(`1st Control - ${biggerControl.value}`);
 
-      // Filter the “allowed” samples to only those ≤ finalPosition.
-      const samples = allSamples.filter(n => n <= finalPos);
+      // Filter the allowed sample positions so we only keep ≤ finalPos.
+      const samples = sampleAllowed.value.filter(n => n <= finalPos);
 
-      // If finalPos < 23, we do a simpler approach:
-      if (finalPos < 23) {
-        // Just add all sample positions
+      // SCENARIO A: finalPos < 13 => no 2nd/4th control
+      if (finalPos < 13) {
+        // Just all samples, then 3rd control (the bigger control).
         for (const s of samples) {
           order.push(`Position ${s}`);
         }
-        // Then the "3rd Control"
-        order.push(`3rd Control - ${controls.third}`);
+        order.push(`3rd Control - ${biggerControl.value}`);
         return order;
       }
 
-      // Otherwise, finalPos >= 23 => we do the "full" approach:
-      //  a) group1 = positions ≤ 12
-      //  b) group2 = positions 13..22
-      //  c) group3 = positions > 22
+      // SCENARIO B: 13 <= finalPos < 23 => we do want a 2nd control after position 12
+      // but we do NOT do the full “split at 22” approach, nor do we add a 4th control.
+      if (finalPos < 23) {
+        // Group1 = positions ≤ 12
+        const group1 = samples.filter(n => n <= 12);
+        // Group2 = positions > 12
+        const group2 = samples.filter(n => n > 12);
 
+        // Add group1
+        for (const s of group1) {
+          order.push(`Position ${s}`);
+        }
+
+        // 2nd Control (the smaller control)
+        order.push(`2nd Control - ${smallerControl.value}`);
+
+        // Add group2
+        for (const s of group2) {
+          order.push(`Position ${s}`);
+        }
+
+        // 3rd Control (the bigger control) at the end
+        order.push(`3rd Control - ${biggerControl.value}`);
+        return order;
+      }
+
+      // SCENARIO C: finalPos >= 23 => the full approach
+      // group1 = positions ≤ 12
+      // group2 = 13..22
+      // group3 = > 22
       const group1 = samples.filter(n => n <= 12);
       const group2 = samples.filter(n => n >= 13 && n <= 22);
       const group3 = samples.filter(n => n > 22);
@@ -123,34 +137,29 @@ export default {
         order.push(`Position ${s}`);
       }
 
-      // b) Insert 2nd control if we have group2 or finalPos >= 13
-      //    (At this point, finalPos is definitely >= 23, so we do want 2nd control.)
-      order.push(`2nd Control - ${controls.second}`);
+      // b) Insert 2nd Control
+      order.push(`2nd Control - ${smallerControl.value}`);
 
       // c) Add group2
       for (const s of group2) {
         order.push(`Position ${s}`);
       }
 
-      // d) Insert 3rd control after "Position 22" if that exists
-      const thirdLabel = `3rd Control - ${controls.third}`;
+      // d) 3rd control (the bigger control) after "Position 22" if it exists
+      const thirdLabel = `3rd Control - ${biggerControl.value}`;
       const indexOf22 = order.indexOf("Position 22");
-
       if (indexOf22 !== -1) {
-        // Insert immediately after "Position 22"
         order.splice(indexOf22 + 1, 0, thirdLabel);
-      } else if (controls.third === 22) {
-        // If the bigger control is 22, that means "Position 22" doesn't exist.
-        // So try to place it after "Position 21" if that exists:
+      } else if (biggerControl.value === 22) {
+        // If 22 is the bigger control, "Position 22" won't exist.
+        // Try "Position 21" or else just push it.
         const indexOf21 = order.indexOf("Position 21");
         if (indexOf21 !== -1) {
           order.splice(indexOf21 + 1, 0, thirdLabel);
         } else {
-          // else just push at the end
           order.push(thirdLabel);
         }
       } else {
-        // If we don't find "Position 22" for some reason, just push the 3rd control at the end of group2
         order.push(thirdLabel);
       }
 
@@ -159,17 +168,17 @@ export default {
         order.push(`Position ${s}`);
       }
 
-      // f) Finally, 4th Control at the end
-      order.push(`4th Control - ${controls.fourth}`);
+      // f) 4th Control at the end (the smaller control again)
+      order.push(`4th Control - ${smallerControl.value}`);
 
       return order;
     }
 
-    // 7. positionOrder is our main computed property that the table uses
+    // 7. The main computed property for our table
     const positionOrder = computed(() => {
       const fp = finalPosition.value;
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      return generatePositionOrder(fp, computedControls.value, sampleAllowed.value, gcType);
+      return generatePositionOrder(fp, gcType);
     });
 
     // 8. (Optional) “closestBefore4” logic is unchanged

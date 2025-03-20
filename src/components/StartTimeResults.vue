@@ -44,7 +44,7 @@
     -->
     <!-- Replacement text in red -->
     <p v-if="showDetailedResults && displayFinalPosition" style="color: red;">
-      Use Run Table For Now, Not Functioning
+      Closest Position Not Functioning For Now, Use Run Table!
     </p>
     <div
       v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
