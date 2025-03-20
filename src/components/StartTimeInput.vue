@@ -209,6 +209,16 @@ export default {
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
 
+    // Watch for changes in the store's control values and update local controls accordingly.
+    watch(
+      () => gcStore.startTime.controls,
+      (newControls) => {
+        localControl1.value = newControls?.control1 ?? "";
+        localControl2.value = newControls?.control2 ?? "";
+      },
+      { deep: true }
+    );
+
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -320,6 +330,7 @@ export default {
 .heading-controls {
   flex: 1;
   text-align: left;
+  font-size: 1rem;
 }
 .input-row {
   display: flex;
@@ -387,10 +398,5 @@ export default {
 }
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
-}
-.heading-batch,
-.heading-controls {
-  font-size: 1.2rem; /* Match the label font size */
-  /* You can also inherit the font size from the parent if that's preferred */
 }
 </style>

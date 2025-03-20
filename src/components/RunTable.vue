@@ -16,15 +16,14 @@
       <tbody>
         <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
-          <td>1</td>
-          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
+          <td>Wait</td>
+          <td>{{ waitRow.computedTitle || waitRow.title || "Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
         <!-- Render the computed rows -->
         <tr v-for="(title, idx) in positionOrder" :key="idx">
-          <!-- If wait row exists, numbering starts at 2 for computed rows -->
-          <td>{{ runsHasWait ? idx + 2 : idx + 1 }}</td>
+          <td>{{ idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>
