@@ -12,6 +12,7 @@
           </label>
           <position-selector
             :allowed-positions="allowedPositionsForSequential"
+            :disabledPositions="disabledPositions"
             mode="sequential"
             field="sequential"
             v-model="sequentialFinalPosition"
@@ -89,7 +90,11 @@ export default {
     batch1EndTime: { type: [Date, String], required: true },
     primaryFinalPosition: { type: Number, required: true },
     gcRuntime: { type: Number, required: true },
-    gcType: { type: String, required: true }  // e.g., "Energy" or "Sulphur"
+    gcType: { type: String, required: true }, // e.g., "Energy" or "Sulphur"
+    disabledPositions: {
+      type: Array,
+      default: () => []
+    }
   },
   emits: ['update-time-delay'],
   setup(props, { emit }) {
@@ -102,13 +107,13 @@ export default {
     const calibrationSelected = ref(false);
     const miscRuns = ref(0);
 
-    // Watch local additionalRuns and update store state AND trigger recalculation.
+    // Update store and recalc when additionalRuns changes.
     watch(additionalRuns, (newVal) => {
       gcStore.additionalRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
-    // Computed property to check if the selected GC is Energy (case-insensitive)
+    // Computed property to check if GC type is Energy.
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
@@ -120,7 +125,7 @@ export default {
     }, 1000);
     const currentTimeString = computed(() => currentTime.value.toLocaleTimeString());
 
-    // Reset local inputs when the store signals a reset
+    // Reset local inputs when store signals a reset.
     watch(
       () => gcStore.startTimeResetCounter,
       () => {
@@ -132,7 +137,7 @@ export default {
       }
     );
 
-    // Computed setters for capping inputs to 99
+    // Computed setters for capping inputs to 99.
     const additionalRunsInput = computed({
       get() {
         return additionalRuns.value === null ? '' : additionalRuns.value;
@@ -153,7 +158,7 @@ export default {
       },
     });
 
-    // Input limiting handlers
+    // Input limiting handlers.
     const limitAdditionalRuns = (e) => {
       const value = e.target.value.toString();
       if (value.length > 2) {
@@ -172,7 +177,7 @@ export default {
       }
     };
 
-    // Toggle functions
+    // Toggle functions.
     const togglePrebatch = () => {
       prebatchSelected.value = !prebatchSelected.value;
       if (prebatchSelected.value) calibrationSelected.value = false;
@@ -213,7 +218,7 @@ export default {
       return 0;
     });
 
-    // Updated baseEndTime: for sequential batch, if computed time is before batch1End, bump it by one day.
+    // Compute baseEndTime for sequential batch.
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
@@ -236,10 +241,7 @@ export default {
     });
 
     const sequentialBatchEndTime = computed(() => {
-      if (
-        sequentialFinalPosition.value &&
-        Number(sequentialFinalPosition.value) > 0
-      ) {
+      if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
       } else if (additionalRuns.value) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
@@ -254,7 +256,7 @@ export default {
       return '';
     });
 
-    // --- Computed property for calibration runs ---
+    // Computed property for calibration runs.
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -262,7 +264,7 @@ export default {
       return props.gcType === 'Energy' ? 8 : 9;
     });
 
-    // Update totalPreruns to use calibrationRuns
+    // Total preruns using calibration runs.
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
@@ -367,7 +369,7 @@ export default {
       return formatTimeWithAmPmAndSeconds(finalEndTime.value);
     });
 
-    // Updated prerunsDescription:
+    // Updated prerunsDescription.
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
@@ -402,7 +404,7 @@ export default {
 
     const hideInputs = computed(() => false);
 
-    // Watcher to emit payload when any input changes
+    // Watcher to emit payload when any input changes.
     watch(
       [
         sequentialFinalPosition,
@@ -528,14 +530,15 @@ export default {
       calibrationRuns,
       gcType: props.gcType,
       isEnergy,
-      currentTimeString
+      currentTimeString,
+      // Expose the disabledPositions prop from the parent
+      disabledPositions: computed(() => props.disabledPositions)
     };
   },
 };
 </script>
 
 <style scoped>
-/* Your existing CSS styles here */
 .main-heading,
 .batch-label,
 .delayed-runs-heading {
