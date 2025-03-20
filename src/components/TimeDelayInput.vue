@@ -10,9 +10,10 @@
             Final Position For Sequential Batch:
             <span style="font-size: 0.80em;">(if required)</span>
           </label>
+          <!-- Pass disabledPositions from prop -->
           <position-selector
             :allowed-positions="allowedPositionsForSequential"
-            :disabledPositions="disabledPositions"
+            :disabledPositions="[...disabledPositions]"
             mode="sequential"
             field="sequential"
             v-model="sequentialFinalPosition"
@@ -107,18 +108,18 @@ export default {
     const calibrationSelected = ref(false);
     const miscRuns = ref(0);
 
-    // Update store and recalc when additionalRuns changes.
+    // Watch additionalRuns to update store state and recalc.
     watch(additionalRuns, (newVal) => {
       gcStore.additionalRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
-    // Computed property to check if GC type is Energy.
+    // Check if selected GC is Energy.
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
 
-    // Update currentTime every second.
+    // Update current time every second.
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
@@ -126,18 +127,15 @@ export default {
     const currentTimeString = computed(() => currentTime.value.toLocaleTimeString());
 
     // Reset local inputs when store signals a reset.
-    watch(
-      () => gcStore.startTimeResetCounter,
-      () => {
-        sequentialFinalPosition.value = null;
-        additionalRuns.value = null;
-        prebatchSelected.value = false;
-        calibrationSelected.value = false;
-        miscRuns.value = 0;
-      }
-    );
+    watch(() => gcStore.startTimeResetCounter, () => {
+      sequentialFinalPosition.value = null;
+      additionalRuns.value = null;
+      prebatchSelected.value = false;
+      calibrationSelected.value = false;
+      miscRuns.value = 0;
+    });
 
-    // Computed setters for capping inputs to 99.
+    // Computed setters for capping inputs.
     const additionalRunsInput = computed({
       get() {
         return additionalRuns.value === null ? '' : additionalRuns.value;
@@ -506,6 +504,14 @@ export default {
       }
     });
 
+    // --- NEW: Use the store getter "finalPositions" to update sequentialFinalPosition in sync.
+    const computedFinalPositions = computed(() => gcStore.finalPositions);
+    watch(computedFinalPositions, (newVal) => {
+      // Update sequentialFinalPosition with the value from the store getter.
+      sequentialFinalPosition.value = newVal.sequentialFinalPosition;
+      // You might also update other state here if needed.
+    });
+
     return {
       sequentialFinalPosition,
       additionalRuns,
@@ -531,7 +537,7 @@ export default {
       gcType: props.gcType,
       isEnergy,
       currentTimeString,
-      // Expose the disabledPositions prop from the parent
+      // Expose disabledPositions from the parent prop.
       disabledPositions: computed(() => props.disabledPositions)
     };
   },

@@ -236,7 +236,6 @@ export const useGcStore = defineStore('gc', {
         if (!formatted || formatted.trim() === "") {
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
-        // Ensure we always have a non-empty string.
         const additionalRunsDurationFormatted = formatted || "0 seconds";
         console.log("Sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
 
@@ -260,10 +259,8 @@ export const useGcStore = defineStore('gc', {
           delayedRunsStartTime: delayedRunsStartTimeComputed,
           additionalRunsDuration: additionalRunsDurationFormatted
         };
-        // Merge the duration into our results.
         this.results = { ...this.results, additionalRunsDuration: additionalRunsDurationFormatted };
       } else {
-        // Non-sequential branch.
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
         console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
@@ -316,6 +313,25 @@ export const useGcStore = defineStore('gc', {
       }
       baseDate.setHours(baseDate.getHours() + delayHours);
       return formatTime(baseDate);
+    },
+    // NEW GETTER: finalPositions
+    finalPositions: (state) => {
+      // Example calculation:
+      // Use the control values to compute a "finalPosition" and a "sequentialFinalPosition"
+      const { control1, control2 } = state.startTime.controls;
+      let finalPosition = null;
+      let sequentialFinalPosition = null;
+      if (control1 !== null && control1 !== undefined && control1 !== "") {
+        finalPosition = Number(control1);
+      }
+      // For sequential, as an example, we add control1 and control2.
+      if (
+        control1 !== null && control1 !== undefined && control1 !== "" &&
+        control2 !== null && control2 !== undefined && control2 !== ""
+      ) {
+        sequentialFinalPosition = Number(control1) + Number(control2);
+      }
+      return { finalPosition, sequentialFinalPosition };
     },
   },
 });

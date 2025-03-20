@@ -24,7 +24,7 @@
         <!-- Controls Inputs -->
         <div class="controls-inputs">
           <div class="control-group">
-            <!-- Changed from @blur to @input so validation runs immediately -->
+            <!-- Using @input for immediate update -->
             <input
               type="number"
               id="control1"
@@ -36,7 +36,7 @@
             />
           </div>
           <div class="control-group">
-            <!-- Changed from @blur to @input -->
+            <!-- Using @input for immediate update -->
             <input
               type="number"
               id="control2"
@@ -59,7 +59,6 @@
       </div>
       <div class="input-group">
         <label for="position-selector">Final Position:</label>
-        <!-- Pass a new array instance using spread so reactivity is triggered -->
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
@@ -86,8 +85,8 @@ export default {
   props: {
     disabledPositions: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
   },
   setup(props) {
     const gcStore = useGcStore();
@@ -126,27 +125,29 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Final Position binding
+    // Use the store getter to compute final positions.
+    const computedFinalPositions = computed(() => gcStore.finalPositions);
+    // Watch the computed getter and update the local finalPosition binding.
     const finalPosition = ref(null);
-    watch(finalPosition, (newVal) => {
-      gcStore.startTime.finalPosition = newVal;
-      recalculateResults();
+    watch(computedFinalPositions, (newVal) => {
+      finalPosition.value = newVal.finalPosition;
+      // Optionally, clear error messages or recalc results here
     });
 
+    // When the selected GC changes, recalc results.
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
         localWait15.value = true;
       } else if (newGc && gcStore.allGcData[newGc]?.type === "Sulphur") {
         localWait15.value = false;
       }
-      recalculateResults();
     });
 
     watch(localBatchStartTime, () => {
-      recalculateResults();
+      // Optionally recalc here if needed
     });
     watch(localWait15, () => {
-      recalculateResults();
+      // Optionally recalc here if needed
     });
     watch(() => gcStore.startTimeResetCounter, () => {
       timeInputError.value = "";
@@ -193,6 +194,8 @@ export default {
       }
     };
 
+    // You can call the store calculation if needed.
+    // For example:
     const recalculateResults = () => {
       gcStore.calculateStartTimeBatch();
     };
@@ -230,6 +233,7 @@ export default {
       return { min: 3, max: 32 };
     });
 
+    // Update validation on input.
     const validateControl1 = () => {
       let num = Number(localControl1.value);
       if (isNaN(num)) {
@@ -248,7 +252,7 @@ export default {
         ...gcStore.startTime.controls,
         control1: num,
       };
-      console.log("validateControl1 - localControl1:", localControl1.value, "Store.control1:", gcStore.startTime.controls.control1);
+      console.log("validateControl1 - localControl1:", localControl1.value);
     };
 
     const validateControl2 = () => {
@@ -269,10 +273,10 @@ export default {
         ...gcStore.startTime.controls,
         control2: num,
       };
-      console.log("validateControl2 - localControl2:", localControl2.value, "Store.control2:", gcStore.startTime.controls.control2);
+      console.log("validateControl2 - localControl2:", localControl2.value);
     };
 
-    // Wrap the incoming disabledPositions prop in a computed for reactivity.
+    // For the disabled positions, we simply use the prop from the parent.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     return {
@@ -295,7 +299,7 @@ export default {
       control2Range,
       validateControl1,
       validateControl2,
-      disabledPositions: disabledPositionsComputed
+      disabledPositions: disabledPositionsComputed,
     };
   },
 };
