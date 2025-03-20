@@ -8,7 +8,6 @@
         <div class="sequential-batch-section">
           <label>
             Final Position For Sequential Batch:
-            <span style="font-size: 0.80em;">(if required)</span>
           </label>
           <!-- Pass disabledPositions from prop -->
           <position-selector

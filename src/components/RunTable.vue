@@ -17,7 +17,7 @@
         <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
           <td>Wait</td>
-          <td>{{ waitRow.computedTitle || waitRow.title || "Wait" }}</td>
+          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
