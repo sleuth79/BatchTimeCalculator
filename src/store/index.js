@@ -36,11 +36,11 @@ function fallbackFormatDuration(ms) {
 }
 
 // Helper to compute the displayed sample position.
-// For runs 4 to 16: sample position = run.position - 1;
-// For runs 17 and above: sample position = run.position.
+// For raw run numbers less than 17: sample position = run.position - 1.
+// For runs 17 and above: sample position = run.position + 1.
 function getSamplePosition(run) {
   if (!run || run.position === undefined) return null;
-  return run.position < 17 ? run.position - 1 : run.position;
+  return run.position < 17 ? run.position - 1 : run.position + 1;
 }
 
 export const useGcStore = defineStore('gc', {
@@ -192,7 +192,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Build array of control values.
+      // --- Candidate Selection Logic ---
       const controlValues = [];
       if (this.startTime.controls.control1) {
         controlValues.push(Number(this.startTime.controls.control1));
@@ -201,7 +201,6 @@ export const useGcStore = defineStore('gc', {
         controlValues.push(Number(this.startTime.controls.control2));
       }
 
-      // Determine candidate runs that end before 4:00 PM.
       const todayStr = new Date().toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       const candidateRuns = calcResults.runs.filter(r => {
@@ -211,12 +210,17 @@ export const useGcStore = defineStore('gc', {
       });
       // Sort candidate runs in descending order by end time.
       candidateRuns.sort((a, b) => new Date(`${todayStr} ${b.endTime}`) - new Date(`${todayStr} ${a.endTime}`));
-      let candidate = candidateRuns[0];
-      // If candidate's sample position is disabled by control values, iterate downward.
-      while (candidate && controlValues.includes(getSamplePosition(candidate))) {
-        candidateRuns.shift();
-        candidate = candidateRuns[0];
+      
+      let candidate = null;
+      for (const r of candidateRuns) {
+        const sp = getSamplePosition(r);
+        // Pick the first candidate whose sample position is not in the current control values.
+        if (!controlValues.includes(sp)) {
+          candidate = r;
+          break;
+        }
       }
+      
       calcResults.closestPositionBefore4PM = candidate
         ? {
             position: getSamplePosition(candidate),
@@ -224,6 +228,7 @@ export const useGcStore = defineStore('gc', {
             endTime: candidate.endTime,
           }
         : "No Sample Position Ends Before 4:00 PM";
+      // --- End Candidate Selection ---
 
       // Build base results.
       this.results = {
@@ -247,9 +252,7 @@ export const useGcStore = defineStore('gc', {
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
         const sequentialBatchRunTimeMS = totalRunsSequential * runtimeSeconds * 1000;
-        const sequentialBatchEndTimeDate = new Date(
-          initialBatchEndTime.getTime() + sequentialBatchRunTimeMS
-        );
+        const sequentialBatchEndTimeDate = new Date(initialBatchEndTime.getTime() + sequentialBatchRunTimeMS);
         const sequentialBatchEndTime = formatTimeWithAmPmAndSeconds(sequentialBatchEndTimeDate);
         const overallTotalRuns = calcResults.totalRuns + totalRunsSequential;
         const target = new Date(initialBatchEndTime);
@@ -260,10 +263,9 @@ export const useGcStore = defineStore('gc', {
         const absDiffMS = Math.abs(diffMS);
         const gapHours = Math.floor(absDiffMS / (1000 * 60 * 60));
         const gapMinutes = Math.floor((absDiffMS % (1000 * 60 * 60)) / (1000 * 60));
-        const newTimeGap =
-          diffMS >= 0 
-            ? `${gapHours} hours, ${gapMinutes} minutes`
-            : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
+        const newTimeGap = diffMS >= 0 
+          ? `${gapHours} hours, ${gapMinutes} minutes`
+          : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
         const additionalRunsDurationSeconds = totalRunsSequential * runtimeSeconds;
