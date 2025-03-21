@@ -2,7 +2,6 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
-import { getClosestRunToTarget } from '../utils/closestRun.js';  // Utility function for closest run
 
 export const pinia = createPinia();
 
@@ -39,7 +38,6 @@ function fallbackFormatDuration(ms) {
 // Helper to compute the displayed sample position.
 // For runs 4 to 16: sample position = run.position - 1.
 // For runs 17 and above: sample position = run.position + 1.
-// (This aligns with the allowed positions list that excludes the control numbers.)
 function getSamplePosition(run) {
   if (!run || run.position === undefined) return null;
   return run.position < 17 ? run.position - 1 : run.position + 1;
@@ -60,7 +58,6 @@ export const useGcStore = defineStore('gc', {
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
-      // Controls for storing C1 and C2:
       controls: {
         control1: null,
         control2: null,
@@ -68,14 +65,13 @@ export const useGcStore = defineStore('gc', {
     },
     lastStartTimeInputs: null,
     sequentialFinalPosition: null,
-    // Time Delay Results – object passed to the component.
     timeDelayResults: {
       prerunsDescription: 'None',
       totalDelayedRuns: 0,
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '', // Holds computed additional runs duration.
+      additionalRunsDuration: '',
     },
     startTimeResetCounter: 0,
     additionalRuns: null,
@@ -136,7 +132,6 @@ export const useGcStore = defineStore('gc', {
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
     },
-    // Actions for control values:
     setControl1(value) {
       this.startTime.controls.control1 = value;
     },
@@ -158,23 +153,6 @@ export const useGcStore = defineStore('gc', {
         }
         baseDate.setHours(baseDate.getHours() + delayHours);
         return formatTime(baseDate);
-      }
-
-      // Helper: Find the valid closest run that is not disabled by the selected controls.
-      function getValidClosestRun(runs, controlValues) {
-        let candidate = getClosestRunToTarget(runs);
-        if (!candidate) return null;
-        const candidateIndex = runs.indexOf(candidate);
-        // Iterate backward from the candidate.
-        for (let i = candidateIndex; i >= 0; i--) {
-          const r = runs[i];
-          if (!r.endTime) continue;
-          const samplePos = getSamplePosition(r);
-          if (!controlValues.includes(samplePos)) {
-            return r;
-          }
-        }
-        return null;
       }
 
       const { batchStartTime, batchStartTimeAMPM, finalPosition, wait15 } = this.startTime;
@@ -214,7 +192,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Build array of control values (using the control numbers directly).
+      // Build array of control values.
       const controlValues = [];
       if (this.startTime.controls.control1) {
         controlValues.push(Number(this.startTime.controls.control1));
@@ -223,14 +201,31 @@ export const useGcStore = defineStore('gc', {
         controlValues.push(Number(this.startTime.controls.control2));
       }
 
-      // Use the utility to compute the closest run, then adjust by skipping runs
-      // whose displayed sample position (as computed by getSamplePosition) is in controlValues.
-      const validCandidate = getValidClosestRun(calcResults.runs, controlValues);
-      calcResults.closestPositionBefore4PM = validCandidate
+      // Determine candidate runs that end before 4:00 PM.
+      const todayStr = new Date().toDateString();
+      const cutoff = new Date(`${todayStr} 4:00:00 PM`);
+      const candidateRuns = calcResults.runs.filter(r => {
+        if (!r.endTime) return false;
+        const endDate = new Date(`${todayStr} ${r.endTime}`);
+        return endDate < cutoff;
+      });
+      candidateRuns.sort((a, b) => {
+        const aEnd = new Date(`${todayStr} ${a.endTime}`);
+        const bEnd = new Date(`${todayStr} ${b.endTime}`);
+        return aEnd - bEnd;
+      });
+      // Select the candidate with the latest end time.
+      let candidate = candidateRuns[candidateRuns.length - 1];
+      // If candidate's sample position is disabled, iterate backward.
+      while (candidate && controlValues.includes(getSamplePosition(candidate))) {
+        candidateRuns.pop();
+        candidate = candidateRuns[candidateRuns.length - 1];
+      }
+      calcResults.closestPositionBefore4PM = candidate
         ? {
-            position: getSamplePosition(validCandidate),
-            startTime: validCandidate.startTime,
-            endTime: validCandidate.endTime,
+            position: getSamplePosition(candidate),
+            startTime: candidate.startTime,
+            endTime: candidate.endTime,
           }
         : "No Sample Position Ends Before 4:00 PM";
 
@@ -248,7 +243,7 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // Now compute additional runs duration.
+      // Compute additional runs duration (unchanged).
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
@@ -355,7 +350,6 @@ export const useGcStore = defineStore('gc', {
       baseDate.setHours(baseDate.getHours() + delayHours);
       return formatTime(baseDate);
     },
-    // NEW GETTER: finalPositions
     finalPositions: (state) => {
       const { control1, control2 } = state.startTime.controls;
       let finalPosition = null;
