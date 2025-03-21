@@ -27,8 +27,8 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!--
-    <p v-if="showDetailedResults && (results.closestPositionBefore4PM || closestPositionDisplay) && displayFinalPosition">
+    <!-- Updated: Display Closest Position Before 4:00 PM -->
+    <p v-if="showDetailedResults && results.closestPositionBefore4PM && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
@@ -40,11 +40,6 @@
           {{ closestPositionDisplay }}
         </template>
       </span>
-    </p>
-    -->
-    <!-- Replacement text in red -->
-    <p v-if="showDetailedResults && displayFinalPosition" style="color: red;">
-      Closest Position Not Functioning For Now, Use Run Table!
     </p>
     <div
       v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"

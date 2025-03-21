@@ -2,6 +2,7 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
+import { getClosestRunToTarget } from '../utils/closestRun.js';  // New import for the utility function
 
 export const pinia = createPinia();
 
@@ -186,6 +187,18 @@ export const useGcStore = defineStore('gc', {
         wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
+
+      // NEW: Use our shared utility function to compute the closest run before 4:00 PM.
+      console.log("Store: Running getClosestRunToTarget on runs:", calcResults.runs);
+      const closestRun = getClosestRunToTarget(calcResults.runs);
+      console.log("Store: Closest run computed:", closestRun);
+      calcResults.closestPositionBefore4PM = closestRun
+        ? {
+            position: closestRun.position,
+            startTime: closestRun.startTime,
+            endTime: closestRun.endTime,
+          }
+        : "No Sample Position Ends Before 4:00 PM";
 
       // Build base results.
       this.results = {
