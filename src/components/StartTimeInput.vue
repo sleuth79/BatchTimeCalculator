@@ -159,11 +159,16 @@ export default {
     watch(() => gcStore.startTimeResetCounter, () => {
       timeInputError.value = "";
     });
-
+    
     // **New watcher**: When local control values change, recalculate the results.
-    watch([() => localControl1.value, () => localControl2.value], () => {
-      recalculateResults();
-    });
+    const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
+    const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
+    watch(
+      [() => localControl1.value, () => localControl2.value],
+      () => {
+        recalculateResults();
+      }
+    );
 
     // Format and validate the time input.
     const formatTimeInput = () => {
@@ -211,10 +216,6 @@ export default {
     };
 
     // --- Local Control Inputs & Dynamic Allowed Ranges ---
-    const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
-    const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
-
-    // Watch for changes in the store's control values and update local controls accordingly.
     watch(
       () => gcStore.startTime.controls,
       (newControls) => {
