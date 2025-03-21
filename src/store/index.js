@@ -209,17 +209,13 @@ export const useGcStore = defineStore('gc', {
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
-      candidateRuns.sort((a, b) => {
-        const aEnd = new Date(`${todayStr} ${a.endTime}`);
-        const bEnd = new Date(`${todayStr} ${b.endTime}`);
-        return aEnd - bEnd;
-      });
-      // Select the candidate with the latest end time.
-      let candidate = candidateRuns[candidateRuns.length - 1];
-      // If candidate's sample position is disabled, iterate backward.
+      // Sort candidate runs in descending order by end time.
+      candidateRuns.sort((a, b) => new Date(`${todayStr} ${b.endTime}`) - new Date(`${todayStr} ${a.endTime}`));
+      let candidate = candidateRuns[0];
+      // If candidate's sample position is disabled, iterate downward.
       while (candidate && controlValues.includes(getSamplePosition(candidate))) {
-        candidateRuns.pop();
-        candidate = candidateRuns[candidateRuns.length - 1];
+        candidateRuns.shift();
+        candidate = candidateRuns[0];
       }
       calcResults.closestPositionBefore4PM = candidate
         ? {
@@ -243,7 +239,7 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // Compute additional runs duration (unchanged).
+      // Compute additional runs duration.
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
