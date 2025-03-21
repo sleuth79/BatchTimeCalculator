@@ -36,11 +36,11 @@ function fallbackFormatDuration(ms) {
 }
 
 // Helper to compute the displayed sample position.
-// For runs 4 to 16: sample position = run.position - 1.
-// For runs 17 and above: sample position = run.position + 1.
+// For runs 4 to 16: sample position = run.position - 1;
+// For runs 17 and above: sample position = run.position.
 function getSamplePosition(run) {
   if (!run || run.position === undefined) return null;
-  return run.position < 17 ? run.position - 1 : run.position + 1;
+  return run.position < 17 ? run.position - 1 : run.position;
 }
 
 export const useGcStore = defineStore('gc', {
@@ -212,7 +212,7 @@ export const useGcStore = defineStore('gc', {
       // Sort candidate runs in descending order by end time.
       candidateRuns.sort((a, b) => new Date(`${todayStr} ${b.endTime}`) - new Date(`${todayStr} ${a.endTime}`));
       let candidate = candidateRuns[0];
-      // If candidate's sample position is disabled, iterate downward.
+      // If candidate's sample position is disabled by control values, iterate downward.
       while (candidate && controlValues.includes(getSamplePosition(candidate))) {
         candidateRuns.shift();
         candidate = candidateRuns[0];
