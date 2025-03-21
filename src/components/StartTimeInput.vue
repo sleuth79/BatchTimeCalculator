@@ -261,7 +261,6 @@ export default {
         ...gcStore.startTime.controls,
         control1: num,
       };
-      console.log("validateControl1 - localControl1:", localControl1.value);
     };
 
     const validateControl2 = () => {
@@ -282,7 +281,6 @@ export default {
         ...gcStore.startTime.controls,
         control2: num,
       };
-      console.log("validateControl2 - localControl2:", localControl2.value);
     };
 
     // Create debounced versions of the validation functions.

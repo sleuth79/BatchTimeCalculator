@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { computed, watch, watchEffect } from 'vue';
+import { computed } from 'vue';
 
 export default {
   name: 'PositionSelector',
@@ -51,22 +51,6 @@ export default {
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    console.log("PositionSelector disabledPositions on setup:", props.disabledPositions);
-    
-    // Use watchEffect to log updates on disabledPositions.
-    watchEffect(() => {
-      console.log("PositionSelector disabledPositions updated (watchEffect):", props.disabledPositions);
-    });
-
-    // Additionally, use a watcher.
-    watch(
-      () => props.disabledPositions,
-      (newVal, oldVal) => {
-        console.log("PositionSelector disabledPositions changed from", oldVal, "to", newVal);
-      },
-      { deep: true }
-    );
-    
     const selectedPosition = computed(() => props.modelValue);
     const isDisabled = (position) => props.disabledPositions.includes(position);
     const isSelected = (position) => position === selectedPosition.value;
