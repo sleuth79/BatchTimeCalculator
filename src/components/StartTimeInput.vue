@@ -160,6 +160,11 @@ export default {
       timeInputError.value = "";
     });
 
+    // **New watcher**: When local control values change, recalculate the results.
+    watch([() => localControl1.value, () => localControl2.value], () => {
+      recalculateResults();
+    });
+
     // Format and validate the time input.
     const formatTimeInput = () => {
       let value = localBatchStartTime.value.replace(/\D/g, "");
