@@ -2,7 +2,7 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
-import { getClosestRunToTarget } from '../utils/closestRun.js';  // New import for the utility function
+import { getClosestRunToTarget } from '../utils/closestRun.js';  // Utility function for closest run
 
 export const pinia = createPinia();
 
@@ -36,9 +36,8 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-// Helper to convert raw run number to sample position.
-// For runs 4 to 16, sample position = run number - 1.
-// For runs 17+, sample position = run number.
+// Helper to convert a raw run number into a sample position.
+// For runs 4–16: sample position = run number – 1; for 17+: sample position = run number.
 function getSamplePosition(run) {
   if (!run || run.position === undefined) return null;
   return run.position < 17 ? run.position - 1 : run.position;
@@ -59,7 +58,7 @@ export const useGcStore = defineStore('gc', {
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
-      // New controls property for storing C1 and C2:
+      // Controls for storing C1 and C2:
       controls: {
         control1: null,
         control2: null,
@@ -67,14 +66,14 @@ export const useGcStore = defineStore('gc', {
     },
     lastStartTimeInputs: null,
     sequentialFinalPosition: null,
-    // Time Delay Results – our object passed to the component.
+    // Time Delay Results – object passed to the component.
     timeDelayResults: {
       prerunsDescription: 'None',
       totalDelayedRuns: 0,
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '', // This property will hold our computed duration.
+      additionalRunsDuration: '',
     },
     startTimeResetCounter: 0,
     additionalRuns: null,
@@ -135,7 +134,7 @@ export const useGcStore = defineStore('gc', {
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
     },
-    // New actions for control values:
+    // Actions for control values:
     setControl1(value) {
       this.startTime.controls.control1 = value;
     },
@@ -157,6 +156,23 @@ export const useGcStore = defineStore('gc', {
         }
         baseDate.setHours(baseDate.getHours() + delayHours);
         return formatTime(baseDate);
+      }
+
+      // Helper to get a valid closest run that is not disabled by control values.
+      function getValidClosestRun(runs, controlValues) {
+        let candidate = getClosestRunToTarget(runs);
+        if (!candidate) return null;
+        const candidateIndex = runs.indexOf(candidate);
+        // Iterate backwards from the candidate.
+        for (let i = candidateIndex; i >= 0; i--) {
+          const r = runs[i];
+          if (!r.endTime) continue;
+          const samplePos = getSamplePosition(r);
+          if (!controlValues.includes(samplePos)) {
+            return r;
+          }
+        }
+        return null;
       }
 
       const { batchStartTime, batchStartTimeAMPM, finalPosition, wait15 } = this.startTime;
@@ -196,13 +212,22 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Use our shared utility function to compute the closest run before 4:00 PM.
-      const closestRun = getClosestRunToTarget(calcResults.runs);
-      calcResults.closestPositionBefore4PM = closestRun
+      // Build array of control values.
+      const controlValues = [];
+      if (this.startTime.controls.control1) {
+        controlValues.push(Number(this.startTime.controls.control1));
+      }
+      if (this.startTime.controls.control2) {
+        controlValues.push(Number(this.startTime.controls.control2));
+      }
+
+      // Use the utility function to compute the closest run, and then get a valid candidate.
+      const validCandidate = getValidClosestRun(calcResults.runs, controlValues);
+      calcResults.closestPositionBefore4PM = validCandidate
         ? {
-            position: getSamplePosition(closestRun),
-            startTime: closestRun.startTime,
-            endTime: closestRun.endTime,
+            position: getSamplePosition(validCandidate),
+            startTime: validCandidate.startTime,
+            endTime: validCandidate.endTime,
           }
         : "No Sample Position Ends Before 4:00 PM";
 
@@ -224,7 +249,6 @@ export const useGcStore = defineStore('gc', {
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
-        // Total additional runs for sequential mode.
         const totalRunsSequential = (seqFinal <= 15 ? seqFinal + 2 : seqFinal + 1) + miscAdditional;
         const initialBatchEndTime = calcResults.batchEndTimeDate;
         const runtimeSeconds = Math.round(runtimeSec);
@@ -248,7 +272,6 @@ export const useGcStore = defineStore('gc', {
             : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
-        // Compute additional runs duration.
         const additionalRunsDurationSeconds = totalRunsSequential * runtimeSeconds;
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
@@ -331,14 +354,12 @@ export const useGcStore = defineStore('gc', {
     },
     // NEW GETTER: finalPositions
     finalPositions: (state) => {
-      // Use the control values to compute a "finalPosition" and a "sequentialFinalPosition"
       const { control1, control2 } = state.startTime.controls;
       let finalPosition = null;
       let sequentialFinalPosition = null;
       if (control1 !== null && control1 !== undefined && control1 !== "") {
         finalPosition = Number(control1);
       }
-      // For sequential, as an example, we add control1 and control2.
       if (
         control1 !== null && control1 !== undefined && control1 !== "" &&
         control2 !== null && control2 !== undefined && control2 !== ""
