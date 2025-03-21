@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { computed, watch } from "vue";
+import { computed } from "vue";
 import { useGcStore } from "../store";
 
 export default {
@@ -61,10 +61,10 @@ export default {
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // 3. finalPosition from store
+    // 3. finalPosition from store.
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
 
-    // 4. Control values from store
+    // 4. Control values from store.
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
     const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
     const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
@@ -109,20 +109,20 @@ export default {
         // Group2 = positions > 12
         const group2 = samples.filter(n => n > 12);
 
-        // Add group1
+        // Add group1.
         for (const s of group1) {
           order.push(`Position ${s}`);
         }
 
-        // 2nd Control (the smaller control)
+        // 2nd Control (the smaller control).
         order.push(`2nd Control - ${smallerControl.value}`);
 
-        // Add group2
+        // Add group2.
         for (const s of group2) {
           order.push(`Position ${s}`);
         }
 
-        // 3rd Control (the bigger control) at the end
+        // 3rd Control (the bigger control) at the end.
         order.push(`3rd Control - ${biggerControl.value}`);
         return order;
       }
@@ -132,20 +132,20 @@ export default {
       const group2 = samples.filter(n => n >= 13 && n <= 22);
       const group3 = samples.filter(n => n > 22);
 
-      // a) Add group1
+      // a) Add group1.
       for (const s of group1) {
         order.push(`Position ${s}`);
       }
 
-      // b) Insert 2nd Control
+      // b) Insert 2nd Control.
       order.push(`2nd Control - ${smallerControl.value}`);
 
-      // c) Add group2
+      // c) Add group2.
       for (const s of group2) {
         order.push(`Position ${s}`);
       }
 
-      // d) 3rd control (the bigger control) after "Position 22" if it exists
+      // d) 3rd control (the bigger control) after "Position 22" if it exists.
       const thirdLabel = `3rd Control - ${biggerControl.value}`;
       const indexOf22 = order.indexOf("Position 22");
       if (indexOf22 !== -1) {
@@ -163,50 +163,26 @@ export default {
         order.push(thirdLabel);
       }
 
-      // e) Add group3
+      // e) Add group3.
       for (const s of group3) {
         order.push(`Position ${s}`);
       }
 
-      // f) 4th Control at the end (the smaller control again)
+      // f) 4th Control at the end (the smaller control again).
       order.push(`4th Control - ${smallerControl.value}`);
 
       return order;
     }
 
-    // 7. The main computed property for our table
+    // 7. The main computed property for our table.
     const positionOrder = computed(() => {
       const fp = finalPosition.value;
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       return generatePositionOrder(fp, gcType);
     });
 
-    // 8. (Optional) “closestBefore4” logic is unchanged
-    function parseTimeStringToDate(timeStr) {
-      const today = new Date();
-      return new Date(`${today.toDateString()} ${timeStr}`);
-    }
-
-    const closestBefore4 = computed(() => {
-      const cutoff = new Date(`${new Date().toDateString()} 4:00:00 PM`);
-      let candidate = null;
-      for (const row of baseRuns.value) {
-        if (!row.endTime) continue;
-        const endDate = parseTimeStringToDate(row.endTime);
-        if (endDate < cutoff) {
-          if (!candidate || endDate > parseTimeStringToDate(candidate.endTime)) {
-            candidate = row;
-          }
-        }
-      }
-      return candidate;
-    });
-
-    watch(closestBefore4, (newVal) => {
-      if (newVal) {
-        gcStore.setClosestPositionBefore4PM(newVal.computedTitle);
-      }
-    }, { immediate: true });
+    // The centralized closest position logic is now handled in the store,
+    // so we do not need to compute it here.
 
     return {
       gcStore,

@@ -188,10 +188,8 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // NEW: Use our shared utility function to compute the closest run before 4:00 PM.
-      console.log("Store: Running getClosestRunToTarget on runs:", calcResults.runs);
+      // Use the shared utility function to compute the closest run before 4:00 PM.
       const closestRun = getClosestRunToTarget(calcResults.runs);
-      console.log("Store: Closest run computed:", closestRun);
       calcResults.closestPositionBefore4PM = closestRun
         ? {
             position: closestRun.position,
@@ -244,13 +242,11 @@ export const useGcStore = defineStore('gc', {
 
         // Compute additional runs duration.
         const additionalRunsDurationSeconds = totalRunsSequential * runtimeSeconds;
-        console.log("Sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
         const additionalRunsDurationFormatted = formatted || "0 seconds";
-        console.log("Sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
 
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
 
@@ -276,13 +272,11 @@ export const useGcStore = defineStore('gc', {
       } else {
         const additionalRunsCount = Number(this.additionalRuns) || 0;
         const additionalRunsDurationSeconds = additionalRunsCount * runtimeSec;
-        console.log("Non-sequential - additionalRunsDurationSeconds:", additionalRunsDurationSeconds);
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
         const additionalRunsDurationFormatted = formatted || "0 seconds";
-        console.log("Non-sequential - additionalRunsDurationFormatted:", additionalRunsDurationFormatted);
         const baseTimeStr = calcResults.batchEndTime;
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);
         this.timeDelayResults = {
@@ -329,7 +323,6 @@ export const useGcStore = defineStore('gc', {
     },
     // NEW GETTER: finalPositions
     finalPositions: (state) => {
-      // Example calculation:
       // Use the control values to compute a "finalPosition" and a "sequentialFinalPosition"
       const { control1, control2 } = state.startTime.controls;
       let finalPosition = null;
