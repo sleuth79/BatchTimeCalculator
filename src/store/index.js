@@ -50,7 +50,6 @@ export const useGcStore = defineStore('gc', {
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
-      // Controls for storing C1 and C2:
       controls: {
         control1: null,
         control2: null,
@@ -194,7 +193,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // --- Compute Allowed Sample Positions (mirroring run table logic) ---
+      // --- Compute Allowed Sample Positions (same as in run table) ---
       const c1 = Number(this.startTime.controls.control1) || 0;
       const c2 = Number(this.startTime.controls.control2) || 0;
       const bigger = Math.max(c1, c2);
@@ -207,7 +206,6 @@ export const useGcStore = defineStore('gc', {
       // --- End Allowed Positions ---
 
       // --- Candidate Selection ---
-      // Build array of control values.
       const controlValues = [];
       if (this.startTime.controls.control1) {
         controlValues.push(Number(this.startTime.controls.control1));
@@ -219,43 +217,39 @@ export const useGcStore = defineStore('gc', {
       const todayStr = new Date().toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
 
-      // Filter runs that end before 4:00 PM and that are sample runs (position >= 4).
-      const candidateRuns = calcResults.runs.filter(r => {
-        if (!r.endTime || r.position < 4) return false;
-        const endDate = new Date(`${todayStr} ${r.endTime}`);
-        return endDate < cutoff;
-      });
-
-      // Sort candidate runs in descending order by end time.
-      candidateRuns.sort(
-        (a, b) =>
-          new Date(`${todayStr} ${b.endTime}`) - new Date(`${todayStr} ${a.endTime}`)
-      );
-
-      // Now, for each candidate run, determine its mapped sample position from the allowedPositions.
-      // The mapping: for a candidate run, the sample index = run.position - 4.
+      // Loop through all sample runs (raw run numbers >= 4)
       let candidate = null;
-      for (const r of candidateRuns) {
-        const index = r.position - 4;
-        const mappedSample = allowedPositions[index];
-        if (mappedSample !== undefined) {
-          // We want the candidate that gives the highest mapped sample value.
+      let maxEndTime = 0;
+      for (const r of calcResults.runs) {
+        if (r.position < 4 || !r.endTime) continue;
+        const endDate = new Date(`${todayStr} ${r.endTime}`);
+        if (endDate >= cutoff) continue;
+        // Get displayed sample from run's raw position:
+        const index = r.position - 4; // run number 4 maps to index 0
+        if (index < 0 || index >= allowedPositions.length) continue;
+        const displayedSample = allowedPositions[index];
+        // Only consider runs whose displayed sample is not one of the control values.
+        if (controlValues.includes(displayedSample)) continue;
+        if (endDate.getTime() > maxEndTime) {
           candidate = r;
-          break;
+          maxEndTime = endDate.getTime();
         }
       }
+      // Determine the displayed sample position from candidate raw run number.
+      const closestDisplay =
+        candidate && candidate.position - 4 >= 0
+          ? allowedPositions[candidate.position - 4]
+          : "No Sample Position Ends Before 4:00 PM";
 
-      // Set the closest position result using the mapped sample position.
       calcResults.closestPositionBefore4PM = candidate
         ? {
-            position: allowedPositions[candidate.position - 4],
+            position: closestDisplay,
             startTime: candidate.startTime,
             endTime: candidate.endTime,
           }
         : "No Sample Position Ends Before 4:00 PM";
       // --- End Candidate Selection ---
 
-      // Build base results.
       this.results = {
         ...partialResults,
         totalRuns: calcResults.totalRuns,
@@ -269,7 +263,7 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // (Additional runs duration computation remains unchanged.)
+      // --- Additional Runs Duration Computation (unchanged) ---
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
@@ -296,10 +290,9 @@ export const useGcStore = defineStore('gc', {
         const gapMinutes = Math.floor(
           (absDiffMS % (1000 * 60 * 60)) / (1000 * 60)
         );
-        const newTimeGap =
-          diffMS >= 0
-            ? `${gapHours} hours, ${gapMinutes} minutes`
-            : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
+        const newTimeGap = diffMS >= 0 
+          ? `${gapHours} hours, ${gapMinutes} minutes`
+          : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
 
         const additionalRunsDurationSeconds =
@@ -331,7 +324,7 @@ export const useGcStore = defineStore('gc', {
             return desc;
           })(),
           delayedRunsStartTime: delayedRunsStartTimeComputed,
-          additionalRunsDuration: additionalRunsDurationFormatted,
+          additionalRunsDuration: additionalRunsDurationFormatted
         };
         this.results = {
           ...this.results,
@@ -362,7 +355,7 @@ export const useGcStore = defineStore('gc', {
           totalDelayedDurationFormatted:
             calcResults.totalDelayedDurationFormatted || "",
           delayedRunsStartTime: delayedRunsStartTimeComputed,
-          additionalRunsDuration: additionalRunsDurationFormatted,
+          additionalRunsDuration: additionalRunsDurationFormatted
         };
         this.results = {
           ...this.results,
