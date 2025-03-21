@@ -36,11 +36,13 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-// Helper to convert a raw run number into a sample position.
-// For runs 4–16: sample position = run number – 1; for 17+: sample position = run number.
+// Helper to compute the displayed sample position.
+// For runs 4 to 16: sample position = run.position - 1.
+// For runs 17 and above: sample position = run.position + 1.
+// (This aligns with the allowed positions list that excludes the control numbers.)
 function getSamplePosition(run) {
   if (!run || run.position === undefined) return null;
-  return run.position < 17 ? run.position - 1 : run.position;
+  return run.position < 17 ? run.position - 1 : run.position + 1;
 }
 
 export const useGcStore = defineStore('gc', {
@@ -73,7 +75,7 @@ export const useGcStore = defineStore('gc', {
       delayedRunsEndTime: '',
       totalDelayedDurationFormatted: '',
       delayedRunsStartTime: '',
-      additionalRunsDuration: '',
+      additionalRunsDuration: '', // Holds computed additional runs duration.
     },
     startTimeResetCounter: 0,
     additionalRuns: null,
@@ -158,12 +160,12 @@ export const useGcStore = defineStore('gc', {
         return formatTime(baseDate);
       }
 
-      // Helper to get a valid closest run that is not disabled by control values.
+      // Helper: Find the valid closest run that is not disabled by the selected controls.
       function getValidClosestRun(runs, controlValues) {
         let candidate = getClosestRunToTarget(runs);
         if (!candidate) return null;
         const candidateIndex = runs.indexOf(candidate);
-        // Iterate backwards from the candidate.
+        // Iterate backward from the candidate.
         for (let i = candidateIndex; i >= 0; i--) {
           const r = runs[i];
           if (!r.endTime) continue;
@@ -212,7 +214,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Build array of control values.
+      // Build array of control values (using the control numbers directly).
       const controlValues = [];
       if (this.startTime.controls.control1) {
         controlValues.push(Number(this.startTime.controls.control1));
@@ -221,7 +223,8 @@ export const useGcStore = defineStore('gc', {
         controlValues.push(Number(this.startTime.controls.control2));
       }
 
-      // Use the utility function to compute the closest run, and then get a valid candidate.
+      // Use the utility to compute the closest run, then adjust by skipping runs
+      // whose displayed sample position (as computed by getSamplePosition) is in controlValues.
       const validCandidate = getValidClosestRun(calcResults.runs, controlValues);
       calcResults.closestPositionBefore4PM = validCandidate
         ? {
