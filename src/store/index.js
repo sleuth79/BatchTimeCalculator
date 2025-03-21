@@ -36,6 +36,14 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
+// Helper to convert raw run number to sample position.
+// For runs 4 to 16, sample position = run number - 1.
+// For runs 17+, sample position = run number.
+function getSamplePosition(run) {
+  if (!run || run.position === undefined) return null;
+  return run.position < 17 ? run.position - 1 : run.position;
+}
+
 export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
@@ -188,11 +196,11 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // Use the shared utility function to compute the closest run before 4:00 PM.
+      // Use our shared utility function to compute the closest run before 4:00 PM.
       const closestRun = getClosestRunToTarget(calcResults.runs);
       calcResults.closestPositionBefore4PM = closestRun
         ? {
-            position: closestRun.position,
+            position: getSamplePosition(closestRun),
             startTime: closestRun.startTime,
             endTime: closestRun.endTime,
           }
