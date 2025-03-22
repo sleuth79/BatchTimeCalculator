@@ -3,8 +3,8 @@
     <div v-if="!isLoading">
       <!-- Header Row -->
       <div class="heading-row">
-        <div class="heading-batch">Batch Start Time:</div>
-        <div class="heading-controls">Controls:</div>
+        <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
+        <label class="heading-controls" for="control1">Controls:</label>
       </div>
       
       <!-- Input Row -->
