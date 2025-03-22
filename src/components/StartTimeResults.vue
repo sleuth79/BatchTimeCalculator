@@ -53,24 +53,25 @@
 
 <script>
 import { ref, computed, onMounted } from "vue";
-import { calculateStartTimeBatch } from "./utils/startTimeBatch";
+// Import your calculation function from your existing file:
+import { calculateStartTimeBatch } from './utils/startTimeCalculations.js';
 
 export default {
   name: "StartTimeResults",
   setup() {
-    // Example input values—replace these with your actual data.
-    const gc = {};               // Your GC object
-    const runtime = "05:00";       // Runtime in "mm:ss" (or a decimal string)
+    // Example input values – replace these with your actual values
+    const gc = {};                    // Your GC object
+    const runtime = "05:00";            // Runtime as "mm:ss" (or a decimal string)
     const currentRun = 1;
-    const finalPosition = 20;      // Example final position
-    const batchStartTime = "08:00:00"; // Batch start time string
+    const finalPosition = 20;           // Example final position
+    const batchStartTime = "08:00:00";    // Batch start time string
     const ampm = "AM";
     const wait15 = false;
-
-    // Create a ref to hold the results.
+    
+    // Create a ref to hold the results
     const results = ref({});
 
-    // Call the calculation function on mount.
+    // Call the calculation function when the component mounts
     onMounted(() => {
       results.value = calculateStartTimeBatch(
         gc,
@@ -87,7 +88,7 @@ export default {
     const displayBatchStartTime = computed(() => results.value.batchStartTime || "");
     
     const showDetailedResults = computed(() => {
-      // Using a simple check to see if batchStartTime is in hh:mm format.
+      // Use a simple regex check if needed. Adjust as appropriate.
       return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
     
@@ -95,8 +96,6 @@ export default {
     
     const displayTotalRuns = computed(() => !!results.value.totalRuns);
     
-    // If the closest position is an object (with run details) then display that,
-    // otherwise fall back to a simple string message.
     const isClosestPositionObject = computed(() => {
       if (results.value.batchEndTime) {
         let batchEndStr = results.value.batchEndTime;
@@ -124,7 +123,6 @@ export default {
       );
     });
     
-    // A fallback display if the closest position is not an object.
     const closestPositionDisplay = computed(() => {
       const batchStart = results.value.batchStartTime;
       if (batchStart) {
