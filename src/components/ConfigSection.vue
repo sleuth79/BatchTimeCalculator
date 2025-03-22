@@ -40,6 +40,14 @@
           <p>Validations: 10 runs</p>
         </div>
       </div>
+
+      <!-- Render the results component; pass the reactive store state -->
+      <start-time-results
+        :results="gcStore.results"
+        :startTime="gcStore.startTime"
+        :delayedRunsExist="false"
+        :additionalRunsExist="false"
+      />
     </div>
   </div>
 </template>
@@ -50,6 +58,7 @@ import { useGcStore } from '../store';
 import GcSelector from './GcSelector.vue';
 import StartTimeInput from './StartTimeInput.vue';
 import TimeDelayInput from './TimeDelayInput.vue';
+import StartTimeResults from './StartTimeResults.vue';
 
 export default {
   name: 'ConfigSection',
@@ -57,6 +66,7 @@ export default {
     GcSelector,
     StartTimeInput,
     TimeDelayInput,
+    StartTimeResults,
   },
   emits: ['update-results'],
   setup() {
@@ -77,7 +87,7 @@ export default {
       gcStore.timeDelayResults = data;
     };
 
-    // Props for the TimeDelayInput components.
+    // Props for TimeDelayInput.
     const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
     const primaryFinalPosition = computed(() =>
       gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
@@ -94,7 +104,7 @@ export default {
     });
     const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
 
-    // Compute disabledPositions from the store's control values.
+    // Compute disabledPositions based on controls.
     const disabledPositions = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -109,7 +119,6 @@ export default {
       return arr;
     });
 
-    // Watch for changes in disabledPositions.
     watch(
       disabledPositions,
       (newVal) => {
@@ -118,12 +127,10 @@ export default {
       { deep: true }
     );
 
-    // Reset function: resets both start-time inputs, control inputs, final position, and GC selection.
+    // Reset function.
     const resetInputs = () => {
       gcStore.resetStartTime();
-      // Clear the control inputs:
       gcStore.startTime.controls = { control1: "", control2: "" };
-      // Reset the finalPosition value:
       gcStore.startTime.finalPosition = null;
       gcStore.setSelectedGc(null);
     };
@@ -140,6 +147,7 @@ export default {
       handleUpdateTimeDelay,
       resetInputs,
       disabledPositions,
+      gcStore, // Passing the store so that children get the reactive object.
     };
   },
 };

@@ -1,16 +1,16 @@
 <template>
   <div class="start-time-results">
-    <!-- Always display Batch Start Time heading -->
+    <!-- Always display Batch Start Time -->
     <p>
       Batch Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
-    <!-- Controls heading always shown; value blank until both controls are entered -->
+    <!-- Controls heading; shows the controls once both are set -->
     <p>
       Controls:
       <span class="result-value">{{ displayControls }}</span>
     </p>
-    <!-- Always display Final Position heading -->
+    <!-- Always display Final Position -->
     <p>
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
@@ -19,17 +19,14 @@
         <span class="result-value">{{ results.totalRuns }}</span>
       </span>
     </p>
-    <!-- Detailed outputs: only displayed when start time is valid -->
+    <!-- Additional details -->
     <p v-if="showDetailedResults && results.totalRunTime">
       Total Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
     </p>
     <p v-if="showDetailedResults && results.batchEndTime">
       Batch End Time:
-      <span 
-        class="result-value" 
-        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
-      >
+      <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
         {{ displayBatchEndTime }}
       </span>
     </p>
@@ -39,7 +36,7 @@
       <span class="result-value">
         <template v-if="isClosestPositionObject">
           {{ results.closestPositionBefore4PM.position }} :
-          {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to 
+          {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to
           {{ results.closestPositionBefore4PM.endTime }}
         </template>
         <template v-else>
@@ -47,9 +44,7 @@
         </template>
       </span>
     </p>
-    <div
-      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -60,7 +55,7 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, toRefs } from "vue";
 
 export default {
   name: "StartTimeResults",
@@ -87,19 +82,21 @@ export default {
     },
   },
   setup(props) {
+    // Use toRefs to ensure nested properties are reactive.
+    const { controls } = toRefs(props.startTime);
+
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
-      const storedTime =
+      return (
         props.results.batchStartTime ||
         props.results.startTime ||
         props.startTime.batchStartTime ||
         props.startTime.startTime ||
-        "";
-      return storedTime;
+        ""
+      );
     });
 
-    // Only consider valid hh:mm strings
     const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
@@ -111,14 +108,15 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Computed property for controls:
-    // Returns "control1, control2" if both are set; otherwise, blank.
+    // Computed property for controls.
     const displayControls = computed(() => {
-      const { control1, control2 } = props.startTime.controls || {};
-      if (control1 == null || control2 == null || control1 === "" || control2 === "") {
+      const ctrl1 = controls.value?.control1;
+      const ctrl2 = controls.value?.control2;
+      console.log("displayControls computed:", ctrl1, ctrl2);
+      if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
         return "";
       }
-      return `${control1}, ${control2}`;
+      return `${ctrl1}, ${ctrl2}`;
     });
 
     const closestPositionDisplay = computed(() => {

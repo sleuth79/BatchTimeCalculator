@@ -1,6 +1,6 @@
 <template>
   <div class="settings-modification">
-    <h3>Settings Modification</h3>
+    <h3>Config Modification</h3>
     <!-- Update GC Section as a 3-column table -->
     <table class="update-table">
       <tr>
