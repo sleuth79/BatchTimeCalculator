@@ -111,19 +111,11 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Computed property for controls: displays control1 and control2 as entered.
+    // Computed property for controls:
+    // Returns "control1, control2" if both are set; otherwise, blank.
     const displayControls = computed(() => {
-      const controls = props.startTime.controls || {};
-      const control1 = controls.control1;
-      const control2 = controls.control2;
-      if (
-        control1 === null ||
-        control1 === undefined ||
-        control1 === "" ||
-        control2 === null ||
-        control2 === undefined ||
-        control2 === ""
-      ) {
+      const { control1, control2 } = props.startTime.controls || {};
+      if (control1 == null || control2 == null || control1 === "" || control2 === "") {
         return "";
       }
       return `${control1}, ${control2}`;
