@@ -111,7 +111,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Computed property for controls: returns a blank string until both controls are set.
+    // Computed property for controls: displays control1 and control2 as entered.
     const displayControls = computed(() => {
       const controls = props.startTime.controls || {};
       const control1 = controls.control1;
@@ -126,12 +126,7 @@ export default {
       ) {
         return "";
       }
-      const num1 = Number(control1);
-      const num2 = Number(control2);
-      if (isNaN(num1) || isNaN(num2)) return "";
-      const higher = Math.max(num1, num2);
-      const lower = Math.min(num1, num2);
-      return `Higher: ${higher}, Lower: ${lower}`;
+      return `${control1}, ${control2}`;
     });
 
     const closestPositionDisplay = computed(() => {
