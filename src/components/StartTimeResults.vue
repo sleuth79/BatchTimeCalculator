@@ -27,18 +27,14 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Updated: Display Closest Position Before 4:00 PM -->
-    <p v-if="showDetailedResults && results.closestPositionBefore4PM && displayFinalPosition">
+    <!-- Updated: Use the store getter for Closest Position Before 4:00 PM -->
+    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }} :
-          {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to 
-          {{ results.closestPositionBefore4PM.endTime }}
-        </template>
-        <template v-else>
-          {{ closestPositionDisplay }}
-        </template>
+        <!-- Using the displayed candidate object from the store -->
+        {{ displayedClosestCandidate.position }}, 
+        {{ displayedClosestCandidate.startTime }} to 
+        {{ displayedClosestCandidate.endTime }}
       </span>
     </p>
     <div
