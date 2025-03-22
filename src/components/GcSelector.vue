@@ -106,7 +106,7 @@ export default {
   font-weight: bold;
   white-space: nowrap;
   font-size: 0.9rem;
-  text-align: right;
+  text-align: left; /* Changed from right to left */
 }
 
 /* Grid for the GC boxes - dynamically adjusting */
