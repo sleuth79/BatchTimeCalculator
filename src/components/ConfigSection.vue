@@ -1,209 +1,307 @@
 <template>
-  <div class="config-section">
-    <h1>Batch Time Calculator</h1>
-    <div v-if="loadError">
-      Failed to load GC data. Please try again.
-    </div>
-    <div v-else class="config-container">
-      <!-- Scrollable main content -->
-      <div class="scrollable-content">
-        <!-- GC Selector remains -->
-        <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
-
-        <!-- Always render start-time input components -->
-        <start-time-input
-          :selected-gc="selectedGc"
-          :disabledPositions="[...disabledPositions]"
-          @update-results="handleUpdateResults"
-        />
-        <time-delay-input
-          :batch1EndTime="batch1EndTime"
-          :primaryFinalPosition="primaryFinalPosition"
-          :gcRuntime="gcRuntime"
-          :gcType="gcType"
-          :disabledPositions="[...disabledPositions]"
-          :key="JSON.stringify(disabledPositions)"
-          @update-time-delay="handleUpdateTimeDelay"
-        />
-      </div>
-
-      <!-- Sticky container for the reset button and the pinned box -->
-      <div class="sticky-bottom-container">
-        <div class="reset-button-container">
-          <button @click="resetInputs">Clear All Inputs</button>
-        </div>
-        <div class="other-batch-types-box">
-          <p class="other-batch-heading">
-            <strong>Total Runs For Other Batch Types:</strong>
-          </p>
-          <p>Repeats: 14 runs</p>
-          <p>Validations: 10 runs</p>
-        </div>
-      </div>
+  <div class="start-time-results">
+    <!-- Always display Batch Start Time -->
+    <p>
+      Batch Start Time:
+      <span class="result-value">{{ displayBatchStartTime }}</span>
+    </p>
+    <!-- Controls heading always shown; remains blank until both controls are set -->
+    <p>
+      Controls:
+      <span class="result-value">{{ displayControls }}</span>
+    </p>
+    <!-- Always display Final Position -->
+    <p>
+      Final Position:
+      <span class="result-value">{{ displayFinalPosition }}</span>
+      <span v-if="displayTotalRuns">
+        &nbsp;| Total Runs (Including Controls):
+        <span class="result-value">{{ results.totalRuns }}</span>
+      </span>
+    </p>
+    <!-- Detailed outputs -->
+    <p v-if="showDetailedResults && results.totalRunTime">
+      Total Run Time:
+      <span class="result-value">{{ results.totalRunTime }}</span>
+    </p>
+    <p v-if="showDetailedResults && results.batchEndTime">
+      Batch End Time:
+      <span
+        class="result-value"
+        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
+      >
+        {{ displayBatchEndTime }}
+      </span>
+    </p>
+    <!-- Display Closest Position Before 4:00 PM -->
+    <p v-if="showDetailedResults && results.closestPositionBefore4PM && displayFinalPosition">
+      Closest Position Before 4:00 PM:
+      <span class="result-value">
+        <template v-if="isClosestPositionObject">
+          {{ results.closestPositionBefore4PM.position }} :
+          {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to
+          {{ results.closestPositionBefore4PM.endTime }}
+        </template>
+        <template v-else>
+          {{ closestPositionDisplay }}
+        </template>
+      </span>
+    </p>
+    <div
+      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
+    >
+      <hr class="time-gap-hr" />
+      <p>
+        Time Gap to 7:30 AM:
+        <span class="result-value">{{ results.timeGapTo730AM }}</span>
+      </p>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, onMounted, watch } from 'vue';
-import { useGcStore } from '../store';
-import GcSelector from './GcSelector.vue';
-import StartTimeInput from './StartTimeInput.vue';
-import TimeDelayInput from './TimeDelayInput.vue';
+import { computed, toRefs } from "vue";
 
 export default {
-  name: 'ConfigSection',
-  components: {
-    GcSelector,
-    StartTimeInput,
-    TimeDelayInput,
+  name: "StartTimeResults",
+  props: {
+    results: {
+      type: Object,
+      default: () => ({}),
+    },
+    startTime: {
+      type: Object,
+      default: () => ({}),
+    },
+    selectedGcData: {
+      type: Object,
+      default: null,
+    },
+    delayedRunsExist: {
+      type: Boolean,
+      default: false,
+    },
+    additionalRunsExist: {
+      type: [Boolean, Number],
+      default: false,
+    },
   },
-  emits: ['update-results'],
-  setup() {
-    const gcStore = useGcStore();
-    const loadError = computed(() => gcStore.error);
+  setup(props) {
+    // Use toRefs so that nested properties like controls remain reactive.
+    const { controls } = toRefs(props.startTime);
 
-    onMounted(() => {
-      if (Object.keys(gcStore.allGcData).length === 0) {
-        gcStore.fetchGcData();
-      }
+    const currentDate = computed(() => new Date().toLocaleDateString());
+
+    const displayBatchStartTime = computed(() => {
+      const storedTime =
+        props.results.batchStartTime ||
+        props.results.startTime ||
+        props.startTime.batchStartTime ||
+        props.startTime.startTime ||
+        "";
+      return storedTime;
     });
 
-    const handleUpdateResults = (results) => {
-      gcStore.results = results;
-    };
-
-    const handleUpdateTimeDelay = (data) => {
-      gcStore.timeDelayResults = data;
-    };
-
-    // Props for the TimeDelayInput components.
-    const batch1EndTime = computed(() => gcStore.startTime.batchEndTime || new Date());
-    const primaryFinalPosition = computed(() =>
-      gcStore.startTime.finalPosition !== null ? gcStore.startTime.finalPosition : 0
-    );
-    const gcRuntime = computed(() => {
-      if (
-        gcStore.selectedGc &&
-        gcStore.allGcData[gcStore.selectedGc] &&
-        gcStore.allGcData[gcStore.selectedGc].runTime
-      ) {
-        return gcStore.allGcData[gcStore.selectedGc].runTime;
-      }
-      return 18.91;
-    });
-    const gcType = computed(() => (gcStore.selectedGcData ? gcStore.selectedGcData.type : ''));
-
-    // Compute disabledPositions from the store's control values.
-    const disabledPositions = computed(() => {
-      const ctrl1 = gcStore.startTime.controls.control1;
-      const ctrl2 = gcStore.startTime.controls.control2;
-      const arr = [];
-      if (ctrl1 !== null && ctrl1 !== undefined && ctrl1 !== '') {
-        arr.push(Number(ctrl1));
-      }
-      if (ctrl2 !== null && ctrl2 !== undefined && ctrl2 !== '') {
-        arr.push(Number(ctrl2));
-      }
-      console.log("ConfigSection disabledPositions computed:", arr);
-      return arr;
+    // Only valid if batch start time is in "hh:mm" format.
+    const showDetailedResults = computed(() => {
+      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
-    // Watch for changes in disabledPositions.
-    watch(
-      disabledPositions,
-      (newVal) => {
-        console.log("ConfigSection disabledPositions changed:", newVal);
-      },
-      { deep: true }
-    );
+    const displayFinalPosition = computed(() => {
+      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
+    });
 
-    // Reset function: resets both start-time inputs, control inputs, final position, and GC selection.
-    const resetInputs = () => {
-      gcStore.resetStartTime();
-      // Clear the control inputs:
-      gcStore.startTime.controls = { control1: "", control2: "" };
-      // Reset the finalPosition value:
-      gcStore.startTime.finalPosition = null;
-      gcStore.setSelectedGc(null);
-    };
+    const displayTotalRuns = computed(() => !!props.results.totalRuns);
+    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
+
+    // Updated computed property for controls using toRefs.
+    const displayControls = computed(() => {
+      const ctrl1 = controls.value?.control1;
+      const ctrl2 = controls.value?.control2;
+      // Log for debugging:
+      console.log("displayControls computed:", ctrl1, ctrl2);
+      if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
+        return "";
+      }
+      return `${ctrl1}, ${ctrl2}`;
+    });
+
+    const closestPositionDisplay = computed(() => {
+      const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
+      if (batchStart) {
+        const parts = batchStart.split(":");
+        if (parts.length === 3) {
+          const hour = parseInt(parts[0], 10);
+          const minute = parseInt(parts[1], 10);
+          const second = parseInt(parts[2], 10);
+          if (hour === 16 && minute === 0 && second === 0) {
+            return "This Batch Started At 4:00 PM";
+          }
+          if (hour > 16) {
+            return "This Batch Started After 4:00 PM";
+          }
+        }
+      }
+      if (props.results.batchEndTime) {
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0];
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            return `This Batch ends at ${batchEndStr}`;
+          }
+        }
+      }
+      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
+    });
+
+    const isClosestPositionObject = computed(() => {
+      if (props.results.batchEndTime) {
+        let batchEndStr = props.results.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0];
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            return false;
+          }
+        }
+      }
+      return (
+        props.results &&
+        props.results.closestPositionBefore4PM &&
+        typeof props.results.closestPositionBefore4PM === "object" &&
+        props.results.closestPositionBefore4PM.position !== undefined
+      );
+    });
+
+    const displayBatchEndTime = computed(() => {
+      if (!props.results.batchEndTime) return "";
+      const batchEndStr = props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      if (isNaN(endDateCandidate.getTime())) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      const endDateString = endDateCandidate.toLocaleDateString();
+      return `${batchEndStr} (${endDateString})`;
+    });
+
+    const initialBatchEndTimeAfter730 = computed(() => {
+      if (!props.results.batchEndTime) return false;
+      const batchEndStr = props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) return false;
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return false;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
+      if (isNaN(endDateCandidate.getTime())) return false;
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      if (endDateCandidate.getDate() === startDate.getDate()) return false;
+      const endHour = endDateCandidate.getHours();
+      const endMinute = endDateCandidate.getMinutes();
+      return endHour > 7 || (endHour === 7 && endMinute >= 30);
+    });
+
+    const showStartTimeFinalPosition = computed(() => true);
 
     return {
-      loadError,
-      selectedGc: computed(() => gcStore.selectedGc),
-      setSelectedGc: gcStore.setSelectedGc,
-      handleUpdateResults,
-      batch1EndTime,
-      primaryFinalPosition,
-      gcRuntime,
-      gcType,
-      handleUpdateTimeDelay,
-      resetInputs,
-      disabledPositions,
+      currentDate,
+      displayBatchStartTime,
+      displayFinalPosition,
+      displayTotalRuns,
+      additionalRunsExistBool,
+      displayControls,
+      isClosestPositionObject,
+      closestPositionDisplay,
+      displayBatchEndTime,
+      initialBatchEndTimeAfter730,
+      showStartTimeFinalPosition,
+      showDetailedResults,
     };
   },
 };
 </script>
 
 <style scoped>
-.config-section {
-  background-color: #fff;
-  padding: 0 10px 10px 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  margin-top: 0;
+.start-time-results {
+  padding: 0;
 }
-.config-section h1 {
-  margin-top: 0 !important;
-  margin-bottom: 5px;
+.start-time-results p {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #333;
 }
-.config-container {
-  display: flex;
-  flex-direction: column;
-  position: relative;
+.result-value {
+  font-weight: bold;
+  font-size: 1rem;
 }
-.scrollable-content {
-  flex-grow: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  margin-bottom: 60px;
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
 }
-.sticky-bottom-container {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-}
-.reset-button-container {
-  padding-bottom: 2px;
-}
-.reset-button-container button {
-  border: 1px solid #ccc;
-  padding: 0 8px;
-  height: 28px;
-  line-height: 28px;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-  cursor: pointer;
-  width: auto;
-}
-.reset-button-container button:hover {
-  background-color: var(--highlight-color-hover, #218838);
-}
-.other-batch-types-box {
-  background-color: #fff;
-  border: 1px solid #ccc;
+hr {
+  border: none;
   border-top: 1px solid #ccc;
-  padding: 5px;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  z-index: 1;
+  margin: 10px 0;
+  padding: 0;
 }
-.other-batch-types-box p {
-  margin: 2px 0;
+.time-gap-hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.highlight-orange {
+  color: orange;
 }
 </style>
