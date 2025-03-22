@@ -99,21 +99,24 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Fixed-width type heading styling for alignment */
+/* Adjusted heading styling for alignment:
+   - Reduced fixed width from 80px to 60px.
+   - Reduced right margin from 10px to 5px.
+   - Left-align text */
 .gc-group-heading {
-  flex: 0 0 80px;
-  margin-right: 10px;
+  flex: 0 0 60px;
+  margin-right: 5px;
   font-weight: bold;
   white-space: nowrap;
   font-size: 0.9rem;
-  text-align: left; /* Changed from right to left */
+  text-align: left;
 }
 
-/* Grid for the GC boxes - dynamically adjusting */
+/* Grid for the GC boxes - increased gap to spread boxes out more */
 .gc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 5px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
