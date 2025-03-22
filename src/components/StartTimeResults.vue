@@ -1,8 +1,8 @@
 <template>
   <div class="start-time-results">
-    <!-- Always display Start Time heading -->
+    <!-- Always display Batch Start Time heading -->
     <p>
-      Start Time:
+      Batch Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
     <!-- Controls heading always shown -->
@@ -111,7 +111,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // New computed property: if both controls are provided, show higher and lower; else "None"
+    // New computed property: if both controls are provided, show higher and lower; else show blank.
     const displayControls = computed(() => {
       const controls = props.startTime.controls || {};
       const control1 = controls.control1;
@@ -124,11 +124,11 @@ export default {
         control2 === undefined ||
         control2 === ""
       ) {
-        return "None";
+        return "";
       }
       const num1 = Number(control1);
       const num2 = Number(control2);
-      if (isNaN(num1) || isNaN(num2)) return "None";
+      if (isNaN(num1) || isNaN(num2)) return "";
       const higher = Math.max(num1, num2);
       const lower = Math.min(num1, num2);
       return `Higher: ${higher}, Lower: ${lower}`;
