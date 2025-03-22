@@ -41,9 +41,7 @@
         </template>
       </span>
     </p>
-    <div
-      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <div v-if="showDetailedResults && results.timeGapTo730AM">
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -54,97 +52,54 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { calculateStartTimeBatch } from "./utils/startTimeBatch";
 
 export default {
   name: "StartTimeResults",
-  props: {
-    results: {
-      type: Object,
-      default: () => ({}),
-    },
-    startTime: {
-      type: Object,
-      default: () => ({}),
-    },
-    selectedGcData: {
-      type: Object,
-      default: null,
-    },
-    delayedRunsExist: {
-      type: Boolean,
-      default: false,
-    },
-    additionalRunsExist: {
-      type: [Boolean, Number],
-      default: false,
-    },
-  },
-  setup(props) {
-    const currentDate = computed(() => new Date().toLocaleDateString());
+  setup() {
+    // Example input values—replace these with your actual data.
+    const gc = {};               // Your GC object
+    const runtime = "05:00";       // Runtime in "mm:ss" (or a decimal string)
+    const currentRun = 1;
+    const finalPosition = 20;      // Example final position
+    const batchStartTime = "08:00:00"; // Batch start time string
+    const ampm = "AM";
+    const wait15 = false;
 
-    const displayBatchStartTime = computed(() => {
-      const storedTime =
-        props.results.batchStartTime ||
-        props.results.startTime ||
-        props.startTime.batchStartTime ||
-        props.startTime.startTime ||
-        "";
-      return storedTime;
+    // Create a ref to hold the results.
+    const results = ref({});
+
+    // Call the calculation function on mount.
+    onMounted(() => {
+      results.value = calculateStartTimeBatch(
+        gc,
+        runtime,
+        currentRun,
+        finalPosition,
+        batchStartTime,
+        ampm,
+        wait15
+      );
     });
 
-    // Updated to match hh:mm instead of hh:mm:ss
+    // Computed properties for display
+    const displayBatchStartTime = computed(() => results.value.batchStartTime || "");
+    
     const showDetailedResults = computed(() => {
+      // Using a simple check to see if batchStartTime is in hh:mm format.
       return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
-
-    const displayFinalPosition = computed(() => {
-      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
-    });
-
-    const displayTotalRuns = computed(() => !!props.results.totalRuns);
-    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
-
-    const closestPositionDisplay = computed(() => {
-      const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
-      if (batchStart) {
-        const parts = batchStart.split(":");
-        if (parts.length === 3) {
-          const hour = parseInt(parts[0], 10);
-          const minute = parseInt(parts[1], 10);
-          const second = parseInt(parts[2], 10);
-          if (hour === 16 && minute === 0 && second === 0) {
-            return "This Batch Started At 4:00 PM";
-          }
-          if (hour > 16) {
-            return "This Batch Started After 4:00 PM";
-          }
-        }
-      }
-      if (props.results.batchEndTime) {
-        let batchEndStr = props.results.batchEndTime;
-        let timePart = batchEndStr.split(" ")[0];
-        let period = "";
-        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
-        if (periodMatch) {
-          period = periodMatch[0].toUpperCase();
-        }
-        const parts = timePart.split(":");
-        if (parts.length === 3) {
-          let hour = parseInt(parts[0], 10);
-          if (period === "PM" && hour < 12) hour += 12;
-          if (period === "AM" && hour === 12) hour = 0;
-          if (hour < 16) {
-            return `This Batch ends at ${batchEndStr}`;
-          }
-        }
-      }
-      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
-    });
-
+    
+    const displayFinalPosition = computed(() => results.value.startTimeFinalPosition || "");
+    
+    const displayTotalRuns = computed(() => !!results.value.totalRuns);
+    
+    // If the closest position is an object (with run details) then display that,
+    // otherwise fall back to a simple string message.
     const isClosestPositionObject = computed(() => {
-      if (props.results.batchEndTime) {
-        let batchEndStr = props.results.batchEndTime;
+      if (results.value.batchEndTime) {
+        let batchEndStr = results.value.batchEndTime;
         let timePart = batchEndStr.split(" ")[0];
         let period = "";
         const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
@@ -162,22 +117,61 @@ export default {
         }
       }
       return (
-        props.results &&
-        props.results.closestPositionBefore4PM &&
-        typeof props.results.closestPositionBefore4PM === "object" &&
-        props.results.closestPositionBefore4PM.position !== undefined
+        results.value &&
+        results.value.closestPositionBefore4PM &&
+        typeof results.value.closestPositionBefore4PM === "object" &&
+        results.value.closestPositionBefore4PM.position !== undefined
       );
     });
-
+    
+    // A fallback display if the closest position is not an object.
+    const closestPositionDisplay = computed(() => {
+      const batchStart = results.value.batchStartTime;
+      if (batchStart) {
+        const parts = batchStart.split(":");
+        if (parts.length === 3) {
+          const hour = parseInt(parts[0], 10);
+          const minute = parseInt(parts[1], 10);
+          const second = parseInt(parts[2], 10);
+          if (hour === 16 && minute === 0 && second === 0) {
+            return "This Batch Started At 4:00 PM";
+          }
+          if (hour > 16) {
+            return "This Batch Started After 4:00 PM";
+          }
+        }
+      }
+      if (results.value.batchEndTime) {
+        let batchEndStr = results.value.batchEndTime;
+        let timePart = batchEndStr.split(" ")[0];
+        let period = "";
+        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
+        if (periodMatch) {
+          period = periodMatch[0].toUpperCase();
+        }
+        const parts = timePart.split(":");
+        if (parts.length === 3) {
+          let hour = parseInt(parts[0], 10);
+          if (period === "PM" && hour < 12) hour += 12;
+          if (period === "AM" && hour === 12) hour = 0;
+          if (hour < 16) {
+            return `This Batch ends at ${batchEndStr}`;
+          }
+        }
+      }
+      return results.value.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
+    });
+    
     const displayBatchEndTime = computed(() => {
-      if (!props.results.batchEndTime) return "";
-      const batchEndStr = props.results.batchEndTime;
+      if (!results.value.batchEndTime) return "";
+      const batchEndStr = results.value.batchEndTime;
+      const currentDate = new Date().toLocaleDateString();
       const startStr = displayBatchStartTime.value;
       if (!startStr) {
-        return `${batchEndStr} (${currentDate.value})`;
+        return `${batchEndStr} (${currentDate})`;
       }
       const startParts = startStr.split(":");
-      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
+      if (startParts.length < 3) return `${batchEndStr} (${currentDate})`;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
       const startSecond = parseInt(startParts[2], 10);
@@ -192,7 +186,7 @@ export default {
       );
       let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) {
-        return `${batchEndStr} (${currentDate.value})`;
+        return `${batchEndStr} (${currentDate})`;
       }
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
@@ -200,10 +194,10 @@ export default {
       const endDateString = endDateCandidate.toLocaleDateString();
       return `${batchEndStr} (${endDateString})`;
     });
-
+    
     const initialBatchEndTimeAfter730 = computed(() => {
-      if (!props.results.batchEndTime) return false;
-      const batchEndStr = props.results.batchEndTime;
+      if (!results.value.batchEndTime) return false;
+      const batchEndStr = results.value.batchEndTime;
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
       const startParts = startStr.split(":");
@@ -220,7 +214,7 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${results.value.batchEndTime}`);
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
@@ -230,23 +224,22 @@ export default {
       const endMinute = endDateCandidate.getMinutes();
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
-
+    
     const showStartTimeFinalPosition = computed(() => true);
-
+    
     return {
-      currentDate,
+      results,
       displayBatchStartTime,
       displayFinalPosition,
       displayTotalRuns,
-      additionalRunsExistBool,
       isClosestPositionObject,
       closestPositionDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
-      showDetailedResults,
+      showDetailedResults
     };
-  },
+  }
 };
 </script>
 
