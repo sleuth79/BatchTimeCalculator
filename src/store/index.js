@@ -51,6 +51,9 @@ function fallbackFormatDuration(ms) {
       If that equals a control value, subtract one more.
     - If raw >= 17: base sample = raw.
       If that equals a control value, add one.
+      
+  In this revision we removed the special-case for control = 19 when raw is 18.
+  Now, if raw is 18 and the control is 19, the function returns 18.
 */
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
@@ -278,7 +281,7 @@ export const useGcStore = defineStore('gc', {
 
       this.lastStartTimeInputs = { ...this.startTime };
 
-      // --- Additional Runs Duration Computation ---
+      // --- Additional Runs Duration Computation (unchanged) ---
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
@@ -402,13 +405,7 @@ export const useGcStore = defineStore('gc', {
     },
     // NEW computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
-      if (!state.rawClosestCandidate) {
-        return {
-          position: "No Sample Position Ends Before 4:00 PM",
-          startTime: "",
-          endTime: ""
-        };
-      }
+      if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
       return {
         position: getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls),
         startTime: state.rawClosestCandidate.startTime,
