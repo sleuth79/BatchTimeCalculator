@@ -68,22 +68,19 @@
     <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
-      <!-- Commented out the delayed runs heading -->
-      <!-- <p class="section-heading"><strong>Delayed Runs</strong></p> -->
+      <p class="section-heading"><strong>Delayed Runs</strong></p>
       <div>
         <p v-if="timeDelayData.timeGapTo730AM">
           Time Gap to 7:30 AM:
           <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
         </p>
-        <!-- Commented out the Delayed Runs label in this paragraph -->
-        <!-- <p>
+        <!-- Comment out the calibration/delayed runs result line -->
+        <!--
+        <p>
           Delayed Runs:
           <strong>{{ timeDelayData.prerunsDescription }}</strong>
-        </p> -->
-        <!-- If you still need to display the delayed runs details without the heading label, you can remove the "Delayed Runs:" text -->
-        <p>
-          <strong>{{ timeDelayData.prerunsDescription }}</strong>
         </p>
+        -->
         <p>
           Total Number of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
