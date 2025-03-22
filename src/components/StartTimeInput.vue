@@ -327,7 +327,7 @@ export default {
 .heading-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px; /* Adjusted to match GC selector spacing */
+  margin-bottom: 0px; /* Adjusted to match GC selector spacing */
 }
 
 /* Header label styling to match the global config section */
