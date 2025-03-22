@@ -330,13 +330,13 @@ export default {
   margin-bottom: 5px;
 }
 
-/* Header label styling to match Final Position */
+/* Header label styling to match the global config section */
 .heading-batch,
 .heading-controls {
   flex: 1;
   text-align: left;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 .input-row {
@@ -392,7 +392,7 @@ export default {
   margin-bottom: 10px;
 }
 
-/* 15-Minute Wait label styling to match other headers */
+/* 15-Minute Wait label set slightly smaller */
 .wait-label {
   font-size: 1rem;
   font-weight: bold;
@@ -422,11 +422,5 @@ export default {
 /* Default label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
-}
-.heading-batch,
-.heading-controls,
-.wait-label {
-  font-size: 1.1rem;
-  font-weight: bold;
 }
 </style>
