@@ -50,7 +50,7 @@
       
       <!-- Additional Inputs -->
       <div class="input-group wait-input" v-if="showWaitInput">
-        <label>15-Minute Wait:</label>
+        <label class="wait-label">15-Minute Wait:</label>
         <div class="wait-toggle" :class="{ on: localWait15 }" @click="setWait15(!localWait15)">
           <span>{{ localWait15 ? 'Yes' : 'No' }}</span>
         </div>
@@ -324,40 +324,47 @@ export default {
 </script>
 
 <style scoped>
+/* Use default label styling for headers to match Final Position */
 .heading-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
-  font-weight: bold;
 }
+
 .heading-batch,
 .heading-controls {
   flex: 1;
   text-align: left;
-  font-size: 1rem;
+  font-size: inherit;
+  font-weight: normal;
 }
+
 .input-row {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
 }
+
 .batch-time-input {
   flex: 1;
   display: flex;
   align-items: center;
 }
+
 .batch-time-input input {
   width: 75px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
+
 .time-input-note {
   margin-left: 10px;
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
 }
+
 .controls-inputs {
   flex: 1;
   display: flex;
@@ -366,21 +373,30 @@ export default {
   margin-left: 0;
   gap: 10px;
 }
+
 .control-group {
   display: flex;
   align-items: center;
 }
+
 .start-time-input .control-input {
   width: 60px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
+
 .input-group.wait-input {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
+
+/* Reduce font-size for the 15-Minute Wait label */
+.input-group.wait-input .wait-label {
+  font-size: 0.9rem;
+}
+
 .wait-toggle {
   margin-left: 10px;
   width: 60px;
@@ -396,10 +412,13 @@ export default {
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .wait-toggle.on {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
 }
+
+/* Default label style */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
