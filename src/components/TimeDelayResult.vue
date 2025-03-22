@@ -68,7 +68,7 @@
     <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
-      <!-- Commented out Delayed Runs Heading -->
+      <!-- Delayed Runs heading commented out -->
       <!-- <p class="section-heading"><strong>Delayed Runs</strong></p> -->
       <div>
         <p v-if="timeDelayData.timeGapTo730AM">
