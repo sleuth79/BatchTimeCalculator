@@ -134,12 +134,20 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Final Position binding
-    const finalPosition = ref(null);
+    // Final Position binding: local ref synced with store.
+    const finalPosition = ref(gcStore.startTime.finalPosition);
+    // Update store when local finalPosition changes.
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
+    // Watch store and update local finalPosition when it resets.
+    watch(
+      () => gcStore.startTime.finalPosition,
+      (newVal) => {
+        finalPosition.value = newVal;
+      }
+    );
 
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
