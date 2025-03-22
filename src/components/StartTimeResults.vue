@@ -1,10 +1,16 @@
 <template>
   <div class="start-time-results">
-    <!-- Always display Start Time and Final Position headings -->
+    <!-- Always display Start Time heading -->
     <p>
-      Start Time:
+      Batch Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
+    <!-- New Controls heading -->
+    <p v-if="displayControls">
+      Controls:
+      <span class="result-value">{{ displayControls }}</span>
+    </p>
+    <!-- Always display Final Position heading -->
     <p>
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
@@ -104,6 +110,21 @@ export default {
 
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
+
+    // New computed property to display the controls.
+    const displayControls = computed(() => {
+      const controls = props.startTime.controls;
+      const control1 = controls?.control1;
+      const control2 = controls?.control2;
+      const parts = [];
+      if (control1 !== null && control1 !== undefined && control1 !== "") {
+        parts.push(`Control1: ${control1}`);
+      }
+      if (control2 !== null && control2 !== undefined && control2 !== "") {
+        parts.push(`Control2: ${control2}`);
+      }
+      return parts.join(", ");
+    });
 
     const closestPositionDisplay = computed(() => {
       const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
@@ -239,6 +260,7 @@ export default {
       displayFinalPosition,
       displayTotalRuns,
       additionalRunsExistBool,
+      displayControls,
       isClosestPositionObject,
       closestPositionDisplay,
       displayBatchEndTime,
