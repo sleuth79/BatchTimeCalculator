@@ -5,7 +5,7 @@
       Batch Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
-    <!-- Controls heading always shown -->
+    <!-- Controls heading always shown; value blank until both controls are entered -->
     <p>
       Controls:
       <span class="result-value">{{ displayControls }}</span>
@@ -33,7 +33,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Updated: Display Closest Position Before 4:00 PM -->
+    <!-- Display Closest Position Before 4:00 PM -->
     <p v-if="showDetailedResults && results.closestPositionBefore4PM && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
@@ -99,7 +99,7 @@ export default {
       return storedTime;
     });
 
-    // Updated to match hh:mm instead of hh:mm:ss
+    // Only consider valid hh:mm strings
     const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
@@ -111,7 +111,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // New computed property: if both controls are provided, show higher and lower; else show blank.
+    // Computed property for controls: returns a blank string until both controls are set.
     const displayControls = computed(() => {
       const controls = props.startTime.controls || {};
       const control1 = controls.control1;
