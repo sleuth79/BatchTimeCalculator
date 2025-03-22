@@ -2,11 +2,11 @@
   <div class="start-time-results">
     <!-- Always display Start Time heading -->
     <p>
-      Batch Start Time:
+      Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
-    <!-- New Controls heading -->
-    <p v-if="displayControls">
+    <!-- Controls heading always shown -->
+    <p>
       Controls:
       <span class="result-value">{{ displayControls }}</span>
     </p>
@@ -111,11 +111,11 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // New computed property to display the controls.
+    // New computed property for controls.
     const displayControls = computed(() => {
-      const controls = props.startTime.controls;
-      const control1 = controls?.control1;
-      const control2 = controls?.control2;
+      const controls = props.startTime.controls || {};
+      const control1 = controls.control1;
+      const control2 = controls.control2;
       const parts = [];
       if (control1 !== null && control1 !== undefined && control1 !== "") {
         parts.push(`Control1: ${control1}`);
@@ -123,7 +123,7 @@ export default {
       if (control2 !== null && control2 !== undefined && control2 !== "") {
         parts.push(`Control2: ${control2}`);
       }
-      return parts.join(", ");
+      return parts.length ? parts.join(", ") : "None";
     });
 
     const closestPositionDisplay = computed(() => {
