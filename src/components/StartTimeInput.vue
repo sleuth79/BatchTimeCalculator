@@ -327,7 +327,7 @@ export default {
 .heading-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2px; /* Reduced space underneath headings */
+  margin-bottom: 5px; /* Adjusted to match GC selector spacing */
 }
 
 /* Header label styling to match the global config section */
@@ -342,7 +342,7 @@ export default {
 .input-row {
   display: flex;
   align-items: center;
-  margin-bottom: 10px; /* Reduced space between input row and below */
+  margin-bottom: 10px;
 }
 
 .batch-time-input {
