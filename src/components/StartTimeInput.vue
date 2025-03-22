@@ -160,7 +160,7 @@ export default {
       timeInputError.value = "";
     });
     
-    // **New watcher**: When local control values change, recalculate the results.
+    // When local control values change, recalculate the results.
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
     watch(
@@ -215,7 +215,7 @@ export default {
       recalculateResults();
     };
 
-    // --- Local Control Inputs & Dynamic Allowed Ranges ---
+    // Local Control Inputs & Dynamic Allowed Ranges
     watch(
       () => gcStore.startTime.controls,
       (newControls) => {
@@ -324,19 +324,19 @@ export default {
 </script>
 
 <style scoped>
-/* Use default label styling for headers to match Final Position */
 .heading-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
 }
 
+/* Header label styling to match Final Position */
 .heading-batch,
 .heading-controls {
   flex: 1;
   text-align: left;
-  font-size: inherit;
-  font-weight: normal;
+  font-weight: bold;
+  font-size: 1rem;
 }
 
 .input-row {
@@ -392,9 +392,10 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Reduce font-size for the 15-Minute Wait label */
-.input-group.wait-input .wait-label {
-  font-size: 0.9rem;
+/* 15-Minute Wait label styling to match other headers */
+.wait-label {
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .wait-toggle {
@@ -418,7 +419,7 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Default label style */
+/* Default label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
