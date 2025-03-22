@@ -54,7 +54,7 @@
 <script>
 import { ref, computed, onMounted } from "vue";
 // Import your calculation function from your existing file:
-import { calculateStartTimeBatch } from './utils/startTimeCalculations.js';
+import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 
 export default {
   name: "StartTimeResults",
