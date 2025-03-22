@@ -68,7 +68,8 @@
     <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
-      <p class="section-heading"><strong>Delayed Runs</strong></p>
+      <!-- Commented out Delayed Runs Heading -->
+      <!-- <p class="section-heading"><strong>Delayed Runs</strong></p> -->
       <div>
         <p v-if="timeDelayData.timeGapTo730AM">
           Time Gap to 7:30 AM:
