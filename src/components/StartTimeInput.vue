@@ -423,4 +423,10 @@ export default {
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
+.heading-batch,
+.heading-controls,
+.wait-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
 </style>
