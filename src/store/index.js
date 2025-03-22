@@ -402,7 +402,13 @@ export const useGcStore = defineStore('gc', {
     },
     // NEW computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
-      if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
+      if (!state.rawClosestCandidate) {
+        return {
+          position: "No Sample Position Ends Before 4:00 PM",
+          startTime: "",
+          endTime: ""
+        };
+      }
       return {
         position: getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls),
         startTime: state.rawClosestCandidate.startTime,
