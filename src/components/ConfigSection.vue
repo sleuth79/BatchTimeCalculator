@@ -118,11 +118,13 @@ export default {
       { deep: true }
     );
 
-    // Reset function: resets both start-time inputs, control inputs, and GC selection.
+    // Reset function: resets both start-time inputs, control inputs, final position, and GC selection.
     const resetInputs = () => {
       gcStore.resetStartTime();
       // Clear the control inputs:
       gcStore.startTime.controls = { control1: "", control2: "" };
+      // Reset the finalPosition value:
+      gcStore.startTime.finalPosition = null;
       gcStore.setSelectedGc(null);
     };
 
