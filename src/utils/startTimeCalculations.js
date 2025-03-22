@@ -3,7 +3,6 @@ import {
   formatTimeWithAmPmAndSeconds, 
   formatDuration 
 } from './utils.js';
-import { findClosestPositionBefore4PM } from './runTableUtils';
 
 /**
  * Parses a start time string (e.g. "10:00:30" or "10:00") with an AM/PM indicator.
@@ -92,7 +91,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
     };
   }
   
-  // Parse the original batch start time (before any wait)
+  // Original batch start time (before any wait)
   const batchStartTimeDate = parseStartTime(batchStartTime, ampm);
   const wait15MS = wait15 ? (15 * 60) * 1000 : 0;
   // Effective start time shifts by 15 minutes if wait15 is true.
@@ -100,7 +99,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const finalPositionNum = Number(finalPosition);
   const totalRuns = finalPositionNum <= 15 ? finalPositionNum + 2 : finalPositionNum + 1;
   
-  // Parse runtime from either mm:ss or decimal format.
+  // Updated: Parse runtime from either mm:ss or decimal format.
   let runtimeSeconds;
   if (typeof runtime === 'string' && runtime.includes(':')) {
     const parts = runtime.split(':');
@@ -112,19 +111,46 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const totalRunTimeSeconds = totalRuns * runtimeSeconds;
   const totalRunTimeMS = totalRunTimeSeconds * 1000;
   
-  // Calculate batch end time.
+  // Batch end time is computed from the effective start time.
   const batchEndTimeDate = new Date(effectiveStartTime.getTime() + totalRunTimeMS);
   const formattedBatchEndTime = formatTimeWithAmPmAndSeconds(batchEndTimeDate);
   
-  // Calculate overall run time from the original batch start to batch end time.
+  // Calculate overall run time from original batch start to batch end time.
   const overallRunTimeMS = batchEndTimeDate.getTime() - batchStartTimeDate.getTime();
   const totalRunTimeFormatted = formatDuration(overallRunTimeMS);
   
-  // Define workDayEnd based on the ORIGINAL batch start time.
+  // Set workDayEnd based on the ORIGINAL batch start time.
   const workDayEnd = new Date(batchStartTimeDate);
   workDayEnd.setHours(16, 0, 0, 0);
   
-  // Build the runs array.
+  let closestPositionBefore4PM;
+  if (batchStartTimeDate >= workDayEnd) {
+    closestPositionBefore4PM = "This Batch Started After 4:00 PM";
+  } else {
+    let candidate = null, candidateStartTime = null, candidateEndTime = null;
+    for (let i = 4; i <= totalRuns; i++) {
+      const samplePos = samplePositionForRun(i);
+      if (samplePos === null || samplePos > finalPositionNum) continue;
+      const runStartTime = new Date(effectiveStartTime.getTime() + (i - 1) * runtimeSeconds * 1000);
+      const runEndTime = new Date(runStartTime.getTime() + runtimeSeconds * 1000);
+      if (runEndTime <= workDayEnd) {
+        candidate = i;
+        candidateStartTime = runStartTime;
+        candidateEndTime = runEndTime;
+      }
+    }
+    closestPositionBefore4PM = candidate === null 
+      ? "No Sample Position Ends Before 4:00 PM" 
+      : { 
+          position: samplePositionForRun(candidate), 
+          startTime: formatTimeWithAmPmAndSeconds(candidateStartTime),
+          endTime: formatTimeWithAmPmAndSeconds(candidateEndTime)
+        };
+  }
+  
+  const timeGapTo730AM = calculateTimeGapTo730AM(batchEndTimeDate, effectiveStartTime);
+  const timeDelayRequired = computeTimeDelayRequired(batchEndTimeDate, effectiveStartTime);
+  
   const runs = [];
   if (wait15) {
     runs.push({
@@ -143,18 +169,6 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
       endTime: formatTimeWithAmPmAndSeconds(runEndTime)
     });
   }
-  
-  // Determine the closest position before 4:00 PM.
-  // If the batch started after 4:00 PM, override the value.
-  let closestPositionBefore4PM;
-  if (batchStartTimeDate >= workDayEnd) {
-    closestPositionBefore4PM = "This Batch Started After 4:00 PM";
-  } else {
-    closestPositionBefore4PM = findClosestPositionBefore4PM(runs);
-  }
-  
-  const timeGapTo730AM = calculateTimeGapTo730AM(batchEndTimeDate, effectiveStartTime);
-  const timeDelayRequired = computeTimeDelayRequired(batchEndTimeDate, effectiveStartTime);
   
   return {
     batchEndTime: formattedBatchEndTime,
