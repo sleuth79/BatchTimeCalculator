@@ -1,6 +1,5 @@
 <template>
   <div class="gc-selector">
-    <label for="gc-select">Select GC:</label>
     <div class="gc-group">
       <!-- Row for Energy GCs -->
       <div class="gc-group-row">
@@ -87,13 +86,6 @@ export default {
   margin-bottom: 15px;
 }
 
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
 /* Container for both groups */
 .gc-group {
   margin-bottom: 10px;
@@ -120,8 +112,8 @@ label {
 /* Grid for the GC boxes - dynamically adjusting */
 .gc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Changed minmax from 80px to 60px */
-  gap: 5px; /* Reduce gap for better spacing */
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 5px;
   flex: 1;
   min-width: 0;
 }
