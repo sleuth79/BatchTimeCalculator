@@ -111,19 +111,27 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // New computed property for controls.
+    // New computed property: if both controls are provided, show higher and lower; else "None"
     const displayControls = computed(() => {
       const controls = props.startTime.controls || {};
       const control1 = controls.control1;
       const control2 = controls.control2;
-      const parts = [];
-      if (control1 !== null && control1 !== undefined && control1 !== "") {
-        parts.push(`Control1: ${control1}`);
+      if (
+        control1 === null ||
+        control1 === undefined ||
+        control1 === "" ||
+        control2 === null ||
+        control2 === undefined ||
+        control2 === ""
+      ) {
+        return "None";
       }
-      if (control2 !== null && control2 !== undefined && control2 !== "") {
-        parts.push(`Control2: ${control2}`);
-      }
-      return parts.length ? parts.join(", ") : "None";
+      const num1 = Number(control1);
+      const num2 = Number(control2);
+      if (isNaN(num1) || isNaN(num2)) return "None";
+      const higher = Math.max(num1, num2);
+      const lower = Math.min(num1, num2);
+      return `Higher: ${higher}, Lower: ${lower}`;
     });
 
     const closestPositionDisplay = computed(() => {
