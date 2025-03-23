@@ -321,7 +321,9 @@ export const useGcStore = defineStore('gc', {
       // Choose the candidate with the highest displayed order (i.e. last in the sorted array).
       const candidate = candidateRuns[candidateRuns.length - 1];
       this.rawClosestCandidate = candidate;
-      let displayedLabel = candidate ? (displayedSamples.find(s => s.raw === candidate.position)?.label || candidate.position) : null;
+      let displayedLabel = candidate
+        ? (displayedSamples.find(s => s.raw === candidate.position)?.label || candidate.position)
+        : null;
       console.log("Final candidate:", candidate, "Displayed as:", displayedLabel);
       // --- End Candidate Selection ---
 
@@ -476,11 +478,13 @@ export const useGcStore = defineStore('gc', {
       const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
       const displayedSamples = generateDisplayedOrder(finalPos, gcType, state.startTime.controls);
       const candidateMapping = displayedSamples.find(s => s.raw === state.rawClosestCandidate.position);
-      return {
-        position: candidateMapping ? candidateMapping.label : state.rawClosestCandidate.position,
-        startTime: state.rawClosestCandidate.startTime,
-        endTime: state.rawClosestCandidate.endTime
-      };
+      return candidateMapping
+        ? {
+            displayedPosition: candidateMapping.label,
+            startTime: state.rawClosestCandidate.startTime,
+            endTime: state.rawClosestCandidate.endTime
+          }
+        : state.rawClosestCandidate.position;
     }
   },
 });
