@@ -30,19 +30,10 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM -->
-    <p v-if="showDetailedResults && results.closestPositionBefore4PM && displayFinalPosition">
-      Closest Position Before 4:00 PM:
-      <span class="result-value">
-        <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }} :
-          {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to
-          {{ results.closestPositionBefore4PM.endTime }}
-        </template>
-        <template v-else>
-          {{ closestPositionDisplay }}
-        </template>
-      </span>
+    <!-- Elegant display for the run closest to 4:00 PM -->
+    <p v-if="showDetailedResults && displayFinalPosition">
+      Closest Position to 4:00 PM:
+      <span class="result-value">{{ closestRunDisplay }}</span>
     </p>
     <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
       <hr class="time-gap-hr" />
@@ -65,8 +56,7 @@ export default {
       type: Object,
       default: () => ({}),
     },
-    // You can still pass startTime for other computed values if needed,
-    // but we no longer use it for controls.
+    // Other props remain unchanged
     startTime: {
       type: Object,
       default: () => ({}),
@@ -85,7 +75,7 @@ export default {
     },
   },
   setup(props) {
-    // Get the store instance.
+    // Access the store for control values.
     const gcStore = useGcStore();
 
     const currentDate = computed(() => new Date().toLocaleDateString());
@@ -111,79 +101,28 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Computed property for controls using the store directly.
+    // Use the store to display control values.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
-      console.log("displayControls computed:", ctrl1, ctrl2);
       if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
         return "";
       }
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    const closestPositionDisplay = computed(() => {
-      const batchStart = props.results.batchStartTime || props.startTime.batchStartTime;
-      if (batchStart) {
-        const parts = batchStart.split(":");
-        if (parts.length === 3) {
-          const hour = parseInt(parts[0], 10);
-          const minute = parseInt(parts[1], 10);
-          const second = parseInt(parts[2], 10);
-          if (hour === 16 && minute === 0 && second === 0) {
-            return "This Batch Started At 4:00 PM";
-          }
-          if (hour > 16) {
-            return "This Batch Started After 4:00 PM";
-          }
-        }
+    // New computed property for elegantly displaying the closest run.
+    const closestRunDisplay = computed(() => {
+      const candidate = props.results.closestPositionBefore4PM;
+      if (!candidate) {
+        return "No Sample Position Ends Before 4:00 PM";
       }
-      if (props.results.batchEndTime) {
-        let batchEndStr = props.results.batchEndTime;
-        let timePart = batchEndStr.split(" ")[0];
-        let period = "";
-        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
-        if (periodMatch) {
-          period = periodMatch[0].toUpperCase();
-        }
-        const parts = timePart.split(":");
-        if (parts.length === 3) {
-          let hour = parseInt(parts[0], 10);
-          if (period === "PM" && hour < 12) hour += 12;
-          if (period === "AM" && hour === 12) hour = 0;
-          if (hour < 16) {
-            return `This Batch ends at ${batchEndStr}`;
-          }
-        }
+      // If the candidate is an object with expected properties, format it nicely.
+      if (typeof candidate === "object" && candidate.position !== undefined) {
+        return `Position ${candidate.position}: ${candidate.startTime} to ${candidate.endTime}`;
       }
-      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
-    });
-
-    const isClosestPositionObject = computed(() => {
-      if (props.results.batchEndTime) {
-        let batchEndStr = props.results.batchEndTime;
-        let timePart = batchEndStr.split(" ")[0];
-        let period = "";
-        const periodMatch = batchEndStr.match(/\b(AM|PM)\b/i);
-        if (periodMatch) {
-          period = periodMatch[0].toUpperCase();
-        }
-        const parts = timePart.split(":");
-        if (parts.length === 3) {
-          let hour = parseInt(parts[0], 10);
-          if (period === "PM" && hour < 12) hour += 12;
-          if (period === "AM" && hour === 12) hour = 0;
-          if (hour < 16) {
-            return false;
-          }
-        }
-      }
-      return (
-        props.results &&
-        props.results.closestPositionBefore4PM &&
-        typeof props.results.closestPositionBefore4PM === "object" &&
-        props.results.closestPositionBefore4PM.position !== undefined
-      );
+      // Otherwise, return it directly.
+      return candidate;
     });
 
     const displayBatchEndTime = computed(() => {
@@ -257,12 +196,12 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      isClosestPositionObject,
-      closestPositionDisplay,
+      closestRunDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
+      results: props.results  // exposing results for use in template
     };
   },
 };
