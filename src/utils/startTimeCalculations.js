@@ -29,7 +29,6 @@ function parseStartTime(batchStartTime, ampm) {
 function get730Target(effectiveStartTime, batchEndTime) {
   const target = new Date(effectiveStartTime);
   target.setHours(7, 30, 0, 0);
-  // If the batch starts at or after 4:00 AM and ends at/after target, or if effectiveStartTime is already past target:
   if ((effectiveStartTime.getHours() >= 4 && batchEndTime >= target) || effectiveStartTime >= target) {
     target.setDate(target.getDate() + 1);
   }
@@ -70,10 +69,59 @@ function samplePositionForRun(i) {
 }
 
 /**
- * Main function to calculate start time batch results.
- * Uses seconds-based arithmetic to minimize rounding errors.
+ * Helper: generate allowed sample numbers (mimicking run table’s "sampleAllowed").
+ * Samples are numbers from 3 to finalPos (or 32) excluding the control numbers and 16.
  */
-export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15) {
+function generateSampleAllowed(finalPos, controls) {
+  const arr = [];
+  for (let num = 3; num <= finalPos; num++) {
+    if (
+      num === Number(controls.control1) ||
+      num === Number(controls.control2) ||
+      num === 16
+    ) {
+      continue;
+    }
+    arr.push(num);
+  }
+  return arr;
+}
+
+/**
+ * Helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
+ * Returns an array of objects with keys: { raw, label }.
+ */
+function generateDisplayedOrder(finalPos, gcType, controls) {
+  const sampleAllowed = generateSampleAllowed(finalPos, controls);
+  let displayedSamples = [];
+
+  if (finalPos < 13) {
+    displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
+  } else if (finalPos < 23) {
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n > 12);
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  } else {
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n >= 13 && n <= 22);
+    const group3 = sampleAllowed.filter(n => n > 22);
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group3.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  }
+  return displayedSamples;
+}
+
+/**
+ * Main function to calculate start time batch results.
+ * NOTE: Added an extra parameter "controls" to apply the displayed-order logic.
+ */
+export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15, controls) {
   if (!gc || !finalPosition) {
     return {
       batchEndTime: null,
@@ -93,13 +141,13 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   
   // Original batch start time (before any wait)
   const batchStartTimeDate = parseStartTime(batchStartTime, ampm);
-  const wait15MS = wait15 ? (15 * 60) * 1000 : 0;
+  const wait15MS = wait15 ? 15 * 60 * 1000 : 0;
   // Effective start time shifts by 15 minutes if wait15 is true.
   const effectiveStartTime = wait15 ? new Date(batchStartTimeDate.getTime() + wait15MS) : batchStartTimeDate;
   const finalPositionNum = Number(finalPosition);
   const totalRuns = finalPositionNum <= 15 ? finalPositionNum + 2 : finalPositionNum + 1;
   
-  // Updated: Parse runtime from either mm:ss or decimal format.
+  // Parse runtime from either mm:ss or decimal format.
   let runtimeSeconds;
   if (typeof runtime === 'string' && runtime.includes(':')) {
     const parts = runtime.split(':');
@@ -115,7 +163,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const batchEndTimeDate = new Date(effectiveStartTime.getTime() + totalRunTimeMS);
   const formattedBatchEndTime = formatTimeWithAmPmAndSeconds(batchEndTimeDate);
   
-  // Calculate overall run time from original batch start to batch end time.
+  // Overall run time from original batch start to batch end time.
   const overallRunTimeMS = batchEndTimeDate.getTime() - batchStartTimeDate.getTime();
   const totalRunTimeFormatted = formatDuration(overallRunTimeMS);
   
@@ -127,25 +175,48 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   if (batchStartTimeDate >= workDayEnd) {
     closestPositionBefore4PM = "This Batch Started After 4:00 PM";
   } else {
-    let candidate = null, candidateStartTime = null, candidateEndTime = null;
+    // New candidate selection using displayed order logic.
+    // Assume gc may include a type property.
+    const gcType = (gc && gc.type ? gc.type : "").trim().toLowerCase();
+    const displayedSamples = generateDisplayedOrder(finalPositionNum, gcType, controls);
+    console.log("Displayed Samples Order:", displayedSamples);
+    
+    const todayStr = batchStartTimeDate.toDateString();
+    const cutoff = new Date(`${todayStr} 4:00:00 PM`);
+    let candidateRuns = [];
+    
     for (let i = 4; i <= totalRuns; i++) {
       const samplePos = samplePositionForRun(i);
       if (samplePos === null || samplePos > finalPositionNum) continue;
+      // Only consider samplePos if it appears in displayedSamples.
+      if (!displayedSamples.some(s => s.raw === samplePos)) continue;
       const runStartTime = new Date(effectiveStartTime.getTime() + (i - 1) * runtimeSeconds * 1000);
       const runEndTime = new Date(runStartTime.getTime() + runtimeSeconds * 1000);
       if (runEndTime <= workDayEnd) {
-        candidate = i;
-        candidateStartTime = runStartTime;
-        candidateEndTime = runEndTime;
+        candidateRuns.push({
+          raw: samplePos,
+          startTime: runStartTime,
+          endTime: runEndTime
+        });
       }
     }
-    closestPositionBefore4PM = candidate === null 
-      ? "No Sample Position Ends Before 4:00 PM" 
-      : { 
-          position: samplePositionForRun(candidate), 
-          startTime: formatTimeWithAmPmAndSeconds(candidateStartTime),
-          endTime: formatTimeWithAmPmAndSeconds(candidateEndTime)
-        };
+    
+    if (candidateRuns.length > 0) {
+      // Sort candidateRuns by their index in displayedSamples.
+      candidateRuns.sort((a, b) => {
+        const indexA = displayedSamples.findIndex(s => s.raw === a.raw);
+        const indexB = displayedSamples.findIndex(s => s.raw === b.raw);
+        return indexA - indexB;
+      });
+      const candidate = candidateRuns[candidateRuns.length - 1];
+      closestPositionBefore4PM = {
+        position: candidate.raw,
+        startTime: formatTimeWithAmPmAndSeconds(candidate.startTime),
+        endTime: formatTimeWithAmPmAndSeconds(candidate.endTime)
+      };
+    } else {
+      closestPositionBefore4PM = "No Sample Position Ends Before 4:00 PM";
+    }
   }
   
   const timeGapTo730AM = calculateTimeGapTo730AM(batchEndTimeDate, effectiveStartTime);
