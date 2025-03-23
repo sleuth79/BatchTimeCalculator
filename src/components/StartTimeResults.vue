@@ -20,18 +20,18 @@
       </span>
     </p>
     <!-- Additional details -->
-    <p v-if="showDetailedResults && results.totalRunTime">
+    <p v-if="showDetailedResults">
       Total Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
     </p>
-    <p v-if="showDetailedResults && results.batchEndTime">
+    <p v-if="showDetailedResults">
       Batch End Time:
       <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
         {{ displayBatchEndTime }}
       </span>
     </p>
     <!-- Elegant display for the run closest to 4:00 PM -->
-    <p v-if="showDetailedResults && displayFinalPosition">
+    <p v-if="showDetailedResults">
       Closest Position to 4:00 PM:
       <span class="result-value">{{ closestRunDisplay }}</span>
     </p>
@@ -90,6 +90,7 @@ export default {
       );
     });
 
+    // We use a regex to determine if detailed results are ready.
     const showDetailedResults = computed(() => {
       return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
@@ -117,7 +118,7 @@ export default {
       if (!candidate) {
         return "No Sample Position Ends Before 4:00 PM";
       }
-      // Use rawPosition if available, else fall back to candidate.position.
+      // Use rawPosition if available; otherwise, use position.
       if (typeof candidate === "object") {
         if (candidate.rawPosition !== undefined) {
           return `${candidate.rawPosition} : ${candidate.startTime} to ${candidate.endTime}`;
