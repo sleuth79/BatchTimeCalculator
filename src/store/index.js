@@ -3,7 +3,7 @@ import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
 
-console.log("DEBUG: useGcStore module loaded"); // <-- Added debug log
+console.log("DEBUG: useGcStore module loaded");
 
 export const pinia = createPinia();
 
@@ -243,13 +243,17 @@ export const useGcStore = defineStore('gc', {
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       console.log("Cutoff time:", cutoff);
 
-      // Filter candidate runs: must have an endTime, raw position ≥ 4, and end before 4:00 PM.
+      // Filter candidate runs: must have an endTime, raw position ≥ 4,
+      // must not be a control (or 16), and must end before 4:00 PM.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
+        const control1 = Number(this.startTime.controls.control1);
+        const control2 = Number(this.startTime.controls.control2);
+        if (r.position === control1 || r.position === control2 || r.position === 16) return false;
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
-      console.log("Candidate runs after filtering by time:", candidateRuns);
+      console.log("Candidate runs after filtering by time and controls:", candidateRuns);
 
       // Sort candidates by end time (ascending).
       candidateRuns.sort((a, b) => new Date(`${todayStr} ${a.endTime}`) - new Date(`${todayStr} ${b.endTime}`));
