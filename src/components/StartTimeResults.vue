@@ -30,7 +30,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using the store's computed value -->
+    <!-- Display Closest Position Before 4:00 PM using store's computed value -->
     <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
