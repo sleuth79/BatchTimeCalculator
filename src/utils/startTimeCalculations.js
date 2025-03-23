@@ -62,10 +62,36 @@ function computeTimeDelayRequired(batchEndTime, effectiveStartTime) {
 /**
  * Given a run number (for sample runs only), returns its sample position.
  * For runs 4–16, sample position = run number – 1; for 17+, sample position = run number.
+ * (Not adjusted for controls.)
  */
 function samplePositionForRun(i) {
   if (i < 4) return null;
   return i < 17 ? i - 1 : i;
+}
+
+/**
+ * Computes the displayed (adjusted) sample number based on the raw run number and the control values.
+ * For raw run numbers 4–16, base sample = run number – 1; if that equals a control, subtract one more.
+ * For raw run numbers 17+, base sample = run number; if that equals a control, add one.
+ */
+function getDisplayedPosition(raw, controls) {
+  const control1 = Number(controls.control1);
+  const control2 = Number(controls.control2);
+  if (raw < 4) return null;
+  
+  let sample;
+  if (raw < 17) {
+    sample = raw - 1;
+    if (sample === control1 || sample === control2) {
+      sample = sample - 1;
+    }
+  } else {
+    sample = raw;
+    if (sample === control1 || sample === control2) {
+      sample = sample + 1;
+    }
+  }
+  return sample;
 }
 
 /**
@@ -94,7 +120,7 @@ function generateSampleAllowed(finalPos, controls) {
 function generateDisplayedOrder(finalPos, gcType, controls) {
   const sampleAllowed = generateSampleAllowed(finalPos, controls);
   let displayedSamples = [];
-
+  
   if (finalPos < 13) {
     displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
   } else if (finalPos < 23) {
@@ -119,7 +145,7 @@ function generateDisplayedOrder(finalPos, gcType, controls) {
 
 /**
  * Main function to calculate start time batch results.
- * NOTE: Added an extra parameter "controls" to apply the displayed-order logic.
+ * NOTE: We’ve added an extra parameter "controls" so that candidate selection uses the adjusted sample numbers.
  */
 export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15, controls) {
   if (!gc || !finalPosition) {
@@ -175,8 +201,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   if (batchStartTimeDate >= workDayEnd) {
     closestPositionBefore4PM = "This Batch Started After 4:00 PM";
   } else {
-    // New candidate selection using displayed order logic.
-    // Assume gc may include a type property.
+    // Use the displayed order logic.
     const gcType = (gc && gc.type ? gc.type : "").trim().toLowerCase();
     const displayedSamples = generateDisplayedOrder(finalPositionNum, gcType, controls);
     console.log("Displayed Samples Order:", displayedSamples);
@@ -185,16 +210,18 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
     const cutoff = new Date(`${todayStr} 4:00:00 PM`);
     let candidateRuns = [];
     
+    // Loop through run numbers from 4 to totalRuns.
     for (let i = 4; i <= totalRuns; i++) {
-      const samplePos = samplePositionForRun(i);
-      if (samplePos === null || samplePos > finalPositionNum) continue;
-      // Only consider samplePos if it appears in displayedSamples.
-      if (!displayedSamples.some(s => s.raw === samplePos)) continue;
+      // Use getDisplayedPosition to adjust the raw run number for controls.
+      const candidateSample = getDisplayedPosition(i, controls);
+      if (candidateSample === null || candidateSample > finalPositionNum) continue;
+      // Only consider candidateSample if it appears in the displayedSamples.
+      if (!displayedSamples.some(s => s.raw === candidateSample)) continue;
       const runStartTime = new Date(effectiveStartTime.getTime() + (i - 1) * runtimeSeconds * 1000);
       const runEndTime = new Date(runStartTime.getTime() + runtimeSeconds * 1000);
       if (runEndTime <= workDayEnd) {
         candidateRuns.push({
-          raw: samplePos,
+          raw: candidateSample,
           startTime: runStartTime,
           endTime: runEndTime
         });
