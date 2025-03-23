@@ -43,17 +43,10 @@ function fallbackFormatDuration(ms) {
 
 /*
   getDisplayedPosition computes the displayed (adjusted) sample number from the raw run number
-  and the control values.
-
-  Mapping:
-    - If raw < 4: return null.
-    - If raw is between 4 and 16: base sample = raw - 1.
-      If that equals a control value, subtract one more.
-    - If raw >= 17: base sample = raw.
-      If that equals a control value, add one.
-      
-  In this revision we removed the special-case for control = 19 when raw is 18.
-  Now, if raw is 18 and the control is 19, the function returns 18.
+  and the control values for simple cases.
+  
+  NOTE: This function is no longer used for candidate selection since we now recalc the full
+  run order for consistency with the run table.
 */
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
@@ -77,6 +70,62 @@ function getDisplayedPosition(raw, controls) {
   }
   console.log(`Final displayed sample for raw ${raw} = ${sample}`);
   return sample;
+}
+
+//
+// NEW helper: generate allowed sample numbers (mimicking run table’s "sampleAllowed")
+// Samples are numbers from 3 to finalPos (or 32) excluding the control numbers and 16.
+//
+function generateSampleAllowed(finalPos, controls) {
+  const arr = [];
+  for (let num = 3; num <= finalPos; num++) {
+    if (
+      num === Number(controls.control1) ||
+      num === Number(controls.control2) ||
+      num === 16
+    ) {
+      continue;
+    }
+    arr.push(num);
+  }
+  return arr;
+}
+
+//
+// NEW helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
+// This returns an array of objects representing sample rows only with their raw number and display label.
+// (Control rows are omitted here because we only need to pick from sample positions.)
+// For different ranges of finalPos the run table groups samples differently; here we simply
+// maintain the grouping order (group1, then group2, then group3) so that the ordering matches the run table.
+function generateDisplayedOrder(finalPos, gcType, controls) {
+  const sampleAllowed = generateSampleAllowed(finalPos, controls);
+  let displayedSamples = [];
+
+  if (finalPos < 13) {
+    // All allowed samples in order.
+    displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
+  } else if (finalPos < 23) {
+    // For positions 13-22, the run table splits into group1 (≤12) and group2 (>12).
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n > 12);
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  } else {
+    // finalPos >= 23
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n >= 13 && n <= 22);
+    const group3 = sampleAllowed.filter(n => n > 22);
+    // In the run table, even though controls are inserted between groups,
+    // the sample labels remain "Position {n}". So the displayed order for samples is:
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group3.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  }
+  return displayedSamples;
 }
 
 export const useGcStore = defineStore('gc', {
@@ -238,31 +287,42 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // --- Candidate Selection (raw candidate based solely on time) ---
+      // --- Candidate Selection using recalculated displayed order ---
       const todayStr = new Date().toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       console.log("Cutoff time:", cutoff);
 
-      // Filter candidate runs: must have an endTime, raw position ≥ 4,
-      // must not be a control (or 16), and must end before 4:00 PM.
+      // Get gcType from the selected GC's data (trim and lower-case if needed)
+      const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
+      const finalPos = Number(finalPosition);
+      // Recalculate the displayed order for sample positions
+      const displayedSamples = generateDisplayedOrder(finalPos, gcType, this.startTime.controls);
+      console.log("Displayed Samples Order:", displayedSamples);
+
+      // Filter candidate runs: each run must have an endTime,
+      // its raw position must be in our displayedSamples (i.e. not a control),
+      // and its endTime is before 4:00 PM.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
-        const control1 = Number(this.startTime.controls.control1);
-        const control2 = Number(this.startTime.controls.control2);
-        if (r.position === control1 || r.position === control2 || r.position === 16) return false;
+        if (!displayedSamples.some(s => s.raw === r.position)) return false;
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
-      console.log("Candidate runs after filtering by time and controls:", candidateRuns);
+      console.log("Candidate runs after filtering by time and displayed order:", candidateRuns);
 
-      // Sort candidates by end time (ascending).
-      candidateRuns.sort((a, b) => new Date(`${todayStr} ${a.endTime}`) - new Date(`${todayStr} ${b.endTime}`));
-      console.log("Candidate runs sorted:", candidateRuns);
+      // Sort candidate runs by their index in displayedSamples.
+      candidateRuns.sort((a, b) => {
+        const indexA = displayedSamples.findIndex(s => s.raw === a.position);
+        const indexB = displayedSamples.findIndex(s => s.raw === b.position);
+        return indexA - indexB;
+      });
+      console.log("Candidate runs sorted by displayed order:", candidateRuns);
 
-      // Choose the candidate with the maximum end time (the last candidate).
+      // Choose the candidate with the highest displayed order (i.e. last in the sorted array).
       const candidate = candidateRuns[candidateRuns.length - 1];
       this.rawClosestCandidate = candidate;
-      console.log("Raw candidate stored in state:", candidate);
+      let displayedLabel = candidate ? (displayedSamples.find(s => s.raw === candidate.position)?.label || candidate.position) : null;
+      console.log("Final candidate:", candidate, "Displayed as:", displayedLabel);
       // --- End Candidate Selection ---
 
       this.results = {
@@ -270,10 +330,11 @@ export const useGcStore = defineStore('gc', {
         totalRuns: calcResults.totalRuns,
         totalRunTime: calcResults.totalRunTime,
         batchEndTime: calcResults.batchEndTime,
-        // Store raw candidate details
+        // Store candidate details including the displayed position label.
         closestPositionBefore4PM: candidate
           ? {
               rawPosition: candidate.position,
+              displayedPosition: displayedLabel,
               startTime: candidate.startTime,
               endTime: candidate.endTime,
             }
@@ -410,8 +471,13 @@ export const useGcStore = defineStore('gc', {
     // NEW computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
       if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
+      // We recalc the displayed order so we can return the correct label.
+      const finalPos = Number(state.startTime.finalPosition);
+      const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
+      const displayedSamples = generateDisplayedOrder(finalPos, gcType, state.startTime.controls);
+      const candidateMapping = displayedSamples.find(s => s.raw === state.rawClosestCandidate.position);
       return {
-        position: getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls),
+        position: candidateMapping ? candidateMapping.label : state.rawClosestCandidate.position,
         startTime: state.rawClosestCandidate.startTime,
         endTime: state.rawClosestCandidate.endTime
       };
