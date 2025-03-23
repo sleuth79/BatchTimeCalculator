@@ -29,7 +29,6 @@ function parseStartTime(batchStartTime, ampm) {
 function get730Target(effectiveStartTime, batchEndTime) {
   const target = new Date(effectiveStartTime);
   target.setHours(7, 30, 0, 0);
-  // If the batch starts at or after 4:00 AM and ends at/after target, or if effectiveStartTime is already past target:
   if ((effectiveStartTime.getHours() >= 4 && batchEndTime >= target) || effectiveStartTime >= target) {
     target.setDate(target.getDate() + 1);
   }
@@ -71,7 +70,8 @@ function samplePositionForRun(i) {
 
 /**
  * Main function to calculate start time batch results.
- * Uses seconds-based arithmetic to minimize rounding errors.
+ * This version does NOT compute the candidate (closest sample) position,
+ * so that value can be computed solely in the store.
  */
 export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15) {
   if (!gc || !finalPosition) {
@@ -99,7 +99,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const finalPositionNum = Number(finalPosition);
   const totalRuns = finalPositionNum <= 15 ? finalPositionNum + 2 : finalPositionNum + 1;
   
-  // Updated: Parse runtime from either mm:ss or decimal format.
+  // Parse runtime from either mm:ss or decimal format.
   let runtimeSeconds;
   if (typeof runtime === 'string' && runtime.includes(':')) {
     const parts = runtime.split(':');
@@ -123,30 +123,8 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const workDayEnd = new Date(batchStartTimeDate);
   workDayEnd.setHours(16, 0, 0, 0);
   
-  let closestPositionBefore4PM;
-  if (batchStartTimeDate >= workDayEnd) {
-    closestPositionBefore4PM = "This Batch Started After 4:00 PM";
-  } else {
-    let candidate = null, candidateStartTime = null, candidateEndTime = null;
-    for (let i = 4; i <= totalRuns; i++) {
-      const samplePos = samplePositionForRun(i);
-      if (samplePos === null || samplePos > finalPositionNum) continue;
-      const runStartTime = new Date(effectiveStartTime.getTime() + (i - 1) * runtimeSeconds * 1000);
-      const runEndTime = new Date(runStartTime.getTime() + runtimeSeconds * 1000);
-      if (runEndTime <= workDayEnd) {
-        candidate = i;
-        candidateStartTime = runStartTime;
-        candidateEndTime = runEndTime;
-      }
-    }
-    closestPositionBefore4PM = candidate === null 
-      ? "No Sample Position Ends Before 4:00 PM" 
-      : { 
-          position: samplePositionForRun(candidate), 
-          startTime: formatTimeWithAmPmAndSeconds(candidateStartTime),
-          endTime: formatTimeWithAmPmAndSeconds(candidateEndTime)
-        };
-  }
+  // Remove candidate selection logic from here:
+  let closestPositionBefore4PM = null;
   
   const timeGapTo730AM = calculateTimeGapTo730AM(batchEndTimeDate, effectiveStartTime);
   const timeDelayRequired = computeTimeDelayRequired(batchEndTimeDate, effectiveStartTime);
@@ -173,7 +151,7 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   return {
     batchEndTime: formattedBatchEndTime,
     batchEndTimeDate,
-    closestPositionBefore4PM,
+    closestPositionBefore4PM,  // Will be computed by the store
     timeGapTo730AM,
     timeDelayRequired,
     batchStartTime,
