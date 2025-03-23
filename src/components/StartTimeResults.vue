@@ -35,7 +35,7 @@
       Closest Position Before 4:00 PM:
       <span class="result-value">
         <template v-if="isClosestPositionObject">
-          {{ results.closestPositionBefore4PM.position }} :
+          {{ results.closestPositionBefore4PM.rawPosition }} :
           {{ results.closestPositionBefore4PM.startTime || displayBatchStartTime }} to
           {{ results.closestPositionBefore4PM.endTime }}
         </template>
@@ -182,7 +182,7 @@ export default {
         props.results &&
         props.results.closestPositionBefore4PM &&
         typeof props.results.closestPositionBefore4PM === "object" &&
-        props.results.closestPositionBefore4PM.position !== undefined
+        props.results.closestPositionBefore4PM.rawPosition !== undefined
       );
     });
 
