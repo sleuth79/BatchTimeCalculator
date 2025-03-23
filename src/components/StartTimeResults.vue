@@ -55,7 +55,8 @@
 </template>
 
 <script>
-import { computed, toRefs } from "vue";
+import { computed } from "vue";
+import { useGcStore } from "../store";
 
 export default {
   name: "StartTimeResults",
@@ -64,6 +65,8 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    // You can still pass startTime for other computed values if needed,
+    // but we no longer use it for controls.
     startTime: {
       type: Object,
       default: () => ({}),
@@ -82,8 +85,8 @@ export default {
     },
   },
   setup(props) {
-    // Use toRefs to ensure nested properties are reactive.
-    const { controls } = toRefs(props.startTime);
+    // Get the store instance.
+    const gcStore = useGcStore();
 
     const currentDate = computed(() => new Date().toLocaleDateString());
 
@@ -108,10 +111,10 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Computed property for controls.
+    // Computed property for controls using the store directly.
     const displayControls = computed(() => {
-      const ctrl1 = controls.value?.control1;
-      const ctrl2 = controls.value?.control2;
+      const ctrl1 = gcStore.startTime.controls.control1;
+      const ctrl2 = gcStore.startTime.controls.control2;
       console.log("displayControls computed:", ctrl1, ctrl2);
       if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
         return "";

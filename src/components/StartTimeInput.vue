@@ -4,7 +4,7 @@
       <!-- Header Row -->
       <div class="heading-row">
         <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
-        <label class="heading-controls" for="control1">Controls:</label>
+        <label class="heading-controls" for="control1">Batch ontrols:</label>
       </div>
       
       <!-- Input Row -->
