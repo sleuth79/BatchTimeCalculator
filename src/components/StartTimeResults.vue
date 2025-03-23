@@ -30,7 +30,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Elegant display for the run closest to 4:00 PM -->
+    <!-- Display Closest Position to 4:00 PM elegantly -->
     <p v-if="showDetailedResults && displayFinalPosition">
       Closest Position to 4:00 PM:
       <span class="result-value">{{ closestRunDisplay }}</span>
@@ -56,7 +56,8 @@ export default {
       type: Object,
       default: () => ({}),
     },
-    // Other props remain unchanged
+    // You can still pass startTime for other computed values if needed,
+    // but we no longer use it for controls.
     startTime: {
       type: Object,
       default: () => ({}),
@@ -75,7 +76,7 @@ export default {
     },
   },
   setup(props) {
-    // Access the store for control values.
+    // Get the store instance.
     const gcStore = useGcStore();
 
     const currentDate = computed(() => new Date().toLocaleDateString());
@@ -101,7 +102,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Use the store to display control values.
+    // Computed property for controls using the store directly.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -111,17 +112,16 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // New computed property for elegantly displaying the closest run.
+    // NEW: Computed property to elegantly display the closest run.
     const closestRunDisplay = computed(() => {
       const candidate = props.results.closestPositionBefore4PM;
       if (!candidate) {
         return "No Sample Position Ends Before 4:00 PM";
       }
-      // If the candidate is an object with expected properties, format it nicely.
-      if (typeof candidate === "object" && candidate.position !== undefined) {
-        return `Position ${candidate.position}: ${candidate.startTime} to ${candidate.endTime}`;
+      // Use candidate.rawPosition since your store sets that key.
+      if (typeof candidate === "object" && candidate.rawPosition !== undefined) {
+        return `${candidate.rawPosition} : ${candidate.startTime} to ${candidate.endTime}`;
       }
-      // Otherwise, return it directly.
       return candidate;
     });
 
@@ -201,7 +201,7 @@ export default {
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
-      results: props.results  // exposing results for use in template
+      results: props.results
     };
   },
 };
