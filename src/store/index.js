@@ -42,8 +42,8 @@ function fallbackFormatDuration(ms) {
 }
 
 /*
-  getDisplayedPosition computes the displayed (adjusted) sample number from the raw run number
-  and the control values.
+  getDisplayedPosition computes the displayed (adjusted) sample number
+  from the raw run number and the control values.
   
   For raw run numbers 4–16, base sample = run number – 1; if that equals a control, subtract one more.
   For raw run numbers ≥ 17, base sample = run number; however, if the raw number equals one of the controls then:
@@ -53,7 +53,7 @@ function fallbackFormatDuration(ms) {
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
-  console.log(`getDisplayedPosition: raw = ${raw}, control1 = ${control1}, control2 = ${control2}`);
+  console.log(`getDisplayedPosition: raw=${raw}, control1=${control1}, control2=${control2}`);
   if (raw < 4) return null;
   
   let sample;
@@ -174,7 +174,7 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // Start‑time mode state (removed AMPM)
+    // Start‑time mode state (AMPM removed)
     startTime: {
       batchStartTime: null,
       wait15: null,
@@ -242,27 +242,29 @@ export const useGcStore = defineStore('gc', {
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
+      console.log("Batch Start Time updated to:", time);
       this.calculateStartTimeBatch();
     },
-    // Removed AMPM setter since it's no longer used.
+    // Removed AMPM setter.
     setWait15(value) {
       this.startTime.wait15 = value;
+      console.log("Wait15 updated to:", value);
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
+      console.log("Final Position updated to:", position);
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log("Control1 updated to:", value);
-      // Delay calculation to ensure state update
+      // Delay calculation to ensure state update (adjust debounce delay as needed)
       setTimeout(() => {
         this.calculateStartTimeBatch();
-      }, 300); // you can adjust debounce delay if needed
+      }, 300);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
       console.log("Control2 updated to:", value);
-      // Delay calculation to ensure state update
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 300);
@@ -304,7 +306,7 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
-      // Pass empty string for AMPM since we're using 24h time now.
+      // Pass empty string for AMPM since we're using 24-hour time now.
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
@@ -317,7 +319,7 @@ export const useGcStore = defineStore('gc', {
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
       const todayStr = new Date().toDateString();
-      const cutoff = new Date(`${todayStr} 16:00:00`); // using 24h format (4:00 PM)
+      const cutoff = new Date(`${todayStr} 16:00:00`); // 4:00 PM in 24h format
       console.log("Cutoff time:", cutoff);
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
@@ -326,6 +328,8 @@ export const useGcStore = defineStore('gc', {
       console.log("Full Order from run table:", fullOrder);
       const sampleOrder = extractSamplePositions(fullOrder);
       console.log("Sample Order:", sampleOrder);
+      
+      console.log("All run data from calcResults.runs:", calcResults.runs);
       
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
