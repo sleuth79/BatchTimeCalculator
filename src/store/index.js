@@ -273,10 +273,6 @@ export const useGcStore = defineStore('gc', {
       this.startTime.batchStartTime = time;
       this.calculateStartTimeBatch();
     },
-    setBatchStartTimeAMPM(ampm) {
-      this.startTime.batchStartTimeAMPM = ampm;
-      this.calculateStartTimeBatch();
-    },
     setWait15(value) {
       this.startTime.wait15 = value;
     },
@@ -333,7 +329,7 @@ export const useGcStore = defineStore('gc', {
       }
       if (batchStartTime) {
         partialResults.batchStartTime = batchStartTime;
-        partialResults.batchStartTimeAMPM = batchStartTimeAMPM;
+        partialResultsAMPM = batchStartTimeAMPM;
       }
       if (finalPosition) {
         partialResults.startTimeFinalPosition = finalPosition;
@@ -563,14 +559,24 @@ export const useGcStore = defineStore('gc', {
     },
     // Computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
-      if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
+      // Guard against missing values
+      if (!state.rawClosestCandidate || !state.startTime || 
+          !state.startTime.finalPosition || !state.startTime.controls ||
+          state.startTime.controls.control1 === null || state.startTime.controls.control1 === "" ||
+          state.startTime.controls.control2 === null || state.startTime.controls.control2 === "") {
+        return "No Sample Position Ends Before 4:00 PM";
+      }
+
+      // Proceed with calculations now that we know all required values exist
       const finalPos = Number(state.startTime.finalPosition);
       const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
+
       // Get full order and extract sample positions.
       const fullOrder = generateFullOrder(finalPos, gcType, state.startTime.controls);
       const sampleOrder = extractSamplePositions(fullOrder);
       const adjustedCandidate = getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls);
       const candidateIndex = sampleOrder.findIndex(label => label === `Position ${adjustedCandidate}`);
+      
       return candidateIndex !== -1
         ? {
             displayedPosition: `Position ${adjustedCandidate}`,
