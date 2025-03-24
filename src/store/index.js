@@ -273,6 +273,10 @@ export const useGcStore = defineStore('gc', {
       this.startTime.batchStartTime = time;
       this.calculateStartTimeBatch();
     },
+    setBatchStartTimeAMPM(ampm) {
+      this.startTime.batchStartTimeAMPM = ampm;
+      this.calculateStartTimeBatch();
+    },
     setWait15(value) {
       this.startTime.wait15 = value;
     },
@@ -329,7 +333,7 @@ export const useGcStore = defineStore('gc', {
       }
       if (batchStartTime) {
         partialResults.batchStartTime = batchStartTime;
-        partialResultsAMPM = batchStartTimeAMPM;
+        partialResults.batchStartTimeAMPM = batchStartTimeAMPM;
       }
       if (finalPosition) {
         partialResults.startTimeFinalPosition = finalPosition;
