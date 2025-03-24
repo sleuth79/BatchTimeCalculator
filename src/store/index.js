@@ -122,7 +122,6 @@ function generateDisplayedOrder(finalPos, gcType, controls) {
 // NEW helper: generate the full order from the run table (including control rows).
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
-  // Fixed header rows.
   order.push("Blank");
   order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
   const c1 = Number(controls.control1);
@@ -360,10 +359,16 @@ export const useGcStore = defineStore('gc', {
       // Extract just the sample positions.
       const sampleOrder = extractSamplePositions(fullOrder);
       console.log("Sample Order:", sampleOrder);
-
+      
       // Filter candidate runs: each run must have an endTime, and its adjusted sample number must be allowed.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
+        // Exclude runs whose raw position equals a control.
+        if (
+          r.position === Number(this.startTime.controls.control1) ||
+          r.position === Number(this.startTime.controls.control2)
+        )
+          return false;
         const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
         if (!sampleOrder.some(label => label === `Position ${adjusted}`)) return false;
         const endDate = new Date(`${todayStr} ${r.endTime}`);
@@ -386,7 +391,6 @@ export const useGcStore = defineStore('gc', {
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
       const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
       console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
-
       // --- End Candidate Selection ---
 
       this.results = {
