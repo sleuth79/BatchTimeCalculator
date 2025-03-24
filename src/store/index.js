@@ -36,9 +36,8 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-// (The helper functions getDisplayedPosition, generateSampleAllowed, generateFullOrder,
-// and extractSamplePositions remain here for compatibility with other parts of your app.)
-
+// (The helper functions getDisplayedPosition, generateSampleAllowed,
+// generateFullOrder, extractSamplePositions remain here for backward compatibility.)
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
@@ -288,7 +287,7 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      // Derive the batch date from the batch start time.
+      // Derive the batch date from the batch start time (assumes "HH:mm" format).
       const batchDate = new Date();
       if (this.startTime.batchStartTime) {
         const parts = this.startTime.batchStartTime.split(":");
@@ -298,7 +297,7 @@ export const useGcStore = defineStore('gc', {
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
       const finalPosNum = Number(this.startTime.finalPosition);
       
-      // Use the candidate selection utility, passing in the batch date.
+      // Use the candidate selection utility.
       const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType, batchDate);
       const candidate = selection.candidate;
       const adjustedCandidate = selection.adjustedCandidate;
