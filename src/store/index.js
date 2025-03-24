@@ -289,12 +289,18 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log("Control1 updated to:", value);
-      this.calculateStartTimeBatch();
+      // Delay the calculation to allow the state to update.
+      setTimeout(() => {
+        this.calculateStartTimeBatch();
+      }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
       console.log("Control2 updated to:", value);
-      this.calculateStartTimeBatch();
+      // Delay the calculation to allow the state to update.
+      setTimeout(() => {
+        this.calculateStartTimeBatch();
+      }, 0);
     },
     calculateStartTimeBatch() {
       console.log("Current controls in store:", JSON.stringify(this.startTime.controls));
