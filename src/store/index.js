@@ -298,6 +298,7 @@ export const useGcStore = defineStore('gc', {
     },
     calculateStartTimeBatch() {
       console.log("Current controls in store:", JSON.stringify(this.startTime.controls));
+      
       // Helper to compute the delayed runs start time.
       function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
         if (!baseTimeStr) return "";
@@ -333,7 +334,18 @@ export const useGcStore = defineStore('gc', {
       if (wait15 !== null && wait15 !== undefined) {
         partialResults.wait15 = wait15;
       }
-      if (!this.selectedGc || !batchStartTime || !finalPosition) {
+      
+      // Modified condition: now we require that the GC selection, batch start time,
+      // final position, and both control inputs (control1 and control2) are provided.
+      if (
+        !this.selectedGc ||
+        !batchStartTime ||
+        !finalPosition ||
+        this.startTime.controls.control1 === null ||
+        this.startTime.controls.control1 === "" ||
+        this.startTime.controls.control2 === null ||
+        this.startTime.controls.control2 === ""
+      ) {
         this.results = partialResults;
         console.log("Incomplete inputs:", partialResults);
         return;
