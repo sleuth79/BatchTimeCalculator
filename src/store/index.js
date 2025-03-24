@@ -251,18 +251,16 @@ export const useGcStore = defineStore('gc', {
       this.selectedGc = gcId;
     },
     resetStartTime() {
+      // Instead of replacing the startTime object, update its properties
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
-      this.startTime = {
-        batchStartTime: null,
-        batchStartTimeAMPM: null,
-        wait15: selectedGcType === "Energy",
-        finalPosition: null,
-        batchEndTime: null,
-        controls: {
-          control1: null,
-          control2: null,
-        },
-      };
+      this.startTime.batchStartTime = null;
+      this.startTime.batchStartTimeAMPM = null;
+      this.startTime.wait15 = selectedGcType === "Energy";
+      this.startTime.finalPosition = null;
+      this.startTime.batchEndTime = null;
+      this.startTime.controls.control1 = null;
+      this.startTime.controls.control2 = null;
+      
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
       this.startTimeResetCounter++;
@@ -289,7 +287,7 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log("Control1 updated to:", value);
-      // Delay the calculation to allow the state to update.
+      // Delay the calculation to ensure the state is updated.
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
@@ -297,7 +295,7 @@ export const useGcStore = defineStore('gc', {
     setControl2(value) {
       this.startTime.controls.control2 = value;
       console.log("Control2 updated to:", value);
-      // Delay the calculation to allow the state to update.
+      // Delay the calculation to ensure the state is updated.
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
@@ -341,8 +339,7 @@ export const useGcStore = defineStore('gc', {
         partialResults.wait15 = wait15;
       }
       
-      // Modified condition: now we require that the GC selection, batch start time,
-      // final position, and both control inputs (control1 and control2) are provided.
+      // Require that GC, batch start time, final position, and both control values are provided.
       if (
         !this.selectedGc ||
         !batchStartTime ||
