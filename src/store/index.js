@@ -8,9 +8,6 @@ console.log("DEBUG: useGcStore module loaded");
 
 export const pinia = createPinia();
 
-//
-// Helper: convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
-//
 function convertRuntime(runtimeStr) {
   if (!runtimeStr) return 0;
   const parts = runtimeStr.split(":");
@@ -27,9 +24,6 @@ function convertRuntime(runtimeStr) {
   return 0;
 }
 
-//
-// Fallback formatting if formatDuration returns an empty string.
-//
 function fallbackFormatDuration(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -42,10 +36,9 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-//
-// getDisplayedPosition computes the displayed sample number from raw and controls.
-// (This function is still here for other parts of your code.)
-//
+// (The helper functions getDisplayedPosition, generateSampleAllowed, generateFullOrder,
+// and extractSamplePositions remain here for compatibility with other parts of your app.)
+
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
@@ -74,11 +67,6 @@ function getDisplayedPosition(raw, controls) {
   console.log(`Final displayed sample for raw ${raw} = ${sample}`);
   return sample;
 }
-
-//
-// generateSampleAllowed, generateFullOrder, extractSamplePositions remain here
-// (They are still used by candidateSelection.js, so you can keep them here for backward compatibility if needed.)
-//
 
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
@@ -168,7 +156,6 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // startTime state (AM/PM removed)
     startTime: {
       batchStartTime: null,
       wait15: null,
@@ -192,7 +179,6 @@ export const useGcStore = defineStore('gc', {
     startTimeResetCounter: 0,
     additionalRuns: null,
     miscRuns: 0,
-    // raw candidate run (before control adjustments)
     rawClosestCandidate: null,
   }),
   actions: {
@@ -219,10 +205,10 @@ export const useGcStore = defineStore('gc', {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
       this.startTime = {
         batchStartTime: null,
-        wait15: selectedGcType === "Energy", // preserve wait15 for Energy
+        wait15: selectedGcType === "Energy",
         finalPosition: null,
         batchEndTime: null,
-        controls: { control1: 3, control2: 18 } // default controls
+        controls: { control1: 3, control2: 18 }
       };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
@@ -239,7 +225,6 @@ export const useGcStore = defineStore('gc', {
       console.log(`[${new Date().toLocaleTimeString()}] Batch Start Time updated to:`, time);
       this.calculateStartTimeBatch();
     },
-    // Removed AM/PM setter.
     setWait15(value) {
       this.startTime.wait15 = value;
       console.log(`[${new Date().toLocaleTimeString()}] Wait15 updated to:`, value);
@@ -251,7 +236,6 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
-      // Delay calculation to allow control update.
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 300);
@@ -293,7 +277,6 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
-      // Pass empty string for AM/PM (using 24-hour time)
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
@@ -305,15 +288,18 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      const todayStr = new Date().toDateString();
-      const cutoff = new Date(`${todayStr} 16:00:00`);
-      console.log("Cutoff time:", cutoff);
+      // Derive the batch date from the batch start time.
+      const batchDate = new Date();
+      if (this.startTime.batchStartTime) {
+        const parts = this.startTime.batchStartTime.split(":");
+        batchDate.setHours(Number(parts[0]), Number(parts[1]), 0, 0);
+      }
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
       const finalPosNum = Number(this.startTime.finalPosition);
       
-      // Use the candidate selection utility.
-      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType);
+      // Use the candidate selection utility, passing in the batch date.
+      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType, batchDate);
       const candidate = selection.candidate;
       const adjustedCandidate = selection.adjustedCandidate;
       const displayedLabel = selection.displayedLabel;

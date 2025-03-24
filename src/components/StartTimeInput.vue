@@ -1,10 +1,10 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Header Row -->
+      <!-- Header Row --#
       <div class="heading-row">
         <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
-        <label class="heading-controls" for="control1">Batch ontrols:</label>
+        <label class="heading-controls" for="control1">Batch Controls:</label>
       </div>
       
       <!-- Input Row -->
