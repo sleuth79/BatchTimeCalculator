@@ -127,10 +127,11 @@ export default {
       { deep: true }
     );
 
-    // Reset function.
+    // Reset function with fix applied.
     const resetInputs = () => {
       gcStore.resetStartTime();
-      gcStore.startTime.controls = { control1: "", control2: "" };
+      // Removed the line that was resetting controls to empty strings.
+      // gcStore.startTime.controls = { control1: "", control2: "" };
       gcStore.startTime.finalPosition = null;
       gcStore.setSelectedGc(null);
     };
