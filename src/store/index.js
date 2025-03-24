@@ -91,34 +91,54 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// NEW helper: generate the full run order like the run table.
-// This replicates the generatePositionOrder function from the run table component.
+// NEW helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
+// Returns an array of objects with keys: { raw, label }.
+function generateDisplayedOrder(finalPos, gcType, controls) {
+  const sampleAllowed = generateSampleAllowed(finalPos, controls);
+  let displayedSamples = [];
+  if (finalPos < 13) {
+    displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
+  } else if (finalPos < 23) {
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n > 12);
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  } else {
+    const group1 = sampleAllowed.filter(n => n <= 12);
+    const group2 = sampleAllowed.filter(n => n >= 13 && n <= 22);
+    const group3 = sampleAllowed.filter(n => n > 22);
+    displayedSamples = [
+      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group2.map(n => ({ raw: n, label: `Position ${n}` })),
+      ...group3.map(n => ({ raw: n, label: `Position ${n}` }))
+    ];
+  }
+  return displayedSamples;
+}
+
+//
+// NEW helper: generate the full order from the run table (including control rows).
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
   // Fixed header rows.
   order.push("Blank");
   order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-  // 1st Control (bigger control)
   const c1 = Number(controls.control1);
   const c2 = Number(controls.control2);
   const biggerControl = Math.max(c1, c2);
   const smallerControl = Math.min(c1, c2);
   order.push(`1st Control - ${biggerControl}`);
-  
-  // Build master list of allowed sample positions.
   const allowed = generateSampleAllowed(finalPos, controls);
-  
   if (finalPos < 13) {
-    // Scenario A.
     for (const s of allowed) {
       order.push(`Position ${s}`);
     }
     order.push(`2nd Control - ${smallerControl}`);
     return order;
   }
-  
   if (finalPos < 23) {
-    // Scenario B.
     const group1 = allowed.filter(n => n <= 12);
     const group2 = allowed.filter(n => n > 12);
     for (const s of group1) {
@@ -131,12 +151,9 @@ function generateFullOrder(finalPos, gcType, controls) {
     order.push(`3rd Control - ${biggerControl}`);
     return order;
   }
-  
-  // Scenario C: finalPos >= 23.
   const group1 = allowed.filter(n => n <= 12);
   const group2 = allowed.filter(n => n >= 13 && n <= 22);
   const group3 = allowed.filter(n => n > 22);
-  
   for (const s of group1) {
     order.push(`Position ${s}`);
   }
@@ -166,7 +183,7 @@ function generateFullOrder(finalPos, gcType, controls) {
 }
 
 //
-// NEW helper: extract just the sample positions (those starting with "Position ") from the full order.
+// NEW helper: extract just the sample positions from the full order.
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
 }
@@ -340,22 +357,21 @@ export const useGcStore = defineStore('gc', {
       // Get the full order from the run table logic.
       const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
       console.log("Full Order from run table:", fullOrder);
-      // Extract just the sample positions (those starting with "Position ").
+      // Extract just the sample positions.
       const sampleOrder = extractSamplePositions(fullOrder);
       console.log("Sample Order:", sampleOrder);
-      
-      // Now filter candidate runs: each run must have an endTime, and its adjusted sample number
-      // (using getDisplayedPosition) must be in sampleOrder (i.e. allowed), and its endTime is before 4:00 PM.
+
+      // Filter candidate runs: each run must have an endTime, and its adjusted sample number must be allowed.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
         const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        if (!sampleOrder.some(item => item === `Position ${adjusted}`)) return false;
+        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) return false;
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
       console.log("Candidate runs after filtering:", candidateRuns);
 
-      // Sort candidate runs by the index of their adjusted sample label in sampleOrder.
+      // Sort candidate runs by the index of their adjusted label in sampleOrder.
       candidateRuns.sort((a, b) => {
         const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
         const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
@@ -368,9 +384,7 @@ export const useGcStore = defineStore('gc', {
       const candidate = candidateRuns[candidateRuns.length - 1];
       this.rawClosestCandidate = candidate;
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
-      const displayedLabel = candidate
-        ? `Position ${adjustedCandidate}`
-        : null;
+      const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
       console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
 
       // --- End Candidate Selection ---
@@ -517,12 +531,12 @@ export const useGcStore = defineStore('gc', {
       }
       return { finalPosition, sequentialFinalPosition };
     },
-    // NEW computed getter: returns the displayed candidate based on the raw candidate and current controls.
+    // Computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
       if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
       const finalPos = Number(state.startTime.finalPosition);
       const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
-      // Get the full order and extract sample positions.
+      // Get full order and extract sample positions.
       const fullOrder = generateFullOrder(finalPos, gcType, state.startTime.controls);
       const sampleOrder = extractSamplePositions(fullOrder);
       const adjustedCandidate = getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls);
