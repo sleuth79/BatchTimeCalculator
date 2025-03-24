@@ -2,7 +2,6 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
-import { selectCandidate } from '../utils/candidateSelection.js';
 
 console.log("DEBUG: useGcStore module loaded");
 
@@ -36,12 +35,10 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-// (The helper functions getDisplayedPosition, generateSampleAllowed,
-// generateFullOrder, extractSamplePositions remain here for backward compatibility.)
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
-  console.log(`[${new Date().toLocaleTimeString()}] getDisplayedPosition: raw=${raw}, control1=${control1}, control2=${control2}`);
+  console.log(`getDisplayedPosition: raw = ${raw}, control1 = ${control1}, control2 = ${control2}`);
   if (raw < 4) return null;
   
   let sample;
@@ -157,6 +154,7 @@ export const useGcStore = defineStore('gc', {
     calculationAttempted: false,
     startTime: {
       batchStartTime: null,
+      batchStartTimeAMPM: "",
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
@@ -204,6 +202,7 @@ export const useGcStore = defineStore('gc', {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
       this.startTime = {
         batchStartTime: null,
+        batchStartTimeAMPM: "",
         wait15: selectedGcType === "Energy",
         finalPosition: null,
         batchEndTime: null,
@@ -221,33 +220,34 @@ export const useGcStore = defineStore('gc', {
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
-      console.log(`[${new Date().toLocaleTimeString()}] Batch Start Time updated to:`, time);
+      this.calculateStartTimeBatch();
+    },
+    setBatchStartTimeAMPM(ampm) {
+      this.startTime.batchStartTimeAMPM = ampm;
       this.calculateStartTimeBatch();
     },
     setWait15(value) {
       this.startTime.wait15 = value;
-      console.log(`[${new Date().toLocaleTimeString()}] Wait15 updated to:`, value);
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
-      console.log(`[${new Date().toLocaleTimeString()}] Final Position updated to:`, position);
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
+      console.log("Control1 updated to:", value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
-      }, 300);
+      }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      console.log(`[${new Date().toLocaleTimeString()}] Control2 updated to:`, value);
+      console.log("Control2 updated to:", value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
-      }, 300);
+      }, 0);
     },
     calculateStartTimeBatch() {
-      console.log(`[${new Date().toLocaleTimeString()}] Calculating Start Time Batch with controls:`, JSON.stringify(this.startTime.controls));
+      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
       let partialResults = { mode: "start-time" };
@@ -258,6 +258,7 @@ export const useGcStore = defineStore('gc', {
       }
       if (this.startTime.batchStartTime) {
         partialResults.batchStartTime = this.startTime.batchStartTime;
+        partialResults.batchStartTimeAMPM = this.startTime.batchStartTimeAMPM;
       }
       if (this.startTime.finalPosition) {
         partialResults.startTimeFinalPosition = this.startTime.finalPosition;
@@ -267,8 +268,11 @@ export const useGcStore = defineStore('gc', {
       }
       
       const { control1, control2 } = this.startTime.controls;
-      if (control1 === null || control1 === "" || control2 === null || control2 === "") {
-        console.log(`[${new Date().toLocaleTimeString()}] Incomplete controls. Aborting candidate selection.`, this.startTime.controls);
+      if (
+        control1 === null || control1 === "" ||
+        control2 === null || control2 === ""
+      ) {
+        console.log("Incomplete controls. Aborting candidate selection.", this.startTime.controls);
         this.results = partialResults;
         return;
       }
@@ -282,28 +286,57 @@ export const useGcStore = defineStore('gc', {
         null,
         this.startTime.finalPosition,
         this.startTime.batchStartTime,
-        "",
+        this.startTime.batchStartTimeAMPM,
         this.startTime.wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      // Derive the batch date from the batch start time (assumes "HH:mm" format).
-      const batchDate = new Date();
-      if (this.startTime.batchStartTime) {
-        const parts = this.startTime.batchStartTime.split(":");
-        batchDate.setHours(Number(parts[0]), Number(parts[1]), 0, 0);
-      }
+      const todayStr = new Date().toDateString();
+      const cutoff = new Date(`${todayStr} 4:00:00 PM`);
+      console.log("Cutoff time:", cutoff);
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
       const finalPosNum = Number(this.startTime.finalPosition);
+      const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
+      console.log("Full Order from run table:", fullOrder);
+      const sampleOrder = extractSamplePositions(fullOrder);
+      console.log("Sample Order:", sampleOrder);
       
-      // Use the candidate selection utility.
-      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType, batchDate);
-      const candidate = selection.candidate;
-      const adjustedCandidate = selection.adjustedCandidate;
-      const displayedLabel = selection.displayedLabel;
+      const candidateRuns = calcResults.runs.filter(r => {
+        if (!r.endTime || r.position < 4) return false;
+        if (isNaN(Number(r.position))) return false;
+        if (
+          r.position === Number(this.startTime.controls.control1) ||
+          r.position === Number(this.startTime.controls.control2)
+        ) {
+          console.log(`Excluding run with raw position ${r.position} because it equals a control.`);
+          return false;
+        }
+        const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
+        console.log(`Run raw position ${r.position} adjusted to ${adjusted}`);
+        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
+          console.log(`Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
+          return false;
+        }
+        const endDate = new Date(`${todayStr} ${r.endTime}`);
+        return endDate < cutoff;
+      });
+      console.log("Candidate runs after filtering:", candidateRuns);
       
-      console.log(`[${new Date().toLocaleTimeString()}] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+      candidateRuns.sort((a, b) => {
+        const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
+        const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
+        const indexA = sampleOrder.findIndex(label => label === `Position ${adjustedA}`);
+        const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
+        return indexA - indexB;
+      });
+      console.log("Candidate runs sorted:", candidateRuns);
+      
+      const candidate = candidateRuns[candidateRuns.length - 1];
+      this.rawClosestCandidate = candidate;
+      const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
+      const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
+      console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
       
       this.results = {
         ...partialResults,
@@ -323,7 +356,7 @@ export const useGcStore = defineStore('gc', {
         runs: calcResults.runs,
       };
       
-      console.log(`[${new Date().toLocaleTimeString()}] Calculation complete. Current startTime state:`, JSON.stringify(this.startTime, null, 2));
+      console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
       
       // Additional Runs Duration Computation remains unchanged...
