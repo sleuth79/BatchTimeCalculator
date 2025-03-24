@@ -80,7 +80,7 @@ function getDisplayedPosition(raw, controls) {
 }
 
 //
-// NEW helper: generate allowed sample numbers (mimicking run table’s "sampleAllowed").
+// Helper: generate allowed sample numbers (mimicking run table’s "sampleAllowed").
 // Samples are numbers from 3 to finalPos (or 32) excluding the control numbers and 16.
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
@@ -98,7 +98,7 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// NEW helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
+// Helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
 // Returns an array of objects with keys: { raw, label }.
 function generateDisplayedOrder(finalPos, gcType, controls) {
   const sampleAllowed = generateSampleAllowed(finalPos, controls);
@@ -126,7 +126,7 @@ function generateDisplayedOrder(finalPos, gcType, controls) {
 }
 
 //
-// NEW helper: generate the full order from the run table (including control rows).
+// Helper: generate the full order from the run table (including control rows).
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
   order.push("Blank");
@@ -189,7 +189,7 @@ function generateFullOrder(finalPos, gcType, controls) {
 }
 
 //
-// NEW helper: extract just the sample positions from the full order.
+// Helper: extract just the sample positions from the full order.
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
 }
@@ -258,7 +258,8 @@ export const useGcStore = defineStore('gc', {
         wait15: selectedGcType === "Energy",  // preserve wait15 for Energy
         finalPosition: null,
         batchEndTime: null,
-        controls: { control1: null, control2: null }
+        // Set default control values so candidate calculations run from the start.
+        controls: { control1: 3, control2: 18 }
       };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
@@ -304,59 +305,36 @@ export const useGcStore = defineStore('gc', {
         console.warn("startTime is null, aborting calculation");
         return;
       }
-      console.log("Current controls in store:", JSON.stringify(this.startTime.controls));
+      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
+      console.log("Batch Start Time:", this.startTime.batchStartTime);
       
-      // Helper to compute the delayed runs start time.
-      function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
-        if (!baseTimeStr) return "";
-        const parsed = parseTimeString(baseTimeStr);
-        if (!parsed) return "";
-        const { hour, minute, second } = parsed;
-        const now = new Date();
-        const baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, second);
-        let delayHours = 0;
-        const delayParts = timeDelayRequired.split(" ");
-        if (delayParts.length > 0) {
-          delayHours = parseInt(delayParts[0], 10) || 0;
-        }
-        baseDate.setHours(baseDate.getHours() + delayHours);
-        return formatTime(baseDate);
-      }
-
-      const { batchStartTime, batchStartTimeAMPM, finalPosition, wait15 } = this.startTime;
       let partialResults = { mode: "start-time" };
-
       if (this.selectedGc) {
         partialResults.selectedGc = this.allGcData[this.selectedGc]
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc;
       }
-      if (batchStartTime) {
-        partialResults.batchStartTime = batchStartTime;
-        partialResults.batchStartTimeAMPM = batchStartTimeAMPM;
+      if (this.startTime.batchStartTime) {
+        partialResults.batchStartTime = this.startTime.batchStartTime;
+        partialResults.batchStartTimeAMPM = this.startTime.batchStartTimeAMPM;
       }
-      if (finalPosition) {
-        partialResults.startTimeFinalPosition = finalPosition;
+      if (this.startTime.finalPosition) {
+        partialResults.startTimeFinalPosition = this.startTime.finalPosition;
       }
-      if (wait15 !== null && wait15 !== undefined) {
-        partialResults.wait15 = wait15;
+      if (this.startTime.wait15 !== null && this.startTime.wait15 !== undefined) {
+        partialResults.wait15 = this.startTime.wait15;
       }
       
-      // Require that GC, batch start time, final position, and both control values are provided.
+      const { control1, control2 } = this.startTime.controls;
       if (
-        !this.selectedGc ||
-        !batchStartTime ||
-        !finalPosition ||
-        this.startTime.controls.control1 === null ||
-        this.startTime.controls.control1 === "" ||
-        this.startTime.controls.control2 === null ||
-        this.startTime.controls.control2 === ""
+        control1 === null || control1 === "" ||
+        control2 === null || control2 === ""
       ) {
+        console.log("Incomplete controls. Aborting candidate selection.", this.startTime.controls);
         this.results = partialResults;
-        console.log("Incomplete inputs:", partialResults);
         return;
       }
-
+      
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
@@ -364,44 +342,45 @@ export const useGcStore = defineStore('gc', {
         this.selectedGc,
         runtime,
         null,
-        finalPosition,
-        batchStartTime,
-        batchStartTimeAMPM,
-        wait15
+        this.startTime.finalPosition,
+        this.startTime.batchStartTime,
+        this.startTime.batchStartTimeAMPM,
+        this.startTime.wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
-
-      // --- Candidate Selection using run table ordering ---
+      
       const todayStr = new Date().toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       console.log("Cutoff time:", cutoff);
-
+      
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
-      const finalPosNum = Number(finalPosition);
-      // Get the full order from the run table logic.
+      const finalPosNum = Number(this.startTime.finalPosition);
       const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
       console.log("Full Order from run table:", fullOrder);
-      // Extract just the sample positions.
       const sampleOrder = extractSamplePositions(fullOrder);
       console.log("Sample Order:", sampleOrder);
       
-      // Filter candidate runs: each run must have an endTime, and its adjusted sample number must be allowed.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
-        // Exclude runs whose raw position equals a control.
+        if (isNaN(Number(r.position))) return false;
         if (
           r.position === Number(this.startTime.controls.control1) ||
           r.position === Number(this.startTime.controls.control2)
-        )
+        ) {
+          console.log(`Excluding run with raw position ${r.position} because it equals a control.`);
           return false;
+        }
         const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) return false;
+        console.log(`Run raw position ${r.position} adjusted to ${adjusted}`);
+        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
+          console.log(`Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
+          return false;
+        }
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
       console.log("Candidate runs after filtering:", candidateRuns);
-
-      // Sort candidate runs by the index of their adjusted label in sampleOrder.
+      
       candidateRuns.sort((a, b) => {
         const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
         const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
@@ -410,14 +389,13 @@ export const useGcStore = defineStore('gc', {
         return indexA - indexB;
       });
       console.log("Candidate runs sorted:", candidateRuns);
-
+      
       const candidate = candidateRuns[candidateRuns.length - 1];
       this.rawClosestCandidate = candidate;
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
       const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
       console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
-      // --- End Candidate Selection ---
-
+      
       this.results = {
         ...partialResults,
         totalRuns: calcResults.totalRuns,
@@ -435,10 +413,9 @@ export const useGcStore = defineStore('gc', {
         timeDelayRequired: calcResults.timeDelayRequired,
         runs: calcResults.runs,
       };
-
+      
       this.lastStartTimeInputs = { ...this.startTime };
-
-      // --- Additional Runs Duration Computation (unchanged) ---
+      
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
@@ -452,7 +429,7 @@ export const useGcStore = defineStore('gc', {
         const target = new Date(initialBatchEndTime);
         target.setHours(7, 30, 0, 0);
         target.setDate(target.getDate() + 1);
-
+        
         const diffMS = target.getTime() - sequentialBatchEndTimeDate.getTime();
         const absDiffMS = Math.abs(diffMS);
         const gapHours = Math.floor(absDiffMS / (1000 * 60 * 60));
@@ -461,16 +438,32 @@ export const useGcStore = defineStore('gc', {
           ? `${gapHours} hours, ${gapMinutes} minutes`
           : `This batch passes 7:30 AM by ${gapHours} hours, ${gapMinutes} minutes`;
         const newTimeDelayRequired = calcResults.timeDelayRequired;
-
+        
         const additionalRunsDurationSeconds = totalRunsSequential * runtimeSeconds;
         let formatted = formatDuration(additionalRunsDurationSeconds * 1000);
         if (!formatted || formatted.trim() === "") {
           formatted = fallbackFormatDuration(additionalRunsDurationSeconds * 1000);
         }
         const additionalRunsDurationFormatted = formatted || "0 seconds";
-
+        
+        function computeDelayedRunsStartTime(baseTimeStr, timeDelayRequired) {
+          if (!baseTimeStr) return "";
+          const parsed = parseTimeString(baseTimeStr);
+          if (!parsed) return "";
+          const { hour, minute, second } = parsed;
+          const now = new Date();
+          const baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, second);
+          let delayHours = 0;
+          const delayParts = timeDelayRequired.split(" ");
+          if (delayParts.length > 0) {
+            delayHours = parseInt(delayParts[0], 10) || 0;
+          }
+          baseDate.setHours(baseDate.getHours() + delayHours);
+          return formatTime(baseDate);
+        }
+        
         const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(sequentialBatchEndTime, newTimeDelayRequired);
-
+        
         this.timeDelayResults = {
           sequentialBatchActive: true,
           sequentialFinalPosition: seqFinal,
@@ -499,7 +492,22 @@ export const useGcStore = defineStore('gc', {
         }
         const additionalRunsDurationFormatted = formatted || "0 seconds";
         const baseTimeStr = calcResults.batchEndTime;
-        const delayedRunsStartTimeComputed = computeDelayedRunsStartTime(baseTimeStr, calcResults.timeDelayRequired);
+        const delayedRunsStartTimeComputed = (function() {
+          if (!baseTimeStr) return "";
+          const parsed = parseTimeString(baseTimeStr);
+          if (!parsed) return "";
+          const { hour, minute, second } = parsed;
+          const now = new Date();
+          const baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, second);
+          const delayStr = (calcResults.timeDelayRequired) || "";
+          let delayHours = 0;
+          const delayParts = delayStr.split(" ");
+          if (delayParts.length > 0) {
+            delayHours = parseInt(delayParts[0], 10) || 0;
+          }
+          baseDate.setHours(baseDate.getHours() + delayHours);
+          return formatTime(baseDate);
+        })();
         this.timeDelayResults = {
           sequentialBatchActive: false,
           sequentialFinalPosition: 0,
@@ -561,21 +569,15 @@ export const useGcStore = defineStore('gc', {
       }
       return { finalPosition, sequentialFinalPosition };
     },
-    // Computed getter: returns the displayed candidate based on the raw candidate and current controls.
     displayedClosestCandidate: (state) => {
-      // Guard against missing values
       if (!state.rawClosestCandidate || !state.startTime || 
           !state.startTime.finalPosition || !state.startTime.controls ||
           state.startTime.controls.control1 === null || state.startTime.controls.control1 === "" ||
           state.startTime.controls.control2 === null || state.startTime.controls.control2 === "") {
         return "No Sample Position Ends Before 4:00 PM";
       }
-
-      // Proceed with calculations now that we know all required values exist
       const finalPos = Number(state.startTime.finalPosition);
       const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
-
-      // Get full order and extract sample positions.
       const fullOrder = generateFullOrder(finalPos, gcType, state.startTime.controls);
       const sampleOrder = extractSamplePositions(fullOrder);
       const adjustedCandidate = getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls);
