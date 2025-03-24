@@ -53,7 +53,7 @@ function fallbackFormatDuration(ms) {
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
-  console.log(`getDisplayedPosition: raw=${raw}, control1=${control1}, control2=${control2}`);
+  console.log(`[${new Date().toLocaleTimeString()}] getDisplayedPosition: raw=${raw}, control1=${control1}, control2=${control2}`);
   if (raw < 4) return null;
   
   let sample;
@@ -80,8 +80,8 @@ function getDisplayedPosition(raw, controls) {
 }
 
 //
-// Helper: generate allowed sample numbers (mimicking run table’s "sampleAllowed").
-// Samples are numbers from 3 to finalPos (or 32) excluding the control numbers and 16.
+// generateSampleAllowed: creates allowed sample numbers (from 3 to finalPos, excluding controls and 16).
+//
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
   for (let num = 3; num <= finalPos; num++) {
@@ -98,7 +98,8 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// Helper: generate the full order from the run table (including control rows).
+// generateFullOrder: creates the full order including control rows.
+//
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
   order.push("Blank");
@@ -161,7 +162,8 @@ function generateFullOrder(finalPos, gcType, controls) {
 }
 
 //
-// Helper: extract just the sample positions from the full order.
+// extractSamplePositions: filters full order to only include sample positions.
+//
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
 }
@@ -174,7 +176,7 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // Start‑time mode state (AMPM removed)
+    // startTime state (AMPM removed)
     startTime: {
       batchStartTime: null,
       wait15: null,
@@ -198,7 +200,7 @@ export const useGcStore = defineStore('gc', {
     startTimeResetCounter: 0,
     additionalRuns: null,
     miscRuns: 0,
-    // New state: store the raw candidate run (before control adjustments)
+    // raw candidate run (before control adjustments)
     rawClosestCandidate: null,
   }),
   actions: {
@@ -225,16 +227,16 @@ export const useGcStore = defineStore('gc', {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
       this.startTime = {
         batchStartTime: null,
-        wait15: selectedGcType === "Energy",  // preserve wait15 for Energy
+        wait15: selectedGcType === "Energy", // preserve wait15 for Energy
         finalPosition: null,
         batchEndTime: null,
-        // Set default control values so candidate calculations run from the start.
-        controls: { control1: 3, control2: 18 }
+        controls: { control1: 3, control2: 18 } // default controls
       };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
       this.startTimeResetCounter++;
       this.rawClosestCandidate = null;
+      console.log(`[${new Date().toLocaleTimeString()}] resetStartTime() called. New startTime:`, this.startTime);
     },
     setSequentialFinalPosition(position) {
       this.sequentialFinalPosition = this.sequentialFinalPosition === position ? null : position;
@@ -242,39 +244,35 @@ export const useGcStore = defineStore('gc', {
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
-      console.log("Batch Start Time updated to:", time);
+      console.log(`[${new Date().toLocaleTimeString()}] Batch Start Time updated to:`, time);
       this.calculateStartTimeBatch();
     },
     // Removed AMPM setter.
     setWait15(value) {
       this.startTime.wait15 = value;
-      console.log("Wait15 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Wait15 updated to:`, value);
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
-      console.log("Final Position updated to:", position);
+      console.log(`[${new Date().toLocaleTimeString()}] Final Position updated to:`, position);
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      console.log("Control1 updated to:", value);
-      // Delay calculation to ensure state update (adjust debounce delay as needed)
+      console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
+      // Delay calculation to allow control value to update.
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 300);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      console.log("Control2 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Control2 updated to:`, value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 300);
     },
     calculateStartTimeBatch() {
-      if (!this.startTime) {
-        console.warn("startTime is null, aborting calculation");
-        return;
-      }
-      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
+      console.log(`[${new Date().toLocaleTimeString()}] Calculating Start Time Batch with controls:`, JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
       let partialResults = { mode: "start-time" };
@@ -294,11 +292,8 @@ export const useGcStore = defineStore('gc', {
       }
       
       const { control1, control2 } = this.startTime.controls;
-      if (
-        control1 === null || control1 === "" ||
-        control2 === null || control2 === ""
-      ) {
-        console.log("Incomplete controls. Aborting candidate selection.", this.startTime.controls);
+      if (control1 === null || control1 === "" || control2 === null || control2 === "") {
+        console.log(`[${new Date().toLocaleTimeString()}] Incomplete controls. Aborting candidate selection.`, this.startTime.controls);
         this.results = partialResults;
         return;
       }
@@ -306,20 +301,20 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
-      // Pass empty string for AMPM since we're using 24-hour time now.
+      // Pass empty string for AM/PM since we're using 24-hour time
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
         null,
         this.startTime.finalPosition,
         this.startTime.batchStartTime,
-        "",  // no AMPM value
+        "",
         this.startTime.wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
       const todayStr = new Date().toDateString();
-      const cutoff = new Date(`${todayStr} 16:00:00`); // 4:00 PM in 24h format
+      const cutoff = new Date(`${todayStr} 16:00:00`);
       console.log("Cutoff time:", cutoff);
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
@@ -365,7 +360,7 @@ export const useGcStore = defineStore('gc', {
       this.rawClosestCandidate = candidate;
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
       const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
-      console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+      console.log(`[${new Date().toLocaleTimeString()}] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
       
       this.results = {
         ...partialResults,
@@ -385,9 +380,10 @@ export const useGcStore = defineStore('gc', {
         runs: calcResults.runs,
       };
       
+      console.log(`[${new Date().toLocaleTimeString()}] Calculation complete. Current startTime state:`, JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
       
-      // Additional Runs Duration Computation (unchanged)
+      // Additional Runs Duration Computation remains unchanged...
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
