@@ -251,16 +251,15 @@ export const useGcStore = defineStore('gc', {
       this.selectedGc = gcId;
     },
     resetStartTime() {
-      // Instead of replacing the startTime object, update its properties
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
-      this.startTime.batchStartTime = null;
-      this.startTime.batchStartTimeAMPM = null;
-      this.startTime.wait15 = selectedGcType === "Energy";
-      this.startTime.finalPosition = null;
-      this.startTime.batchEndTime = null;
-      this.startTime.controls.control1 = null;
-      this.startTime.controls.control2 = null;
-      
+      this.startTime = {
+        batchStartTime: null,
+        batchStartTimeAMPM: "",
+        wait15: selectedGcType === "Energy",  // preserve wait15 for Energy
+        finalPosition: null,
+        batchEndTime: null,
+        controls: { control1: null, control2: null }
+      };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
       this.startTimeResetCounter++;
@@ -301,6 +300,10 @@ export const useGcStore = defineStore('gc', {
       }, 0);
     },
     calculateStartTimeBatch() {
+      if (!this.startTime) {
+        console.warn("startTime is null, aborting calculation");
+        return;
+      }
       console.log("Current controls in store:", JSON.stringify(this.startTime.controls));
       
       // Helper to compute the delayed runs start time.
@@ -520,6 +523,7 @@ export const useGcStore = defineStore('gc', {
         ? state.allGcData[state.selectedGc]
         : null,
     delayedRunsStartTime: (state) => {
+      if (!state.startTime || !state.startTime.batchStartTime) return "";
       const baseTimeStr = state.timeDelayResults.sequentialBatchActive
         ? state.timeDelayResults.sequentialBatchEndTime
         : state.results && state.results.batchEndTime;
