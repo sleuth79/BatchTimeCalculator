@@ -91,32 +91,84 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// NEW helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
-// Returns an array of objects with keys: { raw, label }.
-function generateDisplayedOrder(finalPos, gcType, controls) {
-  const sampleAllowed = generateSampleAllowed(finalPos, controls);
-  let displayedSamples = [];
-
+// NEW helper: generate the full run order like the run table.
+// This replicates the generatePositionOrder function from the run table component.
+function generateFullOrder(finalPos, gcType, controls) {
+  const order = [];
+  // Fixed header rows.
+  order.push("Blank");
+  order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
+  // 1st Control (bigger control)
+  const c1 = Number(controls.control1);
+  const c2 = Number(controls.control2);
+  const biggerControl = Math.max(c1, c2);
+  const smallerControl = Math.min(c1, c2);
+  order.push(`1st Control - ${biggerControl}`);
+  
+  // Build master list of allowed sample positions.
+  const allowed = generateSampleAllowed(finalPos, controls);
+  
   if (finalPos < 13) {
-    displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
-  } else if (finalPos < 23) {
-    const group1 = sampleAllowed.filter(n => n <= 12);
-    const group2 = sampleAllowed.filter(n => n > 12);
-    displayedSamples = [
-      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group2.map(n => ({ raw: n, label: `Position ${n}` }))
-    ];
-  } else {
-    const group1 = sampleAllowed.filter(n => n <= 12);
-    const group2 = sampleAllowed.filter(n => n >= 13 && n <= 22);
-    const group3 = sampleAllowed.filter(n => n > 22);
-    displayedSamples = [
-      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group2.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group3.map(n => ({ raw: n, label: `Position ${n}` }))
-    ];
+    // Scenario A.
+    for (const s of allowed) {
+      order.push(`Position ${s}`);
+    }
+    order.push(`2nd Control - ${smallerControl}`);
+    return order;
   }
-  return displayedSamples;
+  
+  if (finalPos < 23) {
+    // Scenario B.
+    const group1 = allowed.filter(n => n <= 12);
+    const group2 = allowed.filter(n => n > 12);
+    for (const s of group1) {
+      order.push(`Position ${s}`);
+    }
+    order.push(`2nd Control - ${smallerControl}`);
+    for (const s of group2) {
+      order.push(`Position ${s}`);
+    }
+    order.push(`3rd Control - ${biggerControl}`);
+    return order;
+  }
+  
+  // Scenario C: finalPos >= 23.
+  const group1 = allowed.filter(n => n <= 12);
+  const group2 = allowed.filter(n => n >= 13 && n <= 22);
+  const group3 = allowed.filter(n => n > 22);
+  
+  for (const s of group1) {
+    order.push(`Position ${s}`);
+  }
+  order.push(`2nd Control - ${smallerControl}`);
+  for (const s of group2) {
+    order.push(`Position ${s}`);
+  }
+  const thirdLabel = `3rd Control - ${biggerControl}`;
+  const indexOf22 = order.indexOf("Position 22");
+  if (indexOf22 !== -1) {
+    order.splice(indexOf22 + 1, 0, thirdLabel);
+  } else if (biggerControl === 22) {
+    const indexOf21 = order.indexOf("Position 21");
+    if (indexOf21 !== -1) {
+      order.splice(indexOf21 + 1, 0, thirdLabel);
+    } else {
+      order.push(thirdLabel);
+    }
+  } else {
+    order.push(thirdLabel);
+  }
+  for (const s of group3) {
+    order.push(`Position ${s}`);
+  }
+  order.push(`4th Control - ${smallerControl}`);
+  return order;
+}
+
+//
+// NEW helper: extract just the sample positions (those starting with "Position ") from the full order.
+function extractSamplePositions(fullOrder) {
+  return fullOrder.filter(item => item.startsWith("Position "));
 }
 
 export const useGcStore = defineStore('gc', {
@@ -278,46 +330,49 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
 
-      // --- Candidate Selection using recalculated displayed order ---
+      // --- Candidate Selection using run table ordering ---
       const todayStr = new Date().toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       console.log("Cutoff time:", cutoff);
 
-      // Get gcType from the selected GC's data.
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
-      const finalPos = Number(finalPosition);
-      // Recalculate the displayed order for sample positions.
-      const displayedSamples = generateDisplayedOrder(finalPos, gcType, this.startTime.controls);
-      console.log("Displayed Samples Order:", displayedSamples);
-
-      // Filter candidate runs: each run must have an endTime,
-      // and its adjusted sample number (using getDisplayedPosition) must be in displayedSamples,
-      // and its endTime is before 4:00 PM.
+      const finalPosNum = Number(finalPosition);
+      // Get the full order from the run table logic.
+      const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
+      console.log("Full Order from run table:", fullOrder);
+      // Extract just the sample positions (those starting with "Position ").
+      const sampleOrder = extractSamplePositions(fullOrder);
+      console.log("Sample Order:", sampleOrder);
+      
+      // Now filter candidate runs: each run must have an endTime, and its adjusted sample number
+      // (using getDisplayedPosition) must be in sampleOrder (i.e. allowed), and its endTime is before 4:00 PM.
       const candidateRuns = calcResults.runs.filter(r => {
         if (!r.endTime || r.position < 4) return false;
         const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        if (!displayedSamples.some(s => s.raw === adjusted)) return false;
+        if (!sampleOrder.some(item => item === `Position ${adjusted}`)) return false;
         const endDate = new Date(`${todayStr} ${r.endTime}`);
         return endDate < cutoff;
       });
-      console.log("Candidate runs after filtering by time and displayed order:", candidateRuns);
+      console.log("Candidate runs after filtering:", candidateRuns);
 
-      // Sort candidate runs by their adjusted sample number's index in displayedSamples.
+      // Sort candidate runs by the index of their adjusted sample label in sampleOrder.
       candidateRuns.sort((a, b) => {
-        const indexA = displayedSamples.findIndex(s => s.raw === getDisplayedPosition(a.position, this.startTime.controls));
-        const indexB = displayedSamples.findIndex(s => s.raw === getDisplayedPosition(b.position, this.startTime.controls));
+        const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
+        const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
+        const indexA = sampleOrder.findIndex(label => label === `Position ${adjustedA}`);
+        const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
         return indexA - indexB;
       });
-      console.log("Candidate runs sorted by displayed order:", candidateRuns);
+      console.log("Candidate runs sorted:", candidateRuns);
 
-      // Choose the candidate with the highest displayed order (last in sorted array).
       const candidate = candidateRuns[candidateRuns.length - 1];
       this.rawClosestCandidate = candidate;
-      let adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
-      let displayedLabel = candidate
-        ? (displayedSamples.find(s => s.raw === adjustedCandidate)?.label || candidate.position)
+      const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
+      const displayedLabel = candidate
+        ? `Position ${adjustedCandidate}`
         : null;
       console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+
       // --- End Candidate Selection ---
 
       this.results = {
@@ -325,7 +380,6 @@ export const useGcStore = defineStore('gc', {
         totalRuns: calcResults.totalRuns,
         totalRunTime: calcResults.totalRunTime,
         batchEndTime: calcResults.batchEndTime,
-        // Store candidate details including the displayed position label.
         closestPositionBefore4PM: candidate
           ? {
               rawPosition: adjustedCandidate,
@@ -468,13 +522,14 @@ export const useGcStore = defineStore('gc', {
       if (!state.rawClosestCandidate) return "No Sample Position Ends Before 4:00 PM";
       const finalPos = Number(state.startTime.finalPosition);
       const gcType = (state.allGcData[state.selectedGc]?.type || "").trim().toLowerCase();
-      const displayedSamples = generateDisplayedOrder(finalPos, gcType, state.startTime.controls);
-      const candidateMapping = displayedSamples.find(
-        s => s.raw === getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls)
-      );
-      return candidateMapping
+      // Get the full order and extract sample positions.
+      const fullOrder = generateFullOrder(finalPos, gcType, state.startTime.controls);
+      const sampleOrder = extractSamplePositions(fullOrder);
+      const adjustedCandidate = getDisplayedPosition(state.rawClosestCandidate.position, state.startTime.controls);
+      const candidateIndex = sampleOrder.findIndex(label => label === `Position ${adjustedCandidate}`);
+      return candidateIndex !== -1
         ? {
-            displayedPosition: candidateMapping.label,
+            displayedPosition: `Position ${adjustedCandidate}`,
             startTime: state.rawClosestCandidate.startTime,
             endTime: state.rawClosestCandidate.endTime
           }
