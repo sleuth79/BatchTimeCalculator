@@ -98,34 +98,6 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// Helper: generate the displayed sample order, similar to the run table's generatePositionOrder.
-// Returns an array of objects with keys: { raw, label }.
-function generateDisplayedOrder(finalPos, gcType, controls) {
-  const sampleAllowed = generateSampleAllowed(finalPos, controls);
-  let displayedSamples = [];
-  if (finalPos < 13) {
-    displayedSamples = sampleAllowed.map(n => ({ raw: n, label: `Position ${n}` }));
-  } else if (finalPos < 23) {
-    const group1 = sampleAllowed.filter(n => n <= 12);
-    const group2 = sampleAllowed.filter(n => n > 12);
-    displayedSamples = [
-      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group2.map(n => ({ raw: n, label: `Position ${n}` }))
-    ];
-  } else {
-    const group1 = sampleAllowed.filter(n => n <= 12);
-    const group2 = sampleAllowed.filter(n => n >= 13 && n <= 22);
-    const group3 = sampleAllowed.filter(n => n > 22);
-    displayedSamples = [
-      ...group1.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group2.map(n => ({ raw: n, label: `Position ${n}` })),
-      ...group3.map(n => ({ raw: n, label: `Position ${n}` }))
-    ];
-  }
-  return displayedSamples;
-}
-
-//
 // Helper: generate the full order from the run table (including control rows).
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
@@ -202,10 +174,9 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // Start‑time mode state:
+    // Start‑time mode state (removed AMPM)
     startTime: {
       batchStartTime: null,
-      batchStartTimeAMPM: "",
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
@@ -254,7 +225,6 @@ export const useGcStore = defineStore('gc', {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
       this.startTime = {
         batchStartTime: null,
-        batchStartTimeAMPM: "",
         wait15: selectedGcType === "Energy",  // preserve wait15 for Energy
         finalPosition: null,
         batchEndTime: null,
@@ -274,10 +244,7 @@ export const useGcStore = defineStore('gc', {
       this.startTime.batchStartTime = time;
       this.calculateStartTimeBatch();
     },
-    setBatchStartTimeAMPM(ampm) {
-      this.startTime.batchStartTimeAMPM = ampm;
-      this.calculateStartTimeBatch();
-    },
+    // Removed AMPM setter since it's no longer used.
     setWait15(value) {
       this.startTime.wait15 = value;
     },
@@ -287,18 +254,18 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log("Control1 updated to:", value);
-      // Delay the calculation to ensure the state is updated.
+      // Delay calculation to ensure state update
       setTimeout(() => {
         this.calculateStartTimeBatch();
-      }, 0);
+      }, 300); // you can adjust debounce delay if needed
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
       console.log("Control2 updated to:", value);
-      // Delay the calculation to ensure the state is updated.
+      // Delay calculation to ensure state update
       setTimeout(() => {
         this.calculateStartTimeBatch();
-      }, 0);
+      }, 300);
     },
     calculateStartTimeBatch() {
       if (!this.startTime) {
@@ -316,7 +283,6 @@ export const useGcStore = defineStore('gc', {
       }
       if (this.startTime.batchStartTime) {
         partialResults.batchStartTime = this.startTime.batchStartTime;
-        partialResults.batchStartTimeAMPM = this.startTime.batchStartTimeAMPM;
       }
       if (this.startTime.finalPosition) {
         partialResults.startTimeFinalPosition = this.startTime.finalPosition;
@@ -338,19 +304,20 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
+      // Pass empty string for AMPM since we're using 24h time now.
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
         null,
         this.startTime.finalPosition,
         this.startTime.batchStartTime,
-        this.startTime.batchStartTimeAMPM,
+        "",  // no AMPM value
         this.startTime.wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
       const todayStr = new Date().toDateString();
-      const cutoff = new Date(`${todayStr} 4:00:00 PM`);
+      const cutoff = new Date(`${todayStr} 16:00:00`); // using 24h format (4:00 PM)
       console.log("Cutoff time:", cutoff);
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
@@ -416,6 +383,7 @@ export const useGcStore = defineStore('gc', {
       
       this.lastStartTimeInputs = { ...this.startTime };
       
+      // Additional Runs Duration Computation (unchanged)
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;
