@@ -2,6 +2,7 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
+import { selectCandidate } from '../utils/candidateSelection.js';
 
 console.log("DEBUG: useGcStore module loaded");
 
@@ -152,6 +153,7 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
+    // Start-time state:
     startTime: {
       batchStartTime: null,
       batchStartTimeAMPM: "",
@@ -268,10 +270,7 @@ export const useGcStore = defineStore('gc', {
       }
       
       const { control1, control2 } = this.startTime.controls;
-      if (
-        control1 === null || control1 === "" ||
-        control2 === null || control2 === ""
-      ) {
+      if (control1 === null || control1 === "" || control2 === null || control2 === "") {
         console.log("Incomplete controls. Aborting candidate selection.", this.startTime.controls);
         this.results = partialResults;
         return;
@@ -359,7 +358,7 @@ export const useGcStore = defineStore('gc', {
       console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
       
-      // Additional Runs Duration Computation remains unchanged...
+      // Additional Runs Duration Computation (unchanged)...
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;

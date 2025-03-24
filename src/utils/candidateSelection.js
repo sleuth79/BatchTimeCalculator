@@ -1,7 +1,4 @@
-// candidateSelection.js
-import { parseTimeString } from './timeUtils.js'; // Ensure this function now handles AM/PM
-// We assume that helper functions (getDisplayedPosition, generateSampleAllowed, generateFullOrder, extractSamplePositions)
-// are defined here or imported from another file if you choose to split them further.
+import { parseTimeString } from './timeUtils.js'; // Ensure this handles AM/PM
 
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
@@ -113,29 +110,28 @@ function extractSamplePositions(fullOrder) {
 }
 
 /**
- * selectCandidate performs the candidate selection.
- * It uses the provided batch date and assumes run end times include AM/PM.
+ * selectCandidate performs candidate selection.
  *
- * @param {Array} runs - Array of run objects (each with a numeric position and an endTime string, e.g. "03:38:34 PM")
+ * @param {Array} runs - Array of run objects (each with a numeric position and an endTime string like "03:38:34 PM")
  * @param {Object} controls - Object with control1 and control2 values.
  * @param {number} finalPos - The final sample position.
- * @param {string} gcType - The GC type in lowercase.
+ * @param {string} gcType - The GC type (in lowercase).
  * @param {Date} batchDate - The Date representing the batch day.
- * @returns {Object} - An object with candidate, adjustedCandidate, displayedLabel, sampleOrder, fullOrder, and cutoff.
+ * @returns {Object} - Object containing candidate info.
  */
 export function selectCandidate(runs, controls, finalPos, gcType, batchDate) {
-  // Set cutoff time to 4:00 PM on the batch date.
+  // Build cutoff time reliably using the batchDate:
   const cutoff = new Date(batchDate);
   cutoff.setHours(16, 0, 0, 0);
-  console.log(`[selectCandidate] Cutoff time based on batch date:`, cutoff);
+  console.log(`[candidateSelection] Cutoff time based on batch date:`, cutoff);
   
   const fullOrder = generateFullOrder(finalPos, gcType, controls);
-  console.log(`[selectCandidate] Full Order:`, fullOrder);
+  console.log(`[candidateSelection] Full Order:`, fullOrder);
   
   const sampleOrder = extractSamplePositions(fullOrder);
-  console.log(`[selectCandidate] Sample Order:`, sampleOrder);
+  console.log(`[candidateSelection] Sample Order:`, sampleOrder);
   
-  console.log(`[selectCandidate] All run data:`, runs);
+  console.log(`[candidateSelection] All run data:`, runs);
   
   const candidateRuns = runs.filter(r => {
     if (!r.endTime || r.position < 4) return false;
@@ -144,23 +140,23 @@ export function selectCandidate(runs, controls, finalPos, gcType, batchDate) {
       r.position === Number(controls.control1) ||
       r.position === Number(controls.control2)
     ) {
-      console.log(`[selectCandidate] Excluding run with raw position ${r.position} because it equals a control.`);
+      console.log(`[candidateSelection] Excluding run with raw position ${r.position} because it equals a control.`);
       return false;
     }
     const adjusted = getDisplayedPosition(r.position, controls);
-    console.log(`[selectCandidate] Run raw position ${r.position} adjusted to ${adjusted}`);
+    console.log(`[candidateSelection] Run raw position ${r.position} adjusted to ${adjusted}`);
     if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
-      console.log(`[selectCandidate] Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
+      console.log(`[candidateSelection] Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
       return false;
     }
-    // Parse r.endTime including AM/PM using parseTimeString.
-    const endParts = parseTimeString(r.endTime); // Should return 24-hour time parts if r.endTime includes AM/PM.
+    // Use parseTimeString to get proper 24-hour parts from r.endTime.
+    const endParts = parseTimeString(r.endTime);
     if (!endParts) return false;
     const runEndDate = new Date(batchDate);
     runEndDate.setHours(endParts.hour, endParts.minute, endParts.second, 0);
     return runEndDate < cutoff;
   });
-  console.log(`[selectCandidate] Candidate runs after filtering:`, candidateRuns);
+  console.log(`[candidateSelection] Candidate runs after filtering:`, candidateRuns);
   
   candidateRuns.sort((a, b) => {
     const adjustedA = getDisplayedPosition(a.position, controls);
@@ -169,12 +165,12 @@ export function selectCandidate(runs, controls, finalPos, gcType, batchDate) {
     const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
     return indexA - indexB;
   });
-  console.log(`[selectCandidate] Candidate runs sorted:`, candidateRuns);
+  console.log(`[candidateSelection] Candidate runs sorted:`, candidateRuns);
   
   const candidate = candidateRuns[candidateRuns.length - 1];
   const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, controls) : null;
   const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
-  console.log(`[selectCandidate] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+  console.log(`[candidateSelection] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
   
   return {
     candidate,
