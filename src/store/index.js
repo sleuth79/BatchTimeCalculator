@@ -46,7 +46,9 @@ function fallbackFormatDuration(ms) {
   and the control values.
   
   For raw run numbers 4–16, base sample = run number – 1; if that equals a control, subtract one more.
-  For raw run numbers 17+, base sample = run number; if that equals a control, add one.
+  For raw run numbers ≥ 17, base sample = run number; however, if the raw number equals one of the controls then:
+    - if raw < 23, adjust upward (raw + 1),
+    - if raw ≥ 23, adjust downward (raw – 1).
 */
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
@@ -63,9 +65,14 @@ function getDisplayedPosition(raw, controls) {
     }
   } else {
     sample = raw;
-    if (sample === control1 || sample === control2) {
-      console.log(`Raw ${raw}: base sample ${sample} equals a control; adjusting upward.`);
-      sample = sample + 1;
+    if (raw === control1 || raw === control2) {
+      if (raw < 23) {
+        console.log(`Raw ${raw}: equals a control in lower block; adjusting upward.`);
+        sample = raw + 1;
+      } else {
+        console.log(`Raw ${raw}: equals a control in higher block; adjusting downward.`);
+        sample = raw - 1;
+      }
     }
   }
   console.log(`Final displayed sample for raw ${raw} = ${sample}`);
