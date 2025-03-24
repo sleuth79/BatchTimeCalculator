@@ -2,6 +2,7 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
+import { selectCandidate } from '../utils/candidateSelection.js';
 
 console.log("DEBUG: useGcStore module loaded");
 
@@ -41,15 +42,10 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-/*
-  getDisplayedPosition computes the displayed (adjusted) sample number
-  from the raw run number and the control values.
-  
-  For raw run numbers 4–16, base sample = run number – 1; if that equals a control, subtract one more.
-  For raw run numbers ≥ 17, base sample = run number; however, if the raw number equals one of the controls then:
-    - if raw < 23, adjust upward (raw + 1),
-    - if raw ≥ 23, adjust downward (raw – 1).
-*/
+//
+// getDisplayedPosition computes the displayed sample number from raw and controls.
+// (This function is still here for other parts of your code.)
+//
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
@@ -80,8 +76,10 @@ function getDisplayedPosition(raw, controls) {
 }
 
 //
-// generateSampleAllowed: creates allowed sample numbers (from 3 to finalPos, excluding controls and 16).
+// generateSampleAllowed, generateFullOrder, extractSamplePositions remain here
+// (They are still used by candidateSelection.js, so you can keep them here for backward compatibility if needed.)
 //
+
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
   for (let num = 3; num <= finalPos; num++) {
@@ -97,9 +95,6 @@ function generateSampleAllowed(finalPos, controls) {
   return arr;
 }
 
-//
-// generateFullOrder: creates the full order including control rows.
-//
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
   order.push("Blank");
@@ -161,9 +156,6 @@ function generateFullOrder(finalPos, gcType, controls) {
   return order;
 }
 
-//
-// extractSamplePositions: filters full order to only include sample positions.
-//
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
 }
@@ -176,7 +168,7 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // startTime state (AMPM removed)
+    // startTime state (AM/PM removed)
     startTime: {
       batchStartTime: null,
       wait15: null,
@@ -247,7 +239,7 @@ export const useGcStore = defineStore('gc', {
       console.log(`[${new Date().toLocaleTimeString()}] Batch Start Time updated to:`, time);
       this.calculateStartTimeBatch();
     },
-    // Removed AMPM setter.
+    // Removed AM/PM setter.
     setWait15(value) {
       this.startTime.wait15 = value;
       console.log(`[${new Date().toLocaleTimeString()}] Wait15 updated to:`, value);
@@ -259,7 +251,7 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
-      // Delay calculation to allow control value to update.
+      // Delay calculation to allow control update.
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 300);
@@ -301,7 +293,7 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
-      // Pass empty string for AM/PM since we're using 24-hour time
+      // Pass empty string for AM/PM (using 24-hour time)
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
@@ -319,47 +311,13 @@ export const useGcStore = defineStore('gc', {
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
       const finalPosNum = Number(this.startTime.finalPosition);
-      const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
-      console.log("Full Order from run table:", fullOrder);
-      const sampleOrder = extractSamplePositions(fullOrder);
-      console.log("Sample Order:", sampleOrder);
       
-      console.log("All run data from calcResults.runs:", calcResults.runs);
+      // Use the candidate selection utility.
+      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType);
+      const candidate = selection.candidate;
+      const adjustedCandidate = selection.adjustedCandidate;
+      const displayedLabel = selection.displayedLabel;
       
-      const candidateRuns = calcResults.runs.filter(r => {
-        if (!r.endTime || r.position < 4) return false;
-        if (isNaN(Number(r.position))) return false;
-        if (
-          r.position === Number(this.startTime.controls.control1) ||
-          r.position === Number(this.startTime.controls.control2)
-        ) {
-          console.log(`Excluding run with raw position ${r.position} because it equals a control.`);
-          return false;
-        }
-        const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        console.log(`Run raw position ${r.position} adjusted to ${adjusted}`);
-        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
-          console.log(`Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
-          return false;
-        }
-        const endDate = new Date(`${todayStr} ${r.endTime}`);
-        return endDate < cutoff;
-      });
-      console.log("Candidate runs after filtering:", candidateRuns);
-      
-      candidateRuns.sort((a, b) => {
-        const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
-        const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
-        const indexA = sampleOrder.findIndex(label => label === `Position ${adjustedA}`);
-        const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
-        return indexA - indexB;
-      });
-      console.log("Candidate runs sorted:", candidateRuns);
-      
-      const candidate = candidateRuns[candidateRuns.length - 1];
-      this.rawClosestCandidate = candidate;
-      const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
-      const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
       console.log(`[${new Date().toLocaleTimeString()}] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
       
       this.results = {
