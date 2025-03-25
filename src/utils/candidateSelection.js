@@ -14,14 +14,22 @@ function getDisplayedPosition(raw, controls) {
       sample = sample - 1;
     }
   } else {
-    sample = raw;
+    // For raw >= 17, adjust the mapping based on the second control.
+    // When control2 is 17, we add an extra offset of +1 to account for the gap (missing 16).
+    if (control2 === 17) {
+      sample = raw + 1;
+    } else {
+      sample = raw;
+    }
+    // Extra adjustment if the raw value itself equals a control is retained,
+    // though candidate runs matching a control should already be filtered out.
     if (raw === control1 || raw === control2) {
       if (raw < 23) {
         console.log(`[candidateSelection] Raw ${raw}: equals a control in lower block; adjusting upward.`);
-        sample = raw + 1;
+        sample = sample + 1;
       } else {
         console.log(`[candidateSelection] Raw ${raw}: equals a control in higher block; adjusting downward.`);
-        sample = raw - 1;
+        sample = sample - 1;
       }
     }
   }
