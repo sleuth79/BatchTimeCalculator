@@ -1,16 +1,16 @@
 <template>
   <div class="start-time-results">
-    <!-- New heading: Actually Closest Position (always displayed) -->
+    <!-- New heading: Actually Closest Position using displayRuntableClosestCandidate -->
     <p>
       Actually Closest Position:
       <span class="result-value">
-        <template v-if="typeof displayedClosestCandidate === 'object'">
-          {{ displayedClosestCandidate.displayedPosition }} :
-          {{ displayedClosestCandidate.startTime }} to
-          {{ displayedClosestCandidate.endTime }}
+        <template v-if="typeof displayRuntableClosestCandidate === 'object'">
+          {{ displayRuntableClosestCandidate.displayedPosition }} :
+          {{ displayRuntableClosestCandidate.startTime }} to
+          {{ displayRuntableClosestCandidate.endTime }}
         </template>
         <template v-else>
-          {{ displayedClosestCandidate }}
+          {{ displayRuntableClosestCandidate }}
         </template>
       </span>
     </p>
@@ -45,16 +45,16 @@
       </span>
     </p>
     <!-- Display Closest Position Before 4:00 PM using store's computed value -->
-    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
+    <p v-if="showDetailedResults && displayRuntableClosestCandidate && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="typeof displayedClosestCandidate === 'object'">
-          {{ displayedClosestCandidate.displayedPosition }} :
-          {{ displayedClosestCandidate.startTime }} to
-          {{ displayedClosestCandidate.endTime }}
+        <template v-if="typeof displayRuntableClosestCandidate === 'object'">
+          {{ displayRuntableClosestCandidate.displayedPosition }} :
+          {{ displayRuntableClosestCandidate.startTime }} to
+          {{ displayRuntableClosestCandidate.endTime }}
         </template>
         <template v-else>
-          {{ displayedClosestCandidate }}
+          {{ displayRuntableClosestCandidate }}
         </template>
       </span>
     </p>
@@ -133,8 +133,8 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // Use the computed getter from the store for the closest candidate.
-    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
+    // Renamed computed getter for the closest candidate to "displayRuntableClosestCandidate"
+    const displayRuntableClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
@@ -207,7 +207,7 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      displayedClosestCandidate,
+      displayRuntableClosestCandidate,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
