@@ -8,9 +8,7 @@ console.log("DEBUG: useGcStore module loaded");
 
 export const pinia = createPinia();
 
-/*
-  Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
-*/
+// Helper: convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
 function convertRuntime(runtimeStr) {
   if (!runtimeStr) return 0;
   const parts = runtimeStr.split(":");
@@ -27,9 +25,7 @@ function convertRuntime(runtimeStr) {
   return 0;
 }
 
-/*
-  Helper: Fallback formatting for a duration in milliseconds.
-*/
+// Fallback formatting if formatDuration returns an empty string.
 function fallbackFormatDuration(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -42,20 +38,7 @@ function fallbackFormatDuration(ms) {
   return str.trim();
 }
 
-/*
-  Helper: Parse a 24‑hour time string (e.g. "10:00") into a Date object.
-  We assume the time is for "today."
-*/
-function parse24HourTimeToDate(timeStr) {
-  const [hourStr, minuteStr] = timeStr.split(":");
-  const date = new Date();
-  date.setHours(Number(hourStr), Number(minuteStr), 0, 0);
-  return date;
-}
-
-/*
-  getDisplayedPosition: Computes the adjusted sample number based on the raw run number and the control values.
-*/
+// This function computes the displayed sample number based on the raw run number and the control values.
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
   const control2 = Number(controls.control2);
@@ -85,9 +68,6 @@ function getDisplayedPosition(raw, controls) {
   return sample;
 }
 
-/*
-  generateSampleAllowed: Returns allowed sample numbers from 3 up to finalPos (excluding control values and 16).
-*/
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
   for (let num = 3; num <= finalPos; num++) {
@@ -103,10 +83,6 @@ function generateSampleAllowed(finalPos, controls) {
   return arr;
 }
 
-/*
-  generateFullOrder: Generates the full run order (including control rows)
-  similar to your run table.
-*/
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
   order.push("Blank");
@@ -168,9 +144,6 @@ function generateFullOrder(finalPos, gcType, controls) {
   return order;
 }
 
-/*
-  extractSamplePositions: Filters the full order array to return only sample positions.
-*/
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
 }
@@ -183,10 +156,10 @@ export const useGcStore = defineStore('gc', {
     isLoading: false,
     error: null,
     calculationAttempted: false,
-    // Start‑time state: User enters batchStartTime as a 24‑hour string.
+    // startTime state:
     startTime: {
-      batchStartTime: null, // e.g. "10:00"
-      batchStartTimeAMPM: "", // This will be derived for display
+      batchStartTime: null,          // Expects a 24-hour time string, e.g. "10:00"
+      batchStartTimeAMPM: "",          // For results display (e.g. "AM" or "PM")
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
@@ -208,8 +181,8 @@ export const useGcStore = defineStore('gc', {
     startTimeResetCounter: 0,
     additionalRuns: null,
     miscRuns: 0,
-    // Store the raw candidate run (before control adjustments)
     rawClosestCandidate: null,
+    _retryTriggered: false,
   }),
   actions: {
     async fetchGcData() {
@@ -261,123 +234,92 @@ export const useGcStore = defineStore('gc', {
     },
     setWait15(value) {
       this.startTime.wait15 = value;
+      console.log(`[${new Date().toLocaleTimeString()}] Wait15 updated to:`, value);
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
+      console.log(`[${new Date().toLocaleTimeString()}] Final Position updated to:`, position);
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      console.log("Control1 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      console.log("Control2 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Control2 updated to:`, value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     calculateStartTimeBatch() {
-      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
+      console.log(`[${new Date().toLocaleTimeString()}] Calculating Start Time Batch with controls:`, JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
-      // Guard: ensure required inputs are provided.
+      // Guard: Check for required inputs
       if (!this.startTime.batchStartTime) {
-        console.log("Guard: Missing batchStartTime");
-        this.results = { mode: "start-time" };
+        console.log(`[${new Date().toLocaleTimeString()}] Guard: Missing batchStartTime`);
+        this.results = { mode: "start-time", error: "Missing batchStartTime" };
         return;
       }
-      // If batchStartTimeAMPM is not provided, derive it from the 24‑hour input.
-      let ampmValue = this.startTime.batchStartTimeAMPM;
-      if (!ampmValue) {
-        const dt = parse24HourTimeToDate(this.startTime.batchStartTime);
-        ampmValue = dt.getHours() >= 12 ? "PM" : "AM";
-        console.log(`Derived AM/PM from 24‑hour input: ${ampmValue}`);
+      if (!this.startTime.batchStartTimeAMPM) {
+        console.log(`[${new Date().toLocaleTimeString()}] Guard: Missing batchStartTimeAMPM`);
+        this.results = { mode: "start-time", error: "Missing batchStartTimeAMPM" };
+        return;
       }
       if (!this.startTime.finalPosition) {
-        console.log("Guard: Missing finalPosition");
-        this.results = { mode: "start-time" };
+        console.log(`[${new Date().toLocaleTimeString()}] Guard: Missing finalPosition`);
+        this.results = { mode: "start-time", error: "Missing finalPosition" };
         return;
       }
-      const { control1, control2 } = this.startTime.controls;
-      if (control1 === null || control1 === "" || control2 === null || control2 === "") {
-        console.log("Guard: Missing control1 or control2");
-        this.results = { mode: "start-time" };
+      if (!this.startTime.controls.control1) {
+        console.log(`[${new Date().toLocaleTimeString()}] Guard: Missing control1`);
+        this.results = { mode: "start-time", error: "Missing control1" };
+        return;
+      }
+      if (!this.startTime.controls.control2) {
+        console.log(`[${new Date().toLocaleTimeString()}] Guard: Missing control2`);
+        this.results = { mode: "start-time", error: "Missing control2" };
         return;
       }
       
-      this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
+      
       const calcResults = calculateStartTimeBatch(
         this.selectedGc,
         runtime,
         null,
         this.startTime.finalPosition,
         this.startTime.batchStartTime,
-        ampmValue,
+        this.startTime.batchStartTimeAMPM,
         this.startTime.wait15
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      const todayStr = new Date().toDateString();
+      // Derive batchDate from the batchStartTime input (assumed in "HH:mm" 24‑hour format).
+      const today = new Date();
+      const parts = this.startTime.batchStartTime.split(":");
+      const batchDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), Number(parts[0]), Number(parts[1]), 0, 0);
+      
+      const todayStr = today.toDateString();
       const cutoff = new Date(`${todayStr} 4:00:00 PM`);
       console.log("Cutoff time:", cutoff);
       
       const gcType = (this.allGcData[this.selectedGc]?.type || "").trim().toLowerCase();
       const finalPosNum = Number(this.startTime.finalPosition);
-      const fullOrder = generateFullOrder(finalPosNum, gcType, this.startTime.controls);
-      console.log("Full Order from run table:", fullOrder);
-      const sampleOrder = extractSamplePositions(fullOrder);
-      console.log("Sample Order:", sampleOrder);
       
-      const candidateRuns = calcResults.runs.filter(r => {
-        if (!r.endTime || r.position < 4) return false;
-        if (isNaN(Number(r.position))) return false;
-        if (
-          r.position === Number(this.startTime.controls.control1) ||
-          r.position === Number(this.startTime.controls.control2)
-        ) {
-          console.log(`Excluding run with raw position ${r.position} because it equals a control.`);
-          return false;
-        }
-        const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        console.log(`Run raw position ${r.position} adjusted to ${adjusted}`);
-        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
-          console.log(`Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
-          return false;
-        }
-        const endDate = new Date(`${todayStr} ${r.endTime}`);
-        return endDate < cutoff;
-      });
-      console.log("Candidate runs after filtering:", candidateRuns);
-      
-      candidateRuns.sort((a, b) => {
-        const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
-        const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
-        const indexA = sampleOrder.findIndex(label => label === `Position ${adjustedA}`);
-        const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
-        return indexA - indexB;
-      });
-      console.log("Candidate runs sorted:", candidateRuns);
-      
-      const candidate = candidateRuns[candidateRuns.length - 1];
+      // Use candidate selection utility.
+      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType, batchDate);
+      const candidate = selection.candidate;
       this.rawClosestCandidate = candidate;
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
       const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
-      console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+      console.log(`[${new Date().toLocaleTimeString()}] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
       
       this.results = {
-        mode: "start-time",
-        selectedGc: this.allGcData[this.selectedGc]
-          ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
-          : this.selectedGc,
-        batchStartTime: this.startTime.batchStartTime,
-        batchStartTimeAMPM: ampmValue,
-        startTimeFinalPosition: this.startTime.finalPosition,
-        wait15: this.startTime.wait15,
         totalRuns: calcResults.totalRuns,
         totalRunTime: calcResults.totalRunTime,
         batchEndTime: calcResults.batchEndTime,
@@ -395,9 +337,18 @@ export const useGcStore = defineStore('gc', {
       };
       
       console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
-      this.lastStartTimeInputs = { ...this.startTime };
       
-      // (Additional Runs Duration Computation remains unchanged.)
+      // Retry mechanism: if candidate's adjusted position equals one of the controls, try candidate selection once more.
+      if (!this._retryTriggered && candidate && 
+          (Number(adjustedCandidate) === Number(this.startTime.controls.control1) ||
+           Number(adjustedCandidate) === Number(this.startTime.controls.control2))) {
+        console.log("Candidate equals a control. Retrying candidate selection...");
+        this._retryTriggered = true;
+        setTimeout(() => {
+          this.calculateStartTimeBatch();
+          this._retryTriggered = false;
+        }, 300);
+      }
     },
   },
   getters: {
@@ -465,6 +416,6 @@ export const useGcStore = defineStore('gc', {
             endTime: state.rawClosestCandidate.endTime
           }
         : state.rawClosestCandidate.position;
-    }
+    },
   },
 });
