@@ -6,10 +6,10 @@
         <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
         <label class="heading-controls" for="control1">Batch Controls:</label>
       </div>
-
+      
       <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input & Note -->
+        <!-- Batch Start Time Input & Inline Note -->
         <div class="batch-time-input">
           <input
             type="text"
@@ -47,7 +47,7 @@
           </div>
         </div>
       </div>
-
+      
       <!-- Additional Inputs -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label class="wait-label">15-Minute Wait:</label>
@@ -77,10 +77,10 @@ import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
 
-// Simple debounce helper
+// Simple debounce utility function.
 function debounce(fn, delay = 300) {
   let timeoutID;
-  return function (...args) {
+  return function(...args) {
     clearTimeout(timeoutID);
     timeoutID = setTimeout(() => {
       fn.apply(this, args);
@@ -94,8 +94,8 @@ export default {
   props: {
     disabledPositions: {
       type: Array,
-      default: () => [],
-    },
+      default: () => []
+    }
   },
   setup(props) {
     const gcStore = useGcStore();
@@ -104,7 +104,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding using 24-hour time only.
+    // Batch Start Time binding (24‑hour format only)
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -114,7 +114,7 @@ export default {
       },
     });
 
-    // Wait toggle binding.
+    // Wait toggle binding
     const localWait15 = computed({
       get() {
         return gcStore.startTime.wait15;
@@ -134,15 +134,20 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ];
 
-    // Final Position binding: sync with store.
+    // Final Position binding: local ref synced with store.
     const finalPosition = ref(gcStore.startTime.finalPosition);
+    // Update store when local finalPosition changes.
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
-    watch(() => gcStore.startTime.finalPosition, (newVal) => {
-      finalPosition.value = newVal;
-    });
+    // Watch store and update local finalPosition when it resets.
+    watch(
+      () => gcStore.startTime.finalPosition,
+      (newVal) => {
+        finalPosition.value = newVal;
+      }
+    );
 
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
@@ -162,8 +167,8 @@ export default {
     watch(() => gcStore.startTimeResetCounter, () => {
       timeInputError.value = "";
     });
-
-    // Local Control inputs.
+    
+    // When local control values change, recalculate the results.
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
     watch(
@@ -191,7 +196,7 @@ export default {
       const parts = timeString.split(":");
       if (parts.length !== 2) {
         timeInputError.value =
-          "Invalid format. Enter time as hh:mm (e.g., 09:30).";
+          "Invalid format. Enter time as hh:mm, with a 0 in front, such as 09:30.";
         return;
       }
       const [hour, minute] = parts.map(Number);
@@ -205,7 +210,7 @@ export default {
       ) {
         localBatchStartTime.value = "";
         timeInputError.value =
-          "Invalid time. Enter time as hh:mm (e.g., 09:30).";
+          "Invalid time. Enter time as hh:mm, with a 0 in front, such as 09:30.";
       }
     };
 
@@ -218,7 +223,7 @@ export default {
       recalculateResults();
     };
 
-    // Update local controls from store.
+    // Local Control Inputs & Dynamic Allowed Ranges
     watch(
       () => gcStore.startTime.controls,
       (newControls) => {
@@ -292,10 +297,11 @@ export default {
       };
     };
 
-    // Create debounced versions.
+    // Create debounced versions of the validation functions.
     const debouncedValidateControl1 = debounce(validateControl1, 300);
     const debouncedValidateControl2 = debounce(validateControl2, 300);
 
+    // Expose the parent's disabledPositions prop via computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     return {
@@ -329,8 +335,10 @@ export default {
 .heading-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: -2px;
+  margin-bottom: -2px; /* Adjusted to match GC selector spacing */
 }
+
+/* Header label styling to match the global config section */
 .heading-batch,
 .heading-controls {
   flex: 1;
@@ -338,54 +346,66 @@ export default {
   font-weight: bold;
   font-size: 1.1rem;
 }
+
 .input-row {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
+
 .batch-time-input {
   flex: 1;
   display: flex;
   align-items: center;
 }
+
 .batch-time-input input {
   width: 75px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
+
 .time-input-note {
   margin-left: 10px;
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
 }
+
 .controls-inputs {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  margin-left: 0;
   gap: 10px;
 }
+
 .control-group {
   display: flex;
   align-items: center;
 }
+
 .start-time-input .control-input {
   width: 60px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
+
 .input-group.wait-input {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
+
+/* 15-Minute Wait label set slightly smaller */
 .wait-label {
   font-size: 1rem;
   font-weight: bold;
 }
+
 .wait-toggle {
   margin-left: 10px;
   width: 60px;
@@ -401,15 +421,14 @@ export default {
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .wait-toggle.on {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
 }
+
+/* Default label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
-}
-.error-message {
-  color: red;
-  font-size: 0.9rem;
 }
 </style>
