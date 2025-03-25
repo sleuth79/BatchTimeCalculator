@@ -1,5 +1,19 @@
 <template>
   <div class="start-time-results">
+    <!-- New Always-Displayed Heading -->
+    <p>
+      Actual Closest Position:
+      <span class="result-value">
+        <template v-if="typeof displayedClosestCandidate === 'object'">
+          {{ displayedClosestCandidate.displayedPosition }} :
+          {{ displayedClosestCandidate.startTime }} to
+          {{ displayedClosestCandidate.endTime }}
+        </template>
+        <template v-else>
+          {{ displayedClosestCandidate }}
+        </template>
+      </span>
+    </p>
     <!-- Always display Batch Start Time -->
     <p>
       Batch Start Time:
@@ -30,31 +44,17 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using candidateDisplay -->
-    <p v-if="showDetailedResults && candidateDisplay && displayFinalPosition">
+    <!-- Display Closest Position Before 4:00 PM using store's computed value -->
+    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="typeof candidateDisplay === 'object'">
-          {{ candidateDisplay.displayedPosition }} :
-          {{ candidateDisplay.startTime }} to
-          {{ candidateDisplay.endTime }}
+        <template v-if="typeof displayedClosestCandidate === 'object'">
+          {{ displayedClosestCandidate.displayedPosition }} :
+          {{ displayedClosestCandidate.startTime }} to
+          {{ displayedClosestCandidate.endTime }}
         </template>
         <template v-else>
-          {{ candidateDisplay }}
-        </template>
-      </span>
-    </p>
-    <!-- New heading: Actually Closest Position -->
-    <p v-if="showDetailedResults && actualCandidateDisplay && displayFinalPosition">
-      Actually Closest Position:
-      <span class="result-value">
-        <template v-if="typeof actualCandidateDisplay === 'object'">
-          {{ actualCandidateDisplay.displayedPosition }} :
-          {{ actualCandidateDisplay.startTime }} to
-          {{ actualCandidateDisplay.endTime }}
-        </template>
-        <template v-else>
-          {{ actualCandidateDisplay }}
+          {{ displayedClosestCandidate }}
         </template>
       </span>
     </p>
@@ -70,7 +70,6 @@
 
 <script>
 import { computed } from "vue";
-// We still import the store for controls (if needed) but not for candidate value.
 import { useGcStore } from "../store";
 
 export default {
@@ -78,28 +77,29 @@ export default {
   props: {
     results: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     // You can still pass startTime for other computed values if needed.
     startTime: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     selectedGcData: {
       type: Object,
-      default: null
+      default: null,
     },
     delayedRunsExist: {
       type: Boolean,
-      default: false
+      default: false,
     },
     additionalRunsExist: {
       type: [Boolean, Number],
-      default: false
-    }
+      default: false,
+    },
   },
   setup(props) {
     const gcStore = useGcStore();
+
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
@@ -113,7 +113,7 @@ export default {
     });
 
     const showDetailedResults = computed(() => {
-      return /^\d{2}:\d{2}/.test(displayBatchStartTime.value);
+      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
     const displayFinalPosition = computed(() => {
@@ -123,7 +123,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Use the store's controls directly.
+    // Use store's controls directly.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -133,16 +133,8 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // This computed property extracts the candidate for "Closest Position Before 4:00 PM"
-    const candidateDisplay = computed(() => {
-      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
-    });
-
-    // NEW: Computed property for the "Actually Closest Position" candidate.
-    // Make sure your parent or calculation logic passes this in as results.actuallyClosestPosition.
-    const actualCandidateDisplay = computed(() => {
-      return props.results.actuallyClosestPosition || "No Actual Candidate Position";
-    });
+    // Use the computed getter from the store for the closest candidate.
+    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
@@ -215,15 +207,13 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      candidateDisplay,
-      actualCandidateDisplay,
+      displayedClosestCandidate,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
-      results: props.results
     };
-  }
+  },
 };
 </script>
 
