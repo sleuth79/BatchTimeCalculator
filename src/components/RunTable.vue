@@ -25,7 +25,7 @@
         <tr
           v-for="(title, idx) in positionOrder"
           :key="idx"
-          :class="{ highlight: idx === closestCandidateIndex }"
+          :class="{ highlight: idx === runtableClosestCandidateIndex }"
         >
           <td>{{ idx + 1 }}</td>
           <td>{{ title }}</td>
@@ -165,7 +165,7 @@ export default {
     });
 
     // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
-    const closestCandidateIndex = computed(() => {
+    const runtableClosestCandidateIndex = computed(() => {
       const base = baseRuns.value;
       if (!base || base.length === 0) return -1;
       const cutoff = new Date();
@@ -190,17 +190,18 @@ export default {
 
     // 9. Compute the selected candidate run (if any) from base runs.
     const selectedCandidate = computed(() => {
-      const idx = closestCandidateIndex.value;
+      const idx = runtableClosestCandidateIndex.value;
       if (idx < 0) return null;
       return baseRuns.value[idx];
     });
 
-    // 10. Compute a label for the selected candidate.
-    //     In this example we simply use the candidate run's raw "position" field.
-    //     You can adjust this if you need to map it to the displayed run table order.
+    // 10. Compute a label for the selected candidate using the table's displayed order.
     const selectedPositionLabel = computed(() => {
-      if (!selectedCandidate.value) return "No candidate found";
-      return `Position ${selectedCandidate.value.position}`;
+      const idx = runtableClosestCandidateIndex.value;
+      if (idx < 0 || !positionOrder.value || idx >= positionOrder.value.length) {
+        return "No candidate found";
+      }
+      return positionOrder.value[idx];
     });
 
     return {
@@ -209,7 +210,7 @@ export default {
       runsHasWait,
       waitRow,
       baseRuns,
-      closestCandidateIndex,
+      runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel
     };
