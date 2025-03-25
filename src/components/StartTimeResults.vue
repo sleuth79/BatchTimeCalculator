@@ -30,17 +30,17 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using store's computed value -->
-    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
+    <!-- Display Closest Position Before 4:00 PM using the candidateDisplay computed property -->
+    <p v-if="showDetailedResults && candidateDisplay && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="typeof displayedClosestCandidate === 'object'">
-          {{ displayedClosestCandidate.displayedPosition }} :
-          {{ displayedClosestCandidate.startTime }} to
-          {{ displayedClosestCandidate.endTime }}
+        <template v-if="typeof candidateDisplay === 'object'">
+          {{ candidateDisplay.displayedPosition }} :
+          {{ candidateDisplay.startTime }} to
+          {{ candidateDisplay.endTime }}
         </template>
         <template v-else>
-          {{ displayedClosestCandidate }}
+          {{ candidateDisplay }}
         </template>
       </span>
     </p>
@@ -56,6 +56,7 @@
 
 <script>
 import { computed } from "vue";
+// We no longer rely on the store for the candidate value, so we only import what's needed.
 import { useGcStore } from "../store";
 
 export default {
@@ -63,29 +64,29 @@ export default {
   props: {
     results: {
       type: Object,
-      default: () => ({}),
+      default: () => ({})
     },
     // You can still pass startTime for other computed values if needed.
     startTime: {
       type: Object,
-      default: () => ({}),
+      default: () => ({})
     },
     selectedGcData: {
       type: Object,
-      default: null,
+      default: null
     },
     delayedRunsExist: {
       type: Boolean,
-      default: false,
+      default: false
     },
     additionalRunsExist: {
       type: [Boolean, Number],
-      default: false,
-    },
+      default: false
+    }
   },
   setup(props) {
+    // Using the store for a few values (like controls) if needed.
     const gcStore = useGcStore();
-
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
@@ -99,7 +100,7 @@ export default {
     });
 
     const showDetailedResults = computed(() => {
-      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
+      return /^\d{2}:\d{2}/.test(displayBatchStartTime.value);
     });
 
     const displayFinalPosition = computed(() => {
@@ -109,7 +110,7 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Use store's controls directly.
+    // Use the store's controls directly.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -119,8 +120,11 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // Use the computed getter from the store for the closest candidate.
-    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
+    // Instead of using the store for candidate display, we derive it from the results.
+    // Ensure that the results object includes a property `closestPositionBefore4PM`.
+    const candidateDisplay = computed(() => {
+      return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
+    });
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
@@ -193,13 +197,14 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      displayedClosestCandidate,
+      candidateDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
+      results: props.results
     };
-  },
+  }
 };
 </script>
 
