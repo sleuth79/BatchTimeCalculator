@@ -30,7 +30,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using the candidateDisplay computed property -->
+    <!-- Display Closest Position Before 4:00 PM using candidateDisplay -->
     <p v-if="showDetailedResults && candidateDisplay && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
@@ -41,6 +41,20 @@
         </template>
         <template v-else>
           {{ candidateDisplay }}
+        </template>
+      </span>
+    </p>
+    <!-- New heading: Actually Closest Position -->
+    <p v-if="showDetailedResults && actualCandidateDisplay && displayFinalPosition">
+      Actually Closest Position:
+      <span class="result-value">
+        <template v-if="typeof actualCandidateDisplay === 'object'">
+          {{ actualCandidateDisplay.displayedPosition }} :
+          {{ actualCandidateDisplay.startTime }} to
+          {{ actualCandidateDisplay.endTime }}
+        </template>
+        <template v-else>
+          {{ actualCandidateDisplay }}
         </template>
       </span>
     </p>
@@ -56,7 +70,7 @@
 
 <script>
 import { computed } from "vue";
-// We no longer rely on the store for the candidate value, so we only import what's needed.
+// We still import the store for controls (if needed) but not for candidate value.
 import { useGcStore } from "../store";
 
 export default {
@@ -85,7 +99,6 @@ export default {
     }
   },
   setup(props) {
-    // Using the store for a few values (like controls) if needed.
     const gcStore = useGcStore();
     const currentDate = computed(() => new Date().toLocaleDateString());
 
@@ -120,10 +133,15 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // Instead of using the store for candidate display, we derive it from the results.
-    // Ensure that the results object includes a property `closestPositionBefore4PM`.
+    // This computed property extracts the candidate for "Closest Position Before 4:00 PM"
     const candidateDisplay = computed(() => {
       return props.results.closestPositionBefore4PM || "No Sample Position Ends Before 4:00 PM";
+    });
+
+    // NEW: Computed property for the "Actually Closest Position" candidate.
+    // Make sure your parent or calculation logic passes this in as results.actuallyClosestPosition.
+    const actualCandidateDisplay = computed(() => {
+      return props.results.actuallyClosestPosition || "No Actual Candidate Position";
     });
 
     const displayBatchEndTime = computed(() => {
@@ -198,6 +216,7 @@ export default {
       additionalRunsExistBool,
       displayControls,
       candidateDisplay,
+      actualCandidateDisplay,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
