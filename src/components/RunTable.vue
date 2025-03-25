@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
 
@@ -62,7 +62,7 @@ export default {
       default: () => []
     }
   },
-  setup(props) {
+  setup(props, { emit }) {
     const gcStore = useGcStore();
 
     // 1. Check if there's a "Wait" row at the top.
@@ -203,6 +203,11 @@ export default {
       }
       return positionOrder.value[idx];
     });
+
+    // Emit the selectedPositionLabel to the parent so it can be passed to the StartTimeResults component.
+    watch(selectedPositionLabel, (newVal) => {
+      emit("update:selectedPositionLabel", newVal);
+    }, { immediate: true });
 
     return {
       gcStore,

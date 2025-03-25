@@ -15,9 +15,10 @@
       </span>
     </p>
 
-    <!-- Always render StartTimeResults even if results is empty -->
+    <!-- Always render StartTimeResults even if results is empty.
+         We merge the computed selectedPositionLabel into the results object. -->
     <StartTimeResults
-      :results="results || {}"
+      :results="{ ...results, selectedPositionLabel: selectedPositionLabel }"
       :selectedGcData="selectedGcData"
       :delayedRunsExist="delayedRunsExist"
       :additionalRunsExist="additionalRunsExist"
@@ -40,7 +41,8 @@
     
     <!-- Run Table -->
     <div v-if="showRunTable && ((results && results.runs && results.runs.length > 0) || delayedRunsExist)">
-      <RunTable :runs="runData" />
+      <!-- Bind v-model:selectedPositionLabel so that RunTable emits its selected label -->
+      <RunTable :runs="runData" v-model:selectedPositionLabel="selectedPositionLabel" />
     </div>
   </div>
 </template>
@@ -124,6 +126,9 @@ export default {
     // Format current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
+    // New reactive property to capture the run table's selected candidate label.
+    const selectedPositionLabel = ref("");
+
     return {
       selectedGcData,
       formattedSelectedGc,
@@ -140,6 +145,7 @@ export default {
       timeDelaySectionExists,
       currentTimeString,
       currentDate,
+      selectedPositionLabel,
     };
   },
 };
