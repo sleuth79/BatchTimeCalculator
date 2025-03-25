@@ -21,8 +21,12 @@
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
         </tr>
-        <!-- Render the computed rows -->
-        <tr v-for="(title, idx) in positionOrder" :key="idx">
+        <!-- Render the computed rows and highlight the closest candidate -->
+        <tr
+          v-for="(title, idx) in positionOrder"
+          :key="idx"
+          :class="{ highlight: idx === closestCandidateIndex }"
+        >
           <td>{{ idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
@@ -36,6 +40,7 @@
 <script>
 import { computed } from "vue";
 import { useGcStore } from "../store";
+import { parseTimeString } from "../utils/timeUtils.js";
 
 export default {
   name: "RunTable",
@@ -94,7 +99,6 @@ export default {
 
       // SCENARIO A: finalPos < 13 => only one control row (2nd control)
       if (finalPos < 13) {
-        // Add all sample positions, then append the 2nd Control (using the smaller control)
         for (const s of samples) {
           order.push(`Position ${s}`);
         }
@@ -104,25 +108,15 @@ export default {
 
       // SCENARIO B: 13 <= finalPos < 23 => add a 2nd control after position 12, then the 3rd control at the end.
       if (finalPos < 23) {
-        // Group1 = positions ≤ 12
         const group1 = samples.filter(n => n <= 12);
-        // Group2 = positions > 12
         const group2 = samples.filter(n => n > 12);
-
-        // Add group1.
         for (const s of group1) {
           order.push(`Position ${s}`);
         }
-
-        // 2nd Control (the smaller control).
         order.push(`2nd Control - ${smallerControl.value}`);
-
-        // Add group2.
         for (const s of group2) {
           order.push(`Position ${s}`);
         }
-
-        // 3rd Control (the bigger control) at the end.
         order.push(`3rd Control - ${biggerControl.value}`);
         return order;
       }
@@ -132,27 +126,18 @@ export default {
       const group2 = samples.filter(n => n >= 13 && n <= 22);
       const group3 = samples.filter(n => n > 22);
 
-      // a) Add group1.
       for (const s of group1) {
         order.push(`Position ${s}`);
       }
-
-      // b) Insert 2nd Control.
       order.push(`2nd Control - ${smallerControl.value}`);
-
-      // c) Add group2.
       for (const s of group2) {
         order.push(`Position ${s}`);
       }
-
-      // d) 3rd control (the bigger control) after "Position 22" if it exists.
       const thirdLabel = `3rd Control - ${biggerControl.value}`;
       const indexOf22 = order.indexOf("Position 22");
       if (indexOf22 !== -1) {
         order.splice(indexOf22 + 1, 0, thirdLabel);
       } else if (biggerControl.value === 22) {
-        // If 22 is the bigger control, "Position 22" won't exist.
-        // Try "Position 21" or else just push it.
         const indexOf21 = order.indexOf("Position 21");
         if (indexOf21 !== -1) {
           order.splice(indexOf21 + 1, 0, thirdLabel);
@@ -162,15 +147,10 @@ export default {
       } else {
         order.push(thirdLabel);
       }
-
-      // e) Add group3.
       for (const s of group3) {
         order.push(`Position ${s}`);
       }
-
-      // f) 4th Control at the end (the smaller control again).
       order.push(`4th Control - ${smallerControl.value}`);
-
       return order;
     }
 
@@ -181,15 +161,39 @@ export default {
       return generatePositionOrder(fp, gcType);
     });
 
-    // The centralized closest position logic is now handled in the store,
-    // so we do not need to compute it here.
+    // 8. Compute which base run (excluding the wait row) is the closest candidate.
+    // We determine this by finding the run with the maximum end time that is still before 4:00 PM.
+    const closestCandidateIndex = computed(() => {
+      const base = baseRuns.value;
+      if (!base || base.length === 0) return -1;
+      const cutoff = new Date();
+      cutoff.setHours(16, 0, 0, 0);
+      let candidateIndex = -1;
+      let candidateTime = null;
+      base.forEach((run, idx) => {
+        if (!run.endTime) return;
+        const parsed = parseTimeString(run.endTime);
+        if (!parsed) return;
+        const runDate = new Date();
+        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+        // Only consider runs that end before 4:00 PM.
+        if (runDate < cutoff) {
+          if (!candidateTime || runDate > candidateTime) {
+            candidateTime = runDate;
+            candidateIndex = idx;
+          }
+        }
+      });
+      return candidateIndex;
+    });
 
     return {
       gcStore,
       positionOrder,
       runsHasWait,
       waitRow,
-      baseRuns
+      baseRuns,
+      closestCandidateIndex
     };
   }
 };
@@ -241,5 +245,8 @@ export default {
 }
 .run-table tbody tr:last-child {
   border-bottom: none;
+}
+.highlight {
+  background-color: yellow;
 }
 </style>
