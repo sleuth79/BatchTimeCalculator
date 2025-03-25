@@ -1,6 +1,6 @@
 <template>
   <div class="start-time-results">
-    <!-- New heading: Run Table Closest Position -->
+    <!-- New heading: Run Table Closest Position (always displayed) -->
     <p>
       Run Table Closest Position:
       <span class="result-value">{{ selectedPositionLabel }}</span>
@@ -68,25 +68,25 @@ export default {
   props: {
     results: {
       type: Object,
-      default: () => ({}),
+      default: () => ({})
     },
     // You can still pass startTime for other computed values if needed.
     startTime: {
       type: Object,
-      default: () => ({}),
+      default: () => ({})
     },
     selectedGcData: {
       type: Object,
-      default: null,
+      default: null
     },
     delayedRunsExist: {
       type: Boolean,
-      default: false,
+      default: false
     },
     additionalRunsExist: {
       type: [Boolean, Number],
-      default: false,
-    },
+      default: false
+    }
   },
   setup(props) {
     const gcStore = useGcStore();
@@ -188,8 +188,8 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // NEW computed property: selectedPositionLabel
-    // It is assumed the parent passes this value as results.selectedPositionLabel.
+    // NEW computed property: selectedPositionLabel.
+    // This value should be passed in via props.results.selectedPositionLabel.
     const selectedPositionLabel = computed(() => {
       return props.results.selectedPositionLabel || "";
     });
@@ -210,7 +210,7 @@ export default {
       showDetailedResults,
       selectedPositionLabel
     };
-  },
+  }
 };
 </script>
 
