@@ -34,6 +34,17 @@
         </tr>
       </tbody>
     </table>
+    <!-- Results section: Display selected candidate details -->
+    <div class="results" v-if="selectedCandidate">
+      <h3>Closest Position Before 4:00 PM</h3>
+      <p><strong>{{ selectedPositionLabel }}</strong></p>
+      <p>Start Time: {{ selectedCandidate.startTime }}</p>
+      <p>End Time: {{ selectedCandidate.endTime }}</p>
+    </div>
+    <div class="results" v-else>
+      <h3>Closest Position Before 4:00 PM</h3>
+      <p>No candidate found before 4:00 PM.</p>
+    </div>
   </div>
 </template>
 
@@ -88,16 +99,13 @@ export default {
 
     // 6. Helper to build the final run order with three scenarios.
     function generatePositionOrder(finalPos, gcType) {
-      // Start with the fixed header rows:
       const order = [];
       order.push("Blank");
       order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
       order.push(`1st Control - ${biggerControl.value}`);
 
-      // Filter the allowed sample positions so we only keep ≤ finalPos.
       const samples = sampleAllowed.value.filter(n => n <= finalPos);
 
-      // SCENARIO A: finalPos < 13 => only one control row (2nd control)
       if (finalPos < 13) {
         for (const s of samples) {
           order.push(`Position ${s}`);
@@ -105,8 +113,6 @@ export default {
         order.push(`2nd Control - ${smallerControl.value}`);
         return order;
       }
-
-      // SCENARIO B: 13 <= finalPos < 23 => add a 2nd control after position 12, then the 3rd control at the end.
       if (finalPos < 23) {
         const group1 = samples.filter(n => n <= 12);
         const group2 = samples.filter(n => n > 12);
@@ -120,12 +126,9 @@ export default {
         order.push(`3rd Control - ${biggerControl.value}`);
         return order;
       }
-
-      // SCENARIO C: finalPos >= 23 => full approach with groups and two control insertions.
       const group1 = samples.filter(n => n <= 12);
       const group2 = samples.filter(n => n >= 13 && n <= 22);
       const group3 = samples.filter(n => n > 22);
-
       for (const s of group1) {
         order.push(`Position ${s}`);
       }
@@ -161,8 +164,7 @@ export default {
       return generatePositionOrder(fp, gcType);
     });
 
-    // 8. Compute which base run (excluding the wait row) is the closest candidate.
-    // We determine this by finding the run with the maximum end time that is still before 4:00 PM.
+    // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
     const closestCandidateIndex = computed(() => {
       const base = baseRuns.value;
       if (!base || base.length === 0) return -1;
@@ -176,7 +178,6 @@ export default {
         if (!parsed) return;
         const runDate = new Date();
         runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-        // Only consider runs that end before 4:00 PM.
         if (runDate < cutoff) {
           if (!candidateTime || runDate > candidateTime) {
             candidateTime = runDate;
@@ -187,13 +188,30 @@ export default {
       return candidateIndex;
     });
 
+    // 9. Compute the selected candidate run (if any) from base runs.
+    const selectedCandidate = computed(() => {
+      const idx = closestCandidateIndex.value;
+      if (idx < 0) return null;
+      return baseRuns.value[idx];
+    });
+
+    // 10. Compute a label for the selected candidate.
+    //     In this example we simply use the candidate run's raw "position" field.
+    //     You can adjust this if you need to map it to the displayed run table order.
+    const selectedPositionLabel = computed(() => {
+      if (!selectedCandidate.value) return "No candidate found";
+      return `Position ${selectedCandidate.value.position}`;
+    });
+
     return {
       gcStore,
       positionOrder,
       runsHasWait,
       waitRow,
       baseRuns,
-      closestCandidateIndex
+      closestCandidateIndex,
+      selectedCandidate,
+      selectedPositionLabel
     };
   }
 };
@@ -234,12 +252,6 @@ export default {
   padding: 10px 10px 5px;
   text-transform: none;
 }
-.time-delay-header {
-  background-color: #f5f5f5;
-  color: #333;
-  font-style: italic;
-  font-size: 0.85rem;
-}
 .run-table tbody tr {
   border-bottom: 1px solid #eee;
 }
@@ -248,5 +260,14 @@ export default {
 }
 .highlight {
   background-color: yellow;
+}
+.results {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #eef;
+  border: 1px solid #ccc;
+}
+.results h3 {
+  margin: 0 0 10px;
 }
 </style>
