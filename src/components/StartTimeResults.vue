@@ -1,222 +1,213 @@
 <template>
-  <div class="run-table">
-    <table v-if="positionOrder.length">
-      <thead>
-        <tr class="title-row">
-          <!-- Increase colspan to account for the new "Run" column -->
-          <th colspan="4" class="batch-header">Initial Batch</th>
-        </tr>
-        <tr class="header-row">
-          <th>Run</th>
-          <th>Run Title</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Render wait row if present -->
-        <tr v-if="runsHasWait">
-          <td>Wait</td>
-          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
-          <td>{{ waitRow.startTime }}</td>
-          <td>{{ waitRow.endTime }}</td>
-        </tr>
-        <!-- Render the computed rows and highlight the closest candidate -->
-        <tr
-          v-for="(title, idx) in positionOrder"
-          :key="idx"
-          :class="{ highlight: idx === runtableClosestCandidateIndex }"
-        >
-          <td>{{ idx + 1 }}</td>
-          <td>{{ title }}</td>
-          <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
-          <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <!-- Results section: Display selected candidate details -->
-    <div class="results" v-if="selectedCandidate">
-      <h3>Closest Position Before 4:00 PM</h3>
-      <p><strong>{{ selectedPositionLabel }}</strong></p>
-      <p>Start Time: {{ selectedCandidate.startTime }}</p>
-      <p>End Time: {{ selectedCandidate.endTime }}</p>
-    </div>
-    <div class="results" v-else>
-      <h3>Closest Position Before 4:00 PM</h3>
-      <p>No candidate found before 4:00 PM.</p>
+  <div class="start-time-results">
+    <!-- New heading: Run Table Closest Position (always displayed) -->
+    <p>
+      Run Table Closest Position:
+      <span class="result-value">{{ selectedPositionLabel }}</span>
+    </p>
+    <!-- Always display Batch Start Time -->
+    <p>
+      Batch Start Time:
+      <span class="result-value">{{ displayBatchStartTime }}</span>
+    </p>
+    <!-- Controls heading; shows the controls once both are set -->
+    <p>
+      Controls:
+      <span class="result-value">{{ displayControls }}</span>
+    </p>
+    <!-- Always display Final Position -->
+    <p>
+      Final Position:
+      <span class="result-value">{{ displayFinalPosition }}</span>
+      <span v-if="displayTotalRuns">
+        &nbsp;| Total Runs (Including Controls):
+        <span class="result-value">{{ results.totalRuns }}</span>
+      </span>
+    </p>
+    <!-- Additional details -->
+    <p v-if="showDetailedResults && results.totalRunTime">
+      Total Run Time:
+      <span class="result-value">{{ results.totalRunTime }}</span>
+    </p>
+    <p v-if="showDetailedResults && results.batchEndTime">
+      Batch End Time:
+      <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
+        {{ displayBatchEndTime }}
+      </span>
+    </p>
+    <!-- Display Closest Position Before 4:00 PM using store's computed value -->
+    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
+      Closest Position Before 4:00 PM:
+      <span class="result-value">
+        <template v-if="typeof displayedClosestCandidate === 'object'">
+          {{ displayedClosestCandidate.displayedPosition }} :
+          {{ displayedClosestCandidate.startTime }} to
+          {{ displayedClosestCandidate.endTime }}
+        </template>
+        <template v-else>
+          {{ displayedClosestCandidate }}
+        </template>
+      </span>
+    </p>
+    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+      <hr class="time-gap-hr" />
+      <p>
+        Time Gap to 7:30 AM:
+        <span class="result-value">{{ results.timeGapTo730AM }}</span>
+      </p>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, watch } from "vue";
+import { computed } from "vue";
 import { useGcStore } from "../store";
-import { parseTimeString } from "../utils/timeUtils.js";
 
 export default {
-  name: "RunTable",
+  name: "StartTimeResults",
   props: {
-    runs: {
-      type: Array,
-      required: true,
-      default: () => []
+    results: {
+      type: Object,
+      default: () => ({})
+    },
+    // You can still pass startTime for other computed values if needed.
+    startTime: {
+      type: Object,
+      default: () => ({})
+    },
+    selectedGcData: {
+      type: Object,
+      default: null
+    },
+    delayedRunsExist: {
+      type: Boolean,
+      default: false
+    },
+    additionalRunsExist: {
+      type: [Boolean, Number],
+      default: false
     }
   },
-  setup(props, { emit }) {
+  setup(props) {
     const gcStore = useGcStore();
+    const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // 1. Check if there's a "Wait" row at the top.
-    const runsHasWait = computed(() =>
-      props.runs.length > 0 &&
-      String(props.runs[0].position).toLowerCase() === "wait"
-    );
-    const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-
-    // 2. Base runs = everything except the wait row (if present).
-    const baseRuns = computed(() =>
-      runsHasWait.value ? props.runs.slice(1) : props.runs
-    );
-
-    // 3. finalPosition from store.
-    const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
-
-    // 4. Control values from store.
-    const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
-    const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
-    const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
-    const smallerControl = computed(() => Math.min(c1.value || 0, c2.value || 0));
-
-    // 5. Build a “master” list of allowed sample positions (3..32), excluding
-    //    the control numbers themselves and 16.
-    const sampleAllowed = computed(() => {
-      const arr = [];
-      for (let num = 3; num <= 32; num++) {
-        if (num === biggerControl.value || num === smallerControl.value || num === 16) continue;
-        arr.push(num);
-      }
-      return arr;
+    const displayBatchStartTime = computed(() => {
+      return (
+        props.results.batchStartTime ||
+        props.results.startTime ||
+        props.startTime.batchStartTime ||
+        props.startTime.startTime ||
+        ""
+      );
     });
 
-    // 6. Helper to build the final run order with three scenarios.
-    function generatePositionOrder(finalPos, gcType) {
-      const order = [];
-      order.push("Blank");
-      order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-      order.push(`1st Control - ${biggerControl.value}`);
-
-      const samples = sampleAllowed.value.filter(n => n <= finalPos);
-
-      if (finalPos < 13) {
-        for (const s of samples) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`2nd Control - ${smallerControl.value}`);
-        return order;
-      }
-      if (finalPos < 23) {
-        const group1 = samples.filter(n => n <= 12);
-        const group2 = samples.filter(n => n > 12);
-        for (const s of group1) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`2nd Control - ${smallerControl.value}`);
-        for (const s of group2) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`3rd Control - ${biggerControl.value}`);
-        return order;
-      }
-      const group1 = samples.filter(n => n <= 12);
-      const group2 = samples.filter(n => n >= 13 && n <= 22);
-      const group3 = samples.filter(n => n > 22);
-      for (const s of group1) {
-        order.push(`Position ${s}`);
-      }
-      order.push(`2nd Control - ${smallerControl.value}`);
-      for (const s of group2) {
-        order.push(`Position ${s}`);
-      }
-      const thirdLabel = `3rd Control - ${biggerControl.value}`;
-      const indexOf22 = order.indexOf("Position 22");
-      if (indexOf22 !== -1) {
-        order.splice(indexOf22 + 1, 0, thirdLabel);
-      } else if (biggerControl.value === 22) {
-        const indexOf21 = order.indexOf("Position 21");
-        if (indexOf21 !== -1) {
-          order.splice(indexOf21 + 1, 0, thirdLabel);
-        } else {
-          order.push(thirdLabel);
-        }
-      } else {
-        order.push(thirdLabel);
-      }
-      for (const s of group3) {
-        order.push(`Position ${s}`);
-      }
-      order.push(`4th Control - ${smallerControl.value}`);
-      return order;
-    }
-
-    // 7. The main computed property for our table.
-    const positionOrder = computed(() => {
-      const fp = finalPosition.value;
-      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      return generatePositionOrder(fp, gcType);
+    const showDetailedResults = computed(() => {
+      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
     });
 
-    // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
-    const runtableClosestCandidateIndex = computed(() => {
-      const base = baseRuns.value;
-      if (!base || base.length === 0) return -1;
-      const cutoff = new Date();
-      cutoff.setHours(16, 0, 0, 0);
-      let candidateIndex = -1;
-      let candidateTime = null;
-      base.forEach((run, idx) => {
-        if (!run.endTime) return;
-        const parsed = parseTimeString(run.endTime);
-        if (!parsed) return;
-        const runDate = new Date();
-        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-        if (runDate < cutoff) {
-          if (!candidateTime || runDate > candidateTime) {
-            candidateTime = runDate;
-            candidateIndex = idx;
-          }
-        }
-      });
-      return candidateIndex;
+    const displayFinalPosition = computed(() => {
+      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
     });
 
-    // 9. Compute the selected candidate run (if any) from base runs.
-    const selectedCandidate = computed(() => {
-      const idx = runtableClosestCandidateIndex.value;
-      if (idx < 0) return null;
-      return baseRuns.value[idx];
+    const displayTotalRuns = computed(() => !!props.results.totalRuns);
+    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
+
+    // Use store's controls directly.
+    const displayControls = computed(() => {
+      const ctrl1 = gcStore.startTime.controls.control1;
+      const ctrl2 = gcStore.startTime.controls.control2;
+      if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
+        return "";
+      }
+      return `${ctrl1}, ${ctrl2}`;
     });
 
-    // 10. Compute a label for the selected candidate using the table's displayed order.
+    // Use the computed getter from the store for the closest candidate.
+    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
+
+    const displayBatchEndTime = computed(() => {
+      if (!props.results.batchEndTime) return "";
+      const batchEndStr = props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      if (isNaN(endDateCandidate.getTime())) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      const endDateString = endDateCandidate.toLocaleDateString();
+      return `${batchEndStr} (${endDateString})`;
+    });
+
+    const initialBatchEndTimeAfter730 = computed(() => {
+      if (!props.results.batchEndTime) return false;
+      const batchEndStr = props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) return false;
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return false;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
+      if (isNaN(endDateCandidate.getTime())) return false;
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      if (endDateCandidate.getDate() === startDate.getDate()) return false;
+      const endHour = endDateCandidate.getHours();
+      const endMinute = endDateCandidate.getMinutes();
+      return endHour > 7 || (endHour === 7 && endMinute >= 30);
+    });
+
+    // NEW computed property: selectedPositionLabel.
+    // This value should be passed in via props.results.selectedPositionLabel.
     const selectedPositionLabel = computed(() => {
-      const idx = runtableClosestCandidateIndex.value;
-      if (idx < 0 || !positionOrder.value || idx >= positionOrder.value.length) {
-        return "No candidate found";
-      }
-      return positionOrder.value[idx];
+      return props.results.selectedPositionLabel || "";
     });
 
-    // Emit the selectedPositionLabel so that parent components can use it.
-    watch(selectedPositionLabel, (newVal) => {
-      emit("update:selectedPositionLabel", newVal);
-    }, { immediate: true });
+    const showStartTimeFinalPosition = computed(() => true);
 
     return {
-      gcStore,
-      positionOrder,
-      runsHasWait,
-      waitRow,
-      baseRuns,
-      runtableClosestCandidateIndex,
-      selectedCandidate,
+      currentDate,
+      displayBatchStartTime,
+      displayFinalPosition,
+      displayTotalRuns,
+      additionalRunsExistBool,
+      displayControls,
+      displayedClosestCandidate,
+      displayBatchEndTime,
+      initialBatchEndTimeAfter730,
+      showStartTimeFinalPosition,
+      showDetailedResults,
       selectedPositionLabel
     };
   }
@@ -224,56 +215,35 @@ export default {
 </script>
 
 <style scoped>
-.run-table {
-  margin-top: 20px;
+.start-time-results {
   padding: 0;
-  background-color: #ffffff;
-  font-family: "Aptos", sans-serif;
 }
-.run-table table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 8px;
-  font-size: 0.9rem;
-}
-.run-table th,
-.run-table td {
-  padding: 4px 10px;
-  border: none;
-  text-align: center;
-}
-.title-row .batch-header,
-.header-row {
-  background-color: #f5f5f5;
+.start-time-results p {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.2;
   color: #333;
-  font-weight: 600;
-  letter-spacing: 0.05em;
 }
-.batch-header {
-  text-align: left;
-  font-size: 1.2rem;
-  background-color: #f5f5f5;
-  color: #333;
+.result-value {
+  font-weight: bold;
+  font-size: 1rem;
+}
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
+}
+hr {
   border: none;
-  padding: 10px 10px 5px;
-  text-transform: none;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+  padding: 0;
 }
-.run-table tbody tr {
-  border-bottom: 1px solid #eee;
+.time-gap-hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
-.run-table tbody tr:last-child {
-  border-bottom: none;
-}
-.highlight {
-  background-color: yellow;
-}
-.results {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #eef;
-  border: 1px solid #ccc;
-}
-.results h3 {
-  margin: 0 0 10px;
+.highlight-orange {
+  color: orange;
 }
 </style>

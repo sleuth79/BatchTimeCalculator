@@ -204,7 +204,7 @@ export default {
       return positionOrder.value[idx];
     });
 
-    // Emit the selectedPositionLabel to the parent so it can be passed to the StartTimeResults component.
+    // Emit the selectedPositionLabel so that parent components can use it.
     watch(selectedPositionLabel, (newVal) => {
       emit("update:selectedPositionLabel", newVal);
     }, { immediate: true });
