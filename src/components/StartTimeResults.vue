@@ -1,18 +1,9 @@
 <template>
   <div class="start-time-results">
-    <!-- New heading: Actually Closest Position using displayRuntableClosestCandidate -->
+    <!-- New heading: Run Table Closest Position -->
     <p>
-      Actually Closest Position:
-      <span class="result-value">
-        <template v-if="typeof displayRuntableClosestCandidate === 'object'">
-          {{ displayRuntableClosestCandidate.displayedPosition }} :
-          {{ displayRuntableClosestCandidate.startTime }} to
-          {{ displayRuntableClosestCandidate.endTime }}
-        </template>
-        <template v-else>
-          {{ displayRuntableClosestCandidate }}
-        </template>
-      </span>
+      Run Table Closest Position:
+      <span class="result-value">{{ selectedPositionLabel }}</span>
     </p>
     <!-- Always display Batch Start Time -->
     <p>
@@ -45,16 +36,16 @@
       </span>
     </p>
     <!-- Display Closest Position Before 4:00 PM using store's computed value -->
-    <p v-if="showDetailedResults && displayRuntableClosestCandidate && displayFinalPosition">
+    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="typeof displayRuntableClosestCandidate === 'object'">
-          {{ displayRuntableClosestCandidate.displayedPosition }} :
-          {{ displayRuntableClosestCandidate.startTime }} to
-          {{ displayRuntableClosestCandidate.endTime }}
+        <template v-if="typeof displayedClosestCandidate === 'object'">
+          {{ displayedClosestCandidate.displayedPosition }} :
+          {{ displayedClosestCandidate.startTime }} to
+          {{ displayedClosestCandidate.endTime }}
         </template>
         <template v-else>
-          {{ displayRuntableClosestCandidate }}
+          {{ displayedClosestCandidate }}
         </template>
       </span>
     </p>
@@ -99,7 +90,6 @@ export default {
   },
   setup(props) {
     const gcStore = useGcStore();
-
     const currentDate = computed(() => new Date().toLocaleDateString());
 
     const displayBatchStartTime = computed(() => {
@@ -133,8 +123,8 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // Renamed computed getter for the closest candidate to "displayRuntableClosestCandidate"
-    const displayRuntableClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
+    // Use the computed getter from the store for the closest candidate.
+    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
@@ -198,6 +188,12 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
+    // NEW computed property: selectedPositionLabel
+    // It is assumed the parent passes this value as results.selectedPositionLabel.
+    const selectedPositionLabel = computed(() => {
+      return props.results.selectedPositionLabel || "";
+    });
+
     const showStartTimeFinalPosition = computed(() => true);
 
     return {
@@ -207,11 +203,12 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      displayRuntableClosestCandidate,
+      displayedClosestCandidate,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
+      selectedPositionLabel
     };
   },
 };
