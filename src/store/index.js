@@ -9,7 +9,7 @@ console.log("DEBUG: useGcStore module loaded");
 export const pinia = createPinia();
 
 //
-// Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
+// Helper: convert a runtime string ("mm:ss" or "hh:mm:ss") into total seconds.
 //
 function convertRuntime(runtimeStr) {
   if (!runtimeStr) return 0;
@@ -43,7 +43,7 @@ function fallbackFormatDuration(ms) {
 }
 
 //
-// getDisplayedPosition computes the adjusted sample number from a raw run number and control values.
+// getDisplayedPosition computes the displayed sample number from raw run number and controls.
 //
 function getDisplayedPosition(raw, controls) {
   const control1 = Number(controls.control1);
@@ -75,8 +75,7 @@ function getDisplayedPosition(raw, controls) {
 }
 
 //
-// generateSampleAllowed: creates an array of allowed sample numbers (from 3 to finalPos)
-// excluding the control values and the number 16.
+// generateSampleAllowed creates allowed sample numbers (from 3 to finalPos) excluding controls and 16.
 //
 function generateSampleAllowed(finalPos, controls) {
   const arr = [];
@@ -94,7 +93,7 @@ function generateSampleAllowed(finalPos, controls) {
 }
 
 //
-// generateFullOrder: creates the full order (as an array of strings) from the run table.
+// generateFullOrder creates the full order from the run table including control rows.
 //
 function generateFullOrder(finalPos, gcType, controls) {
   const order = [];
@@ -158,7 +157,7 @@ function generateFullOrder(finalPos, gcType, controls) {
 }
 
 //
-// extractSamplePositions: filters out only the sample positions from the full order.
+// extractSamplePositions filters the full order to just include sample positions.
 //
 function extractSamplePositions(fullOrder) {
   return fullOrder.filter(item => item.startsWith("Position "));
@@ -197,6 +196,7 @@ export const useGcStore = defineStore('gc', {
     startTimeResetCounter: 0,
     additionalRuns: null,
     miscRuns: 0,
+    // Raw candidate run (before control adjustments)
     rawClosestCandidate: null,
   }),
   actions: {
@@ -227,7 +227,7 @@ export const useGcStore = defineStore('gc', {
         wait15: selectedGcType === "Energy",
         finalPosition: null,
         batchEndTime: null,
-        controls: { control1: 3, control2: 18 }
+        controls: { control1: 3, control2: 18 } // default controls
       };
       this.lastStartTimeInputs = null;
       this.sequentialFinalPosition = null;
@@ -255,33 +255,20 @@ export const useGcStore = defineStore('gc', {
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      console.log("Control1 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Control1 updated to:`, value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      console.log("Control2 updated to:", value);
+      console.log(`[${new Date().toLocaleTimeString()}] Control2 updated to:`, value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     calculateStartTimeBatch() {
-      // Step 1: Guard clause—only run calculation if all required inputs are present.
-      if (
-        !this.startTime.batchStartTime ||
-        !this.startTime.batchStartTimeAMPM ||
-        !this.startTime.finalPosition ||
-        this.startTime.controls.control1 === null || this.startTime.controls.control1 === "" ||
-        this.startTime.controls.control2 === null || this.startTime.controls.control2 === ""
-      ) {
-        console.log("Incomplete inputs. Aborting candidate selection.");
-        this.results = { mode: "start-time" };
-        return;
-      }
-      
-      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
+      console.log(`[${new Date().toLocaleTimeString()}] Calculating Start Time Batch with controls:`, JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
       let partialResults = { mode: "start-time" };
@@ -290,11 +277,47 @@ export const useGcStore = defineStore('gc', {
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc;
       }
-      partialResults.batchStartTime = this.startTime.batchStartTime;
-      partialResults.batchStartTimeAMPM = this.startTime.batchStartTimeAMPM;
-      partialResults.startTimeFinalPosition = this.startTime.finalPosition;
-      partialResults.wait15 = this.startTime.wait15;
+      if (this.startTime.batchStartTime) {
+        partialResults.batchStartTime = this.startTime.batchStartTime;
+        partialResults.batchStartTimeAMPM = this.startTime.batchStartTimeAMPM;
+      }
+      if (this.startTime.finalPosition) {
+        partialResults.startTimeFinalPosition = this.startTime.finalPosition;
+      }
+      if (this.startTime.wait15 !== null && this.startTime.wait15 !== undefined) {
+        partialResults.wait15 = this.startTime.wait15;
+      }
       
+      // --- Guard Clause: Log each required input ---
+      if (!this.startTime.batchStartTime) {
+        console.log("Guard: Missing batchStartTime");
+      }
+      if (!this.startTime.batchStartTimeAMPM) {
+        console.log("Guard: Missing batchStartTimeAMPM");
+      }
+      if (!this.startTime.finalPosition) {
+        console.log("Guard: Missing finalPosition");
+      }
+      if (this.startTime.controls.control1 === null || this.startTime.controls.control1 === "") {
+        console.log("Guard: Missing control1");
+      }
+      if (this.startTime.controls.control2 === null || this.startTime.controls.control2 === "") {
+        console.log("Guard: Missing control2");
+      }
+      if (
+        !this.startTime.batchStartTime ||
+        !this.startTime.batchStartTimeAMPM ||
+        !this.startTime.finalPosition ||
+        this.startTime.controls.control1 === null || this.startTime.controls.control1 === "" ||
+        this.startTime.controls.control2 === null || this.startTime.controls.control2 === ""
+      ) {
+        console.log("Incomplete inputs. Aborting candidate selection.");
+        this.results = partialResults;
+        return;
+      }
+      // ------------------------------------------------
+      
+      this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
       const calcResults = calculateStartTimeBatch(
@@ -319,41 +342,18 @@ export const useGcStore = defineStore('gc', {
       const sampleOrder = extractSamplePositions(fullOrder);
       console.log("Sample Order:", sampleOrder);
       
-      const candidateRuns = calcResults.runs.filter(r => {
-        if (!r.endTime || r.position < 4) return false;
-        if (isNaN(Number(r.position))) return false;
-        if (
-          r.position === Number(this.startTime.controls.control1) ||
-          r.position === Number(this.startTime.controls.control2)
-        ) {
-          console.log(`Excluding run with raw position ${r.position} because it equals a control.`);
-          return false;
-        }
-        const adjusted = getDisplayedPosition(r.position, this.startTime.controls);
-        console.log(`Run raw position ${r.position} adjusted to ${adjusted}`);
-        if (!sampleOrder.some(label => label === `Position ${adjusted}`)) {
-          console.log(`Excluding run with adjusted sample Position ${adjusted} not in sample order.`);
-          return false;
-        }
-        const endDate = new Date(`${todayStr} ${r.endTime}`);
-        return endDate < cutoff;
-      });
-      console.log("Candidate runs after filtering:", candidateRuns);
-      
-      candidateRuns.sort((a, b) => {
-        const adjustedA = getDisplayedPosition(a.position, this.startTime.controls);
-        const adjustedB = getDisplayedPosition(b.position, this.startTime.controls);
-        const indexA = sampleOrder.findIndex(label => label === `Position ${adjustedA}`);
-        const indexB = sampleOrder.findIndex(label => label === `Position ${adjustedB}`);
-        return indexA - indexB;
-      });
-      console.log("Candidate runs sorted:", candidateRuns);
-      
-      const candidate = candidateRuns[candidateRuns.length - 1];
-      this.rawClosestCandidate = candidate;
+      // Use the candidate selection utility.
+      // Note: Pass an additional batchDate (derived from batchStartTime) if needed.
+      const batchDate = new Date();
+      if (this.startTime.batchStartTime) {
+        const parts = this.startTime.batchStartTime.split(":");
+        batchDate.setHours(Number(parts[0]), Number(parts[1]), 0, 0);
+      }
+      const selection = selectCandidate(calcResults.runs, this.startTime.controls, finalPosNum, gcType, batchDate);
+      const candidate = selection.candidate;
       const adjustedCandidate = candidate ? getDisplayedPosition(candidate.position, this.startTime.controls) : null;
       const displayedLabel = candidate ? `Position ${adjustedCandidate}` : null;
-      console.log("Final candidate:", candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
+      console.log(`[${new Date().toLocaleTimeString()}] Final candidate:`, candidate, "Adjusted as:", adjustedCandidate, "Displayed as:", displayedLabel);
       
       this.results = {
         ...partialResults,
@@ -373,10 +373,10 @@ export const useGcStore = defineStore('gc', {
         runs: calcResults.runs,
       };
       
-      console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
+      console.log(`[${new Date().toLocaleTimeString()}] Calculation complete. Current startTime state:`, JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
       
-      // Additional Runs Duration Computation (unchanged)
+      // Additional Runs Duration Computation remains unchanged...
       if (this.sequentialFinalPosition !== null) {
         const seqFinal = Number(this.sequentialFinalPosition);
         const miscAdditional = this.additionalRuns ? Number(this.additionalRuns) : 0;

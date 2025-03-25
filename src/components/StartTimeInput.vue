@@ -1,7 +1,7 @@
 <template>
   <div class="start-time-input">
     <div v-if="!isLoading">
-      <!-- Header Row --#
+      <!-- Header Row -->
       <div class="heading-row">
         <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
         <label class="heading-controls" for="control1">Batch Controls:</label>
@@ -104,7 +104,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding
+    // Batch Start Time binding (24‑hour format only)
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
