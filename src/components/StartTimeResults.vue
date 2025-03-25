@@ -1,5 +1,19 @@
 <template>
   <div class="start-time-results">
+    <!-- New heading: Actually Closest Position (always displayed) -->
+    <p>
+      Actually Closest Position:
+      <span class="result-value">
+        <template v-if="typeof displayedClosestCandidate === 'object'">
+          {{ displayedClosestCandidate.displayedPosition }} :
+          {{ displayedClosestCandidate.startTime }} to
+          {{ displayedClosestCandidate.endTime }}
+        </template>
+        <template v-else>
+          {{ displayedClosestCandidate }}
+        </template>
+      </span>
+    </p>
     <!-- Always display Batch Start Time -->
     <p>
       Batch Start Time:
