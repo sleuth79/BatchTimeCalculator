@@ -1,9 +1,9 @@
 <template>
   <div class="start-time-results">
-    <!-- Updated heading: Run Table Closest Position (always displayed) -->
+    <!-- Updated heading: using the full string with times -->
     <p>
       Run Table Closest Position:
-      <span class="result-value">{{ runTableClosestPosition }}</span>
+      <span class="result-value">{{ selectedPositionLabelFull }}</span>
     </p>
     <!-- Always display Batch Start Time -->
     <p>
@@ -188,16 +188,23 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // NEW computed property: selectedPositionLabel.
-    // This value should be passed in via props.results.selectedPositionLabel.
+    // Existing selectedPositionLabel coming from props.
     const selectedPositionLabel = computed(() => {
       return props.results.selectedPositionLabel || "";
     });
 
-    // NEW: computed property to display run table closest position (including start & end time).
-    // It will use the store's computed value if available; otherwise it falls back to selectedPositionLabel.
-    const runTableClosestPosition = computed(() => {
-      return gcStore.displayClosestPosition || selectedPositionLabel.value;
+    // NEW: computed property to build the full string from the displayed candidate.
+    const selectedPositionLabelFull = computed(() => {
+      if (
+        displayedClosestCandidate.value &&
+        typeof displayedClosestCandidate.value === "object" &&
+        displayedClosestCandidate.value.displayedPosition &&
+        displayedClosestCandidate.value.startTime &&
+        displayedClosestCandidate.value.endTime
+      ) {
+        return `${displayedClosestCandidate.value.displayedPosition} : ${displayedClosestCandidate.value.startTime} to ${displayedClosestCandidate.value.endTime}`;
+      }
+      return selectedPositionLabel.value;
     });
 
     const showStartTimeFinalPosition = computed(() => true);
@@ -215,7 +222,7 @@ export default {
       showStartTimeFinalPosition,
       showDetailedResults,
       selectedPositionLabel,
-      runTableClosestPosition
+      selectedPositionLabelFull
     };
   }
 };
