@@ -15,10 +15,10 @@
       </span>
     </p>
 
-    <!-- Always render StartTimeResults even if results is empty.
-         We merge the computed selectedPositionLabel into the results object. -->
+    <!-- Pass runtableClosestPositionFull to StartTimeResults -->
     <StartTimeResults
       :results="{ ...results, selectedPositionLabel: selectedPositionLabel }"
+      :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
       :delayedRunsExist="delayedRunsExist"
       :additionalRunsExist="additionalRunsExist"
@@ -41,8 +41,12 @@
     
     <!-- Run Table -->
     <div v-if="showRunTable && ((results && results.runs && results.runs.length > 0) || delayedRunsExist)">
-      <!-- Bind v-model:selectedPositionLabel so that RunTable emits its selected label -->
-      <RunTable :runs="runData" v-model:selectedPositionLabel="selectedPositionLabel" />
+      <!-- Bind both v-model:selectedPositionLabel and v-model:runtableClosestPositionFull -->
+      <RunTable
+        :runs="runData"
+        v-model:selectedPositionLabel="selectedPositionLabel"
+        v-model:runtableClosestPositionFull="runtableClosestPositionFull"
+      />
     </div>
   </div>
 </template>
@@ -126,8 +130,9 @@ export default {
     // Format current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // New reactive property to capture the run table's selected candidate label.
+    // Reactive properties for run table selected label and full candidate string.
     const selectedPositionLabel = ref("");
+    const runtableClosestPositionFull = ref("");
 
     return {
       selectedGcData,
@@ -146,86 +151,12 @@ export default {
       currentTimeString,
       currentDate,
       selectedPositionLabel,
+      runtableClosestPositionFull,
     };
   },
 };
 </script>
 
 <style scoped>
-.results-display {
-  background-color: #fff;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-}
-
-/* Header container with flex layout */
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* Updated results heading with drop shadow similar to the config window */
-.results-heading {
-  font-size: 2.1rem;
-  margin: 0;
-  color: #333;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
-}
-
-.current-date-time {
-  font-size: 1rem;
-  color: #333;
-  font-weight: bold;
-}
-
-.result-value {
-  font-weight: bold;
-}
-
-.info-message {
-  font-size: 1rem;
-  color: #555;
-  margin-top: 10px;
-}
-
-.results-display p {
-  margin-bottom: 10px;
-  font-size: 1rem;
-  color: #333;
-}
-
-.time-delay-section {
-  margin-top: 0;
-  padding-top: 0 !important;
-}
-
-.section-separator {
-  border: none;
-  border-top: 1px solid #ccc;
-  margin: 10px 0;
-}
-
-.toggle-run-table-button {
-  display: block;
-  width: fit-content;
-  margin: 10px 0 0 0;
-  padding: 4px 8px;
-  font-size: 0.95rem;
-  border: 1px solid #28a745;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #28a745;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  text-align: left;
-}
-
-.toggle-run-table-button:hover {
-  background-color: var(--highlight-color);
-  color: var(--text-highlight);
-}
+/* ... your existing styles ... */
 </style>
