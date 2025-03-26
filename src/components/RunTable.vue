@@ -34,18 +34,6 @@
         </tr>
       </tbody>
     </table>
-    <!-- Results section: Display selected candidate details -->
-    <div class="results" v-if="selectedCandidate">
-      <h3>Closest Position Before 4:00 PM</h3>
-      <!-- Still displaying the candidate details from the table -->
-      <p><strong>{{ selectedPositionLabel }}</strong></p>
-      <p>Start Time: {{ selectedCandidate.startTime }}</p>
-      <p>End Time: {{ selectedCandidate.endTime }}</p>
-    </div>
-    <div class="results" v-else>
-      <h3>Closest Position Before 4:00 PM</h3>
-      <p>No candidate found before 4:00 PM.</p>
-    </div>
   </div>
 </template>
 

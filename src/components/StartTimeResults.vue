@@ -1,10 +1,6 @@
 <template>
   <div class="start-time-results">
-    <!-- Updated heading: using the run table's full candidate string -->
-    <p>
-      Run Table Closest Position:
-      <span class="result-value">{{ runtableClosestPositionFull }}</span>
-    </p>
+    <!-- Removed the Run Table Closest Position heading -->
     <!-- Always display Batch Start Time -->
     <p>
       Batch Start Time:
@@ -31,25 +27,23 @@
     </p>
     <p v-if="showDetailedResults && results.batchEndTime">
       Batch End Time:
-      <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
+      <span
+        class="result-value"
+        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
+      >
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using store's computed value -->
-    <p v-if="showDetailedResults && displayedClosestCandidate && displayFinalPosition">
+    <!-- Display Closest Position Before 4:00 PM using the run table prop -->
+    <p v-if="showDetailedResults && displayFinalPosition">
       Closest Position Before 4:00 PM:
       <span class="result-value">
-        <template v-if="typeof displayedClosestCandidate === 'object'">
-          {{ displayedClosestCandidate.displayedPosition }} :
-          {{ displayedClosestCandidate.startTime }} to
-          {{ displayedClosestCandidate.endTime }}
-        </template>
-        <template v-else>
-          {{ displayedClosestCandidate }}
-        </template>
+        {{ runtableClosestPositionFull }}
       </span>
     </p>
-    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
@@ -87,7 +81,7 @@ export default {
       type: [Boolean, Number],
       default: false
     },
-    // NEW: Prop to receive the full closest position string from the run table
+    // Prop to receive the full closest position string from the run table
     runtableClosestPositionFull: {
       type: String,
       default: ""
@@ -112,7 +106,11 @@ export default {
     });
 
     const displayFinalPosition = computed(() => {
-      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
+      return (
+        props.results.startTimeFinalPosition ||
+        props.startTime.finalPosition ||
+        ""
+      );
     });
 
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
@@ -128,8 +126,8 @@ export default {
       return `${ctrl1}, ${ctrl2}`;
     });
 
-    // Use the computed getter from the store for the closest candidate.
-    const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
+    // The following computed property is no longer used for this heading.
+    // const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
@@ -139,7 +137,8 @@ export default {
         return `${batchEndStr} (${currentDate.value})`;
       }
       const startParts = startStr.split(":");
-      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
+      if (startParts.length < 3)
+        return `${batchEndStr} (${currentDate.value})`;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
       const startSecond = parseInt(startParts[2], 10);
@@ -152,7 +151,9 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${batchEndStr}`
+      );
       if (isNaN(endDateCandidate.getTime())) {
         return `${batchEndStr} (${currentDate.value})`;
       }
@@ -182,7 +183,9 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${props.results.batchEndTime}`
+      );
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
@@ -200,7 +203,6 @@ export default {
       displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
-      displayedClosestCandidate,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showDetailedResults
