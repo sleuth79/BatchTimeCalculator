@@ -39,13 +39,13 @@
       </button>
     </template>
     
-    <!-- Run Table -->
-    <div v-if="showRunTable && ((results && results.runs && results.runs.length > 0) || delayedRunsExist)">
-      <!-- Bind both v-model:selectedPositionLabel and v-model:runtableClosestPositionFull -->
+    <!-- Run Table: Always mount if runs exist; control visibility with v-show -->
+    <div v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
       <RunTable
         :runs="runData"
         v-model:selectedPositionLabel="selectedPositionLabel"
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
+        v-show="showRunTable"
       />
     </div>
   </div>
