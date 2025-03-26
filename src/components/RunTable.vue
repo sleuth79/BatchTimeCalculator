@@ -37,6 +37,7 @@
     <!-- Results section: Display selected candidate details -->
     <div class="results" v-if="selectedCandidate">
       <h3>Closest Position Before 4:00 PM</h3>
+      <!-- Currently still showing separate values -->
       <p><strong>{{ selectedPositionLabel }}</strong></p>
       <p>Start Time: {{ selectedCandidate.startTime }}</p>
       <p>End Time: {{ selectedCandidate.endTime }}</p>
@@ -204,6 +205,12 @@ export default {
       return positionOrder.value[idx];
     });
 
+    // NEW: Compute a display string that includes position label, start time, and end time.
+    const displayClosestPosition = computed(() => {
+      if (!selectedCandidate.value) return "No candidate found";
+      return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
+    });
+
     // Emit the selectedPositionLabel so that parent components can use it.
     watch(selectedPositionLabel, (newVal) => {
       emit("update:selectedPositionLabel", newVal);
@@ -217,7 +224,8 @@ export default {
       baseRuns,
       runtableClosestCandidateIndex,
       selectedCandidate,
-      selectedPositionLabel
+      selectedPositionLabel,
+      displayClosestPosition
     };
   }
 };

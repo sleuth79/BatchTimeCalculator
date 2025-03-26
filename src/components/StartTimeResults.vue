@@ -1,9 +1,9 @@
 <template>
   <div class="start-time-results">
-    <!-- New heading: Run Table Closest Position (always displayed) -->
+    <!-- Updated heading: Run Table Closest Position (always displayed) -->
     <p>
       Run Table Closest Position:
-      <span class="result-value">{{ selectedPositionLabel }}</span>
+      <span class="result-value">{{ runTableClosestPosition }}</span>
     </p>
     <!-- Always display Batch Start Time -->
     <p>
@@ -194,6 +194,12 @@ export default {
       return props.results.selectedPositionLabel || "";
     });
 
+    // NEW: computed property to display run table closest position (including start & end time).
+    // It will use the store's computed value if available; otherwise it falls back to selectedPositionLabel.
+    const runTableClosestPosition = computed(() => {
+      return gcStore.displayClosestPosition || selectedPositionLabel.value;
+    });
+
     const showStartTimeFinalPosition = computed(() => true);
 
     return {
@@ -208,7 +214,8 @@ export default {
       initialBatchEndTimeAfter730,
       showStartTimeFinalPosition,
       showDetailedResults,
-      selectedPositionLabel
+      selectedPositionLabel,
+      runTableClosestPosition
     };
   }
 };
