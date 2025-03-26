@@ -37,7 +37,7 @@
     <!-- Results section: Display selected candidate details -->
     <div class="results" v-if="selectedCandidate">
       <h3>Closest Position Before 4:00 PM</h3>
-      <!-- Currently still showing separate values -->
+      <!-- Still displaying the candidate details from the table -->
       <p><strong>{{ selectedPositionLabel }}</strong></p>
       <p>Start Time: {{ selectedCandidate.startTime }}</p>
       <p>End Time: {{ selectedCandidate.endTime }}</p>
@@ -92,7 +92,8 @@ export default {
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
-        if (num === biggerControl.value || num === smallerControl.value || num === 16) continue;
+        if (num === biggerControl.value || num === smallerControl.value || num === 16)
+          continue;
         arr.push(num);
       }
       return arr;
@@ -205,15 +206,15 @@ export default {
       return positionOrder.value[idx];
     });
 
-    // NEW: Compute a display string that includes position label, start time, and end time.
-    const displayClosestPosition = computed(() => {
+    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
+    const runtableClosestPositionFull = computed(() => {
       if (!selectedCandidate.value) return "No candidate found";
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the selectedPositionLabel so that parent components can use it.
-    watch(selectedPositionLabel, (newVal) => {
-      emit("update:selectedPositionLabel", newVal);
+    // Emit the new computed value so that parent components can use it
+    watch(runtableClosestPositionFull, (newVal) => {
+      emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
     return {
@@ -225,7 +226,7 @@ export default {
       runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel,
-      displayClosestPosition
+      runtableClosestPositionFull
     };
   }
 };

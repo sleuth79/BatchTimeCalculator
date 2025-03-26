@@ -1,9 +1,9 @@
 <template>
   <div class="start-time-results">
-    <!-- Updated heading: using the full string with times -->
+    <!-- Updated heading: using the run table's full candidate string -->
     <p>
       Run Table Closest Position:
-      <span class="result-value">{{ selectedPositionLabelFull }}</span>
+      <span class="result-value">{{ runtableClosestPositionFull }}</span>
     </p>
     <!-- Always display Batch Start Time -->
     <p>
@@ -86,6 +86,11 @@ export default {
     additionalRunsExist: {
       type: [Boolean, Number],
       default: false
+    },
+    // NEW: Prop to receive the full closest position string from the run table
+    runtableClosestPositionFull: {
+      type: String,
+      default: ""
     }
   },
   setup(props) {
@@ -188,27 +193,6 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // Existing selectedPositionLabel coming from props.
-    const selectedPositionLabel = computed(() => {
-      return props.results.selectedPositionLabel || "";
-    });
-
-    // NEW: computed property to build the full string from the displayed candidate.
-    const selectedPositionLabelFull = computed(() => {
-      if (
-        displayedClosestCandidate.value &&
-        typeof displayedClosestCandidate.value === "object" &&
-        displayedClosestCandidate.value.displayedPosition &&
-        displayedClosestCandidate.value.startTime &&
-        displayedClosestCandidate.value.endTime
-      ) {
-        return `${displayedClosestCandidate.value.displayedPosition} : ${displayedClosestCandidate.value.startTime} to ${displayedClosestCandidate.value.endTime}`;
-      }
-      return selectedPositionLabel.value;
-    });
-
-    const showStartTimeFinalPosition = computed(() => true);
-
     return {
       currentDate,
       displayBatchStartTime,
@@ -219,10 +203,7 @@ export default {
       displayedClosestCandidate,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
-      showStartTimeFinalPosition,
-      showDetailedResults,
-      selectedPositionLabel,
-      selectedPositionLabelFull
+      showDetailedResults
     };
   }
 };
