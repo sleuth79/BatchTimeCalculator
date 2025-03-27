@@ -15,7 +15,7 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder=""
+            placeholder="hhmm"
             @keydown="handleTimeKeydown"
             @input="formatTimeInput"
             @blur="validateTimeInput"
@@ -183,67 +183,46 @@ export default {
     );
 
     // FORMAT TIME INPUT:
-    // Remove any non-digits.
-    // If a leading "0" is present, drop it.
-    // Then, if the digits form a value that is too high for the first two characters (e.g., "80"),
-    // use only the first digit as the hour.
-    // Examples:
-    // - "80:00" or "8000" becomes "8:00"
-    // - "7:30" remains "7:30"
-    // - "10:30" remains "10:30"
+    // Remove any non-digits, and if a leading "0" is present, drop it.
+    // Then, format according to:
+    //  • 1–2 digits: assume hour only (no colon yet)
+    //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
+    //           otherwise, use the first digit as hour and the remaining two as minute.
+    //  • 4 or more digits: use first two as hour and next two as minute.
     const formatTimeInput = () => {
+      let digits = localBatchStartTime.value.replace(/\D/g, "");
+      // Remove a leading 0, if present.
+      if (digits.startsWith("0")) {
+        digits = digits.slice(1);
+      }
+      if (!digits) {
+        localBatchStartTime.value = "";
+        return;
+      }
+      let formatted = "";
+      if (digits.length <= 2) {
+        formatted = digits;
+      } else if (digits.length === 3) {
+        const firstTwo = Number(digits.slice(0, 2));
+        if (firstTwo >= 10 && firstTwo <= 24) {
+          formatted = digits.slice(0, 2) + ":" + digits.slice(2);
+        } else {
+          formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
+        }
+      } else {
+        formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
+      }
+      localBatchStartTime.value = formatted;
+    };
+
+    // VALIDATE TIME INPUT on blur:
+    // Re-read digits and rebuild a valid "hh:mm" string.
+    const validateTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
       // Remove a leading 0 if present.
       if (digits.startsWith("0")) {
         digits = digits.slice(1);
       }
-      if (!digits) {
-        localBatchStartTime.value = "";
-        return;
-      }
-      let hour = "";
-      let minute = "";
-      if (digits.length <= 2) {
-        // Only hour provided; set minute default.
-        hour = digits;
-        minute = "00";
-      } else if (digits.length === 3) {
-        // If first two digits form a valid hour (10-23) then use them;
-        // otherwise, treat the first digit as hour.
-        const potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour >= 10 && potentialHour <= 23) {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2).padStart(2, "0");
-        } else {
-          hour = digits.slice(0, 1);
-          minute = digits.slice(1, 3);
-        }
-      } else {
-        // 4 or more digits: try first two digits
-        let potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour > 23) {
-          // If not valid, take only the first digit as hour.
-          hour = digits.slice(0, 1);
-          minute = digits.slice(1, 3);
-        } else {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2, 4);
-        }
-      }
-      // Pad minute if needed.
-      minute = minute.padEnd(2, "0");
-      localBatchStartTime.value = hour + ":" + minute;
-    };
-
-    // VALIDATE TIME INPUT on blur:
-    // Re-read digits and rebuild a valid "hh:mm" string.
-    // If the parsed hour is more than 23 or minutes more than 59,
-    // default to a valid time (e.g., hour becomes only the first digit and minute "00").
-    const validateTimeInput = () => {
-      let digits = localBatchStartTime.value.replace(/\D/g, "");
-      if (digits.startsWith("0")) {
-        digits = digits.slice(1);
-      }
       let hour = "";
       let minute = "";
       if (!digits) {
@@ -254,36 +233,26 @@ export default {
         hour = digits;
         minute = "00";
       } else if (digits.length === 3) {
-        const potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour >= 10 && potentialHour <= 23) {
+        const firstTwo = Number(digits.slice(0, 2));
+        if (firstTwo >= 10 && firstTwo <= 24) {
           hour = digits.slice(0, 2);
-          minute = digits.slice(2).padStart(2, "0");
+          minute = digits.slice(2, 3).padStart(2, "0");
         } else {
           hour = digits.slice(0, 1);
           minute = digits.slice(1, 3);
         }
       } else {
-        let potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour > 23) {
-          hour = digits.slice(0, 1);
-          minute = digits.slice(1, 3);
-        } else {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2, 4);
-        }
+        hour = digits.slice(0, 2);
+        minute = digits.slice(2, 4);
       }
-      // Convert to numbers and adjust if out of bounds.
-      let h = Number(hour);
-      let m = Number(minute);
-      if (h > 23) {
-        // Fallback: take only the first digit.
-        h = Number(hour.slice(0, 1));
+      const h = Number(hour);
+      const m = Number(minute);
+      if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) {
+        localBatchStartTime.value = "";
+        timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
+        return;
       }
-      if (m > 59) {
-        m = 0;
-      }
-      // Format without forcing a leading zero for hour.
-      localBatchStartTime.value = h + ":" + (m < 10 ? "0" + m : m);
+      localBatchStartTime.value = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
     };
 
     const recalculateResults = () => {
