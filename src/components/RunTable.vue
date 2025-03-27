@@ -2,10 +2,6 @@
   <div class="run-table">
     <table v-if="positionOrder.length">
       <thead>
-        <tr class="title-row">
-          <!-- Increase colspan to account for the new "Run" column -->
-          <th colspan="4" class="batch-header">Initial Batch</th>
-        </tr>
         <tr class="header-row">
           <th>Run</th>
           <th>Run Title</th>
@@ -239,21 +235,11 @@ export default {
   border: none;
   text-align: center;
 }
-.title-row .batch-header,
 .header-row {
   background-color: #f5f5f5;
   color: #333;
   font-weight: 600;
   letter-spacing: 0.05em;
-}
-.batch-header {
-  text-align: left;
-  font-size: 1.2rem;
-  background-color: #f5f5f5;
-  color: #333;
-  border: none;
-  padding: 10px 10px 5px;
-  text-transform: none;
 }
 .run-table tbody tr {
   border-bottom: 1px solid #eee;
