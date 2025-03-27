@@ -395,4 +395,8 @@ label {
 .vue3-timepicker input {
   text-align: center !important;
 }
+::v-deep .vue3-timepicker .timepicker-option--selected {
+  background-color: var(--highlight-color) !important;
+  color: var(--text-highlight) !important;
+}
 </style>
