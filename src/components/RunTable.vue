@@ -96,7 +96,7 @@ export default {
         for (const s of samples) {
           order.push(`Position ${s}`);
         }
-        order.push(`2nd Control - ${smallerControl.value}`);
+        order.push(`2nd Control : ${smallerControl.value}`);
         return order;
       }
       if (finalPos < 23) {
@@ -105,7 +105,7 @@ export default {
         for (const s of group1) {
           order.push(`Position ${s}`);
         }
-        order.push(`2nd Control - ${smallerControl.value}`);
+        order.push(`2nd Control : ${smallerControl.value}`);
         for (const s of group2) {
           order.push(`Position ${s}`);
         }
@@ -118,7 +118,7 @@ export default {
       for (const s of group1) {
         order.push(`Position ${s}`);
       }
-      order.push(`2nd Control - ${smallerControl.value}`);
+      order.push(`2nd Control : ${smallerControl.value}`);
       for (const s of group2) {
         order.push(`Position ${s}`);
       }

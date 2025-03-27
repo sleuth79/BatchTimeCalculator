@@ -16,6 +16,7 @@
             id="batch-start-time"
             v-model="localBatchStartTime"
             placeholder="hhmm"
+            @keydown="handleBackspace"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
@@ -331,6 +332,14 @@ export default {
 
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
+    // NEW: Handler to allow Backspace functionality on the start time input.
+    const handleBackspace = (event) => {
+      if (event.key === "Backspace" || event.keyCode === 8) {
+        // Allow the backspace key to function normally.
+        return;
+      }
+    };
+
     return {
       isLoading,
       localBatchStartTime,
@@ -353,6 +362,7 @@ export default {
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
+      handleBackspace,
     };
   },
 };
