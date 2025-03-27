@@ -144,6 +144,7 @@ export default {
 };
 </script>
 
+
 <style scoped>
 .main-heading,
 .batch-label,
