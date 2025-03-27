@@ -15,7 +15,7 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hhmm"
+            placeholder=""
             @keydown="handleTimeKeydown"
             @input="formatTimeInput"
             @blur="validateTimeInput"
