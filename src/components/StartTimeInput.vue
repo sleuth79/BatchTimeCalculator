@@ -9,16 +9,14 @@
       
       <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input & Inline Note -->
+        <!-- Batch Start Time Input using vue3-timepicker -->
         <div class="batch-time-input">
-          <input
-            type="text"
-            id="batch-start-time"
+          <Timepicker
             v-model="localBatchStartTime"
-            placeholder=""
-            @keydown="handleTimeKeydown"
-            @input="formatTimeInput"
-            @blur="validateTimeInput"
+            format="HH:mm"
+            :minute-interval="1"
+            id="batch-start-time"
+            placeholder="Enter time"
           />
           <span class="time-input-note">
             Enter 24 Hour Time (<mark>NO 0 FIRST</mark>)
@@ -83,6 +81,9 @@
 import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
+// Import the vue3-timepicker and its styles.
+import Timepicker from "vue3-timepicker";
+import "vue3-timepicker/dist/VueTimepicker.css";
 
 // Simple debounce utility function.
 function debounce(fn, delay = 300) {
@@ -97,7 +98,7 @@ function debounce(fn, delay = 300) {
 
 export default {
   name: "StartTimeInput",
-  components: { PositionSelector },
+  components: { PositionSelector, Timepicker },
   props: {
     disabledPositions: {
       type: Array,
@@ -111,7 +112,8 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding (stored as "hh:mm")
+    // Batch Start Time binding (stored as "hh:mm").
+    // With the timepicker, this will be a formatted "HH:mm" string.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -121,7 +123,7 @@ export default {
       },
     });
 
-    // Wait toggle binding
+    // Wait toggle binding.
     const localWait15 = computed({
       get() {
         return gcStore.startTime.wait15;
@@ -182,112 +184,7 @@ export default {
       }
     );
 
-    // FORMAT TIME INPUT:
-    // Remove any non-digits, drop a leading "0", and insert a colon.
-    // If there are 4 or more digits, check if the first two digits form a valid hour.
-    const formatTimeInput = () => {
-      let digits = localBatchStartTime.value.replace(/\D/g, "");
-      if (digits.startsWith("0")) {
-        digits = digits.slice(1);
-      }
-      if (!digits) {
-        localBatchStartTime.value = "";
-        return;
-      }
-      let formatted = "";
-      if (digits.length <= 2) {
-        formatted = digits;
-      } else if (digits.length === 3) {
-        const firstTwo = Number(digits.slice(0, 2));
-        if (firstTwo >= 10 && firstTwo <= 24) {
-          formatted = digits.slice(0, 2) + ":" + digits.slice(2);
-        } else {
-          formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
-        }
-      } else {
-        const potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour > 24) {
-          formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
-        } else {
-          formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
-        }
-      }
-      localBatchStartTime.value = formatted;
-    };
-
-    // VALIDATE TIME INPUT on blur:
-    // Rebuild a "hh:mm" string, normalize minutes if needed.
-    const validateTimeInput = () => {
-      let digits = localBatchStartTime.value.replace(/\D/g, "");
-      if (digits.startsWith("0")) {
-        digits = digits.slice(1);
-      }
-      let hour = "";
-      let minute = "";
-      if (!digits) {
-        localBatchStartTime.value = "";
-        return;
-      }
-      if (digits.length <= 2) {
-        hour = digits;
-        minute = "00";
-      } else if (digits.length === 3) {
-        const firstTwo = Number(digits.slice(0, 2));
-        if (firstTwo >= 10 && firstTwo <= 24) {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2, 3).padStart(2, "0");
-        } else {
-          hour = digits.slice(0, 1);
-          minute = digits.slice(1, 3);
-        }
-      } else {
-        const potentialHour = Number(digits.slice(0, 2));
-        if (potentialHour > 24) {
-          hour = digits.slice(0, 1);
-          minute = digits.slice(1, 3);
-        } else {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2, 4);
-        }
-      }
-      
-      let h = Number(hour);
-      let m = Number(minute);
-      
-      // Normalize minutes if 60 or above.
-      if (m >= 60) {
-        const extraHours = Math.floor(m / 60);
-        m = m % 60;
-        h += extraHours;
-      }
-      
-      if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) {
-        localBatchStartTime.value = "";
-        timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
-        return;
-      }
-      
-      localBatchStartTime.value = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
-    };
-
-    const recalculateResults = () => {
-      gcStore.calculateStartTimeBatch();
-    };
-
-    const setWait15 = (val) => {
-      localWait15.value = val;
-      recalculateResults();
-    };
-
-    watch(
-      () => gcStore.startTime.controls,
-      (newControls) => {
-        localControl1.value = newControls?.control1 ?? "";
-        localControl2.value = newControls?.control2 ?? "";
-      },
-      { deep: true }
-    );
-
+    // Control range and validation functions remain unchanged.
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -357,53 +254,7 @@ export default {
 
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // Updated keydown handler for time input:
-    // 1. If the input is empty and the user presses "0", prevent it.
-    // 2. If no colon exists (we're in the hour portion) and there is one digit,
-    //    check that appending the new digit doesn't exceed 24.
-    // 3. If a colon exists and the caret is at the first minute digit,
-    //    only allow digits 0–5.
-    const handleTimeKeydown = (event) => {
-      const input = event.target;
-      const currentValue = input.value;
-      const pos = input.selectionStart;
-
-      // Prevent a leading zero.
-      if (event.key === "0" && currentValue === "") {
-        event.preventDefault();
-        return;
-      }
-
-      // Only handle digit keys.
-      if (!/[0-9]/.test(event.key)) {
-        return;
-      }
-
-      // Check if a colon already exists.
-      const colonIndex = currentValue.indexOf(":");
-      if (colonIndex === -1) {
-        // No colon yet – we're in the hour portion.
-        // If there's already one digit and the caret is at the end, test the new hour.
-        if (currentValue.length === 1 && pos === 1) {
-          const potentialHour = Number(currentValue + event.key);
-          if (potentialHour > 24) {
-            event.preventDefault();
-            return;
-          }
-        }
-      } else {
-        // There is a colon – check if we are at the minute tens digit.
-        if (pos === colonIndex + 1) {
-          const digit = Number(event.key);
-          if (digit > 5) {
-            event.preventDefault();
-            return;
-          }
-        }
-      }
-    };
-
-    // Keydown handler for the control inputs (unchanged).
+    // We no longer need custom keydown handlers for time input as the timepicker handles input validation.
     const handleControlKeydown = (field, event) => {
       if (event.key === "0") {
         if (field === "control1" && localControl1.value === "") {
@@ -418,12 +269,18 @@ export default {
     const control1InputRef = ref(null);
     const control2InputRef = ref(null);
 
+    const recalculateResults = () => {
+      gcStore.calculateStartTimeBatch();
+    };
+
+    const setWait15 = (val) => {
+      localWait15.value = val;
+      recalculateResults();
+    };
+
     return {
       isLoading,
       localBatchStartTime,
-      formatTimeInput,
-      validateTimeInput,
-      timeInputError,
       localWait15,
       setWait15,
       finalPosition,
@@ -440,7 +297,6 @@ export default {
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
-      handleTimeKeydown,
       handleControlKeydown,
       control1Input: control1InputRef,
       control2Input: control2InputRef,
@@ -476,7 +332,8 @@ export default {
   align-items: center;
 }
 
-.batch-time-input input {
+.batch-time-input input,
+.batch-time-input .vue3-timepicker {
   width: 75px;
   height: 36px;
   text-align: center;
