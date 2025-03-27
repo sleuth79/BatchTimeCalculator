@@ -180,4 +180,9 @@ export default {
   display: block;
   margin-top: 15px;
 }
+
+/* Remove default margins for paragraph tags inside the results-display */
+.results-display p {
+  margin: 0;
+}
 </style>

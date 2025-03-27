@@ -15,12 +15,14 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hhmm"
+            placeholder=""
             @keydown="handleTimeKeydown"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time (NO 0 FIRST)</span>
+          <span class="time-input-note">
+            Enter 24 Hour Time (<mark>NO 0 FIRST</mark>)
+          </span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -434,6 +436,12 @@ export default {
   font-size: 0.8rem;
   color: #181818;
   font-weight: bold;
+}
+
+mark {
+  background-color: yellow;
+  color: inherit;
+  padding: 0 2px;
 }
 
 .controls-inputs {
