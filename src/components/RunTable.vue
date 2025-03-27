@@ -36,8 +36,8 @@
 <script>
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
-import { parseTimeString } from "../utils/timeUtils.js";
-
+// We'll no longer rely on parseTimeString for candidate runs.
+  
 export default {
   name: "RunTable",
   props: {
@@ -49,6 +49,12 @@ export default {
   },
   setup(props, { emit }) {
     const gcStore = useGcStore();
+
+    // Helper: parse a time string with AM/PM into a Date object.
+    // For example, "04:15:00 PM" becomes a Date on 1970-01-01.
+    function parseTimeAMPM(timeStr) {
+      return new Date("1970-01-01 " + timeStr);
+    }
 
     // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
@@ -151,20 +157,17 @@ export default {
     });
 
     // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
+    // Here, we use our parseTimeAMPM helper. We define a cutoff of 4:00:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = baseRuns.value;
       if (!base || base.length === 0) return -1;
-      const cutoff = new Date();
-      cutoff.setHours(16, 0, 0, 0);
+      const cutoff = new Date("1970-01-01 04:00:00 PM");
       let candidateIndex = -1;
       let candidateTime = null;
       base.forEach((run, idx) => {
         if (!run.endTime) return;
-        const parsed = parseTimeString(run.endTime);
-        if (!parsed) return;
-        const runDate = new Date();
-        runDate.setHours(parsed.hour, parsed.minute, parsed.second || 0, 0);
-        // Use <= so runs ending exactly at 4:00 PM count.
+        // Parse run.endTime (e.g., "04:15:00 PM") into a Date.
+        const runDate = parseTimeAMPM(run.endTime);
         if (runDate <= cutoff) {
           if (!candidateTime || runDate > candidateTime) {
             candidateTime = runDate;
@@ -197,23 +200,25 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the new computed value so that parent components can use it.
+    // Emit the computed value so that parent components can use it.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // Compute batch start time parsed.
+    // For batch start time, we assume it is stored in 24-hour "HH:mm" format.
     const batchStartTimeParsed = computed(() => {
       if (!gcStore.startTime.batchStartTime) return null;
-      return parseTimeString(gcStore.startTime.batchStartTime);
+      const parts = gcStore.startTime.batchStartTime.split(":").map(Number);
+      return { hour: parts[0], minute: parts[1] || 0 };
     });
 
-    // Determine if at least one base run ends at or before 4:00 PM.
+    // Determine if at least one base run ends at or before 4:00 PM using parseTimeAMPM.
     const hasCandidateRun = computed(() => {
       return baseRuns.value.some(run => {
         if (!run.endTime) return false;
-        const parsed = parseTimeString(run.endTime);
-        return parsed && (parsed.hour < 16 || (parsed.hour === 16 && parsed.minute === 0));
+        const runDate = parseTimeAMPM(run.endTime);
+        const cutoff = new Date("1970-01-01 04:00:00 PM");
+        return runDate <= cutoff;
       });
     });
 
