@@ -17,11 +17,11 @@
           <td>{{ waitRow.endTime }}</td>
           <td>Wait</td>
         </tr>
-        <!-- Render the computed rows and conditionally highlight the candidate run -->
+        <!-- Render the computed rows and highlight the closest candidate -->
         <tr
           v-for="(title, idx) in positionOrder"
           :key="idx"
-          :class="{ highlight: shouldHighlight && idx === runtableClosestCandidateIndex }"
+          :class="{ highlight: idx === runtableClosestCandidateIndex }"
         >
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
@@ -36,8 +36,8 @@
 <script>
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
-// We'll no longer rely on parseTimeString for candidate runs.
-  
+import { parseTimeString } from "../utils/timeUtils.js";
+
 export default {
   name: "RunTable",
   props: {
@@ -49,12 +49,6 @@ export default {
   },
   setup(props, { emit }) {
     const gcStore = useGcStore();
-
-    // Helper: parse a time string with AM/PM into a Date object.
-    // For example, "04:15:00 PM" becomes a Date on 1970-01-01.
-    function parseTimeAMPM(timeStr) {
-      return new Date("1970-01-01 " + timeStr);
-    }
 
     // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
@@ -89,7 +83,7 @@ export default {
       return arr;
     });
 
-    // 6. Helper to build the final run order.
+    // 6. Helper to build the final run order with three scenarios.
     function generatePositionOrder(finalPos, gcType) {
       const order = [];
       order.push("Blank");
@@ -157,18 +151,20 @@ export default {
     });
 
     // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
-    // Here, we use our parseTimeAMPM helper. We define a cutoff of 4:00:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = baseRuns.value;
       if (!base || base.length === 0) return -1;
-      const cutoff = new Date("1970-01-01 04:00:00 PM");
+      const cutoff = new Date();
+      cutoff.setHours(16, 0, 0, 0);
       let candidateIndex = -1;
       let candidateTime = null;
       base.forEach((run, idx) => {
         if (!run.endTime) return;
-        // Parse run.endTime (e.g., "04:15:00 PM") into a Date.
-        const runDate = parseTimeAMPM(run.endTime);
-        if (runDate <= cutoff) {
+        const parsed = parseTimeString(run.endTime);
+        if (!parsed) return;
+        const runDate = new Date();
+        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+        if (runDate < cutoff) {
           if (!candidateTime || runDate > candidateTime) {
             candidateTime = runDate;
             candidateIndex = idx;
@@ -194,43 +190,16 @@ export default {
       return positionOrder.value[idx];
     });
 
-    // Compute a display string that includes the position label, start time, and end time.
+    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
     const runtableClosestPositionFull = computed(() => {
       if (!selectedCandidate.value) return "No candidate found";
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the computed value so that parent components can use it.
+    // Emit the new computed value so that parent components can use it
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
-
-    // For batch start time, we assume it is stored in 24-hour "HH:mm" format.
-    const batchStartTimeParsed = computed(() => {
-      if (!gcStore.startTime.batchStartTime) return null;
-      const parts = gcStore.startTime.batchStartTime.split(":").map(Number);
-      return { hour: parts[0], minute: parts[1] || 0 };
-    });
-
-    // Determine if at least one base run ends at or before 4:00 PM using parseTimeAMPM.
-    const hasCandidateRun = computed(() => {
-      return baseRuns.value.some(run => {
-        if (!run.endTime) return false;
-        const runDate = parseTimeAMPM(run.endTime);
-        const cutoff = new Date("1970-01-01 04:00:00 PM");
-        return runDate <= cutoff;
-      });
-    });
-
-    // Should we highlight the candidate run?
-    const shouldHighlight = computed(() => {
-      if (!batchStartTimeParsed.value) return false;
-      // If the batch starts at or after 4:00 PM, no highlighting.
-      if (batchStartTimeParsed.value.hour >= 16) return false;
-      // If no run ends at or before 4:00 PM, no highlighting.
-      if (!hasCandidateRun.value) return false;
-      return true;
-    });
 
     return {
       gcStore,
@@ -241,8 +210,7 @@ export default {
       runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel,
-      runtableClosestPositionFull,
-      shouldHighlight
+      runtableClosestPositionFull
     };
   }
 };
@@ -279,9 +247,8 @@ export default {
 .run-table tbody tr:last-child {
   border-bottom: none;
 }
-/* Highlighting style applied only when conditions are met */
 .highlight {
-  background-color: #f0f0f0;
+  background-color: yellow;
 }
 .results {
   margin-top: 20px;
