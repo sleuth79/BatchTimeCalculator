@@ -114,13 +114,14 @@ export const useGcStore = defineStore('gc', {
     },
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
+      // Resetting controls to null to clear the input values
       this.startTime = {
         batchStartTime: null,
         batchStartTimeAMPM: "",
         wait15: selectedGcType === "Energy",
         finalPosition: null,
         batchEndTime: null,
-        controls: { control1: 3, control2: 18 }
+        controls: { control1: null, control2: null }
       };
       this.lastStartTimeInputs = null;
       this.startTimeResetCounter++;
