@@ -10,19 +10,20 @@
         <!-- GC Selector remains -->
         <gc-selector :selected-gc="selectedGc" @gc-changed="setSelectedGc" />
 
-        <!-- Always render start-time input components -->
+        <!-- Always render start-time input components with a dynamic key to force re-render on reset -->
         <start-time-input
+          :key="gcStore.startTimeResetCounter"
           :selected-gc="selectedGc"
           :disabledPositions="[...disabledPositions]"
           @update-results="handleUpdateResults"
         />
         <time-delay-input
+          :key="gcStore.startTimeResetCounter"
           :batch1EndTime="batch1EndTime"
           :primaryFinalPosition="primaryFinalPosition"
           :gcRuntime="gcRuntime"
           :gcType="gcType"
           :disabledPositions="[...disabledPositions]"
-          :key="JSON.stringify(disabledPositions)"
           @update-time-delay="handleUpdateTimeDelay"
         />
       </div>
@@ -127,11 +128,9 @@ export default {
       { deep: true }
     );
 
-    // Reset function with fix applied.
+    // Reset function that calls the store's resetStartTime and also clears finalPosition and selectedGc.
     const resetInputs = () => {
       gcStore.resetStartTime();
-      // Removed the line that was resetting controls to empty strings.
-      // gcStore.startTime.controls = { control1: "", control2: "" };
       gcStore.startTime.finalPosition = null;
       gcStore.setSelectedGc(null);
     };
