@@ -106,19 +106,16 @@ export default {
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
 
-    // Simply return the runtime value as stored in the selected GC data.
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
       return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
     });
 
-    // Create a reactive current time that updates every second.
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
     }, 1000);
 
-    // Format current time (24-hour format)
     const currentTimeString = computed(() =>
       currentTime.value.toLocaleTimeString([], {
         hour: "2-digit",
@@ -127,10 +124,8 @@ export default {
         hour12: false,
       })
     );
-    // Format current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // Reactive properties for run table selected label and full candidate string.
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
 
@@ -172,9 +167,10 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+/* current-date-time now does not set an explicit font-size, so it will remain as before,
+   while still being aligned to the right */
 .current-date-time {
   text-align: right;
-  font-size: 2.1rem;
   font-weight: bold;
 }
 
