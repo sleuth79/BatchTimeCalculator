@@ -3,19 +3,19 @@
     <table v-if="positionOrder.length">
       <thead>
         <tr class="header-row">
-          <th>Run</th>
-          <th>Run Title</th>
+          <th>Run Name</th>
           <th>Start Time</th>
           <th>End Time</th>
+          <th>Run #</th>
         </tr>
       </thead>
       <tbody>
         <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
-          <td>Wait</td>
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
+          <td>Wait</td>
         </tr>
         <!-- Render the computed rows and highlight the closest candidate -->
         <tr
@@ -23,10 +23,10 @@
           :key="idx"
           :class="{ highlight: idx === runtableClosestCandidateIndex }"
         >
-          <td>{{ idx + 1 }}</td>
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>
+          <td>{{ idx + 1 }}</td>
         </tr>
       </tbody>
     </table>

@@ -15,11 +15,11 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hhmm"
+            placeholder="hhmm or hh:mm"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time (digits only)</span>
+          <span class="time-input-note">Enter 24 Hour Time (digits only or with colon)</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -140,12 +140,9 @@ export default {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
-    watch(
-      () => gcStore.startTime.finalPosition,
-      (newVal) => {
-        finalPosition.value = newVal;
-      }
-    );
+    watch(() => gcStore.startTime.finalPosition, (newVal) => {
+      finalPosition.value = newVal;
+    });
 
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
@@ -168,21 +165,23 @@ export default {
     
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
-    watch(
-      [() => localControl1.value, () => localControl2.value],
-      () => {
-        recalculateResults();
-      }
-    );
+    watch([() => localControl1.value, () => localControl2.value], () => {
+      recalculateResults();
+    });
 
-    // FORMAT TIME INPUT:
-    // The user types only digits.
-    //  • 1–2 digits: assume hour only.
-    //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
-    //           otherwise, use the first digit as hour and the remaining two as minute.
-    //  • 4 or more digits: use the first two as hour and the next two as minute.
+    // FORMAT TIME INPUT
+    // If the user types a colon, simply remove any unwanted characters but don't reformat.
     const formatTimeInput = () => {
-      let digits = localBatchStartTime.value.replace(/\D/g, "");
+      let value = localBatchStartTime.value;
+      if (value.includes(":")) {
+        // Remove any characters except digits and colon.
+        value = value.replace(/[^\d:]/g, "");
+        localBatchStartTime.value = value;
+        return;
+      }
+      
+      // Otherwise, work only with digits.
+      let digits = value.replace(/\D/g, "");
       if (!digits) {
         localBatchStartTime.value = "";
         return;
@@ -194,20 +193,20 @@ export default {
       } else if (digits.length === 3) {
         const firstTwo = Number(digits.slice(0, 2));
         if (firstTwo >= 10 && firstTwo <= 24) {
-          // Use first two digits as hour, last digit as minute.
+          // Use first two as hour, last as minute.
           formatted = digits.slice(0, 2) + ":" + digits.slice(2);
         } else {
-          // Otherwise, first digit is hour, remaining two as minute.
+          // Otherwise, first digit as hour and remaining two as minute.
           formatted = digits.slice(0, 1).padStart(2, "0") + ":" + digits.slice(1, 3);
         }
       } else {
-        // 4 or more digits: take the first two as hour, next two as minute.
+        // 4 or more digits: take the first two as hour and the next two as minute.
         formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
       }
       localBatchStartTime.value = formatted;
     };
 
-    // VALIDATE TIME INPUT on blur:
+    // VALIDATE TIME INPUT on blur
     // Re-read the digits and rebuild a valid "hh:mm" string.
     const validateTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
@@ -253,14 +252,10 @@ export default {
       recalculateResults();
     };
 
-    watch(
-      () => gcStore.startTime.controls,
-      (newControls) => {
-        localControl1.value = newControls?.control1 ?? "";
-        localControl2.value = newControls?.control2 ?? "";
-      },
-      { deep: true }
-    );
+    watch(() => gcStore.startTime.controls, (newControls) => {
+      localControl1.value = newControls?.control1 ?? "";
+      localControl2.value = newControls?.control2 ?? "";
+    }, { deep: true });
 
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
