@@ -158,21 +158,26 @@ export default {
 </script>
 
 <style scoped>
-/* Flex layout for the header */
 .results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* Right align the current date/time and bold it */
+.results-header h2 {
+  margin: 0 0 5px 0;
+  font-size: 2.1rem;
+  color: #131313;
+  text-align: left;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+}
+
 .current-date-time {
   text-align: right;
+  font-size: 2.1rem;
   font-weight: bold;
 }
 
-/* Style for the toggle button: the button is aligned left in its container,
-   has a fixed width of 150px, centered text, and added top margin for spacing */
 .toggle-run-table-button {
   width: 150px;
   text-align: center;
