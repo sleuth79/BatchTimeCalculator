@@ -1,6 +1,5 @@
 <template>
   <div class="start-time-results">
-    <!-- Removed the Run Table Closest Position heading -->
     <!-- Always display Batch Start Time -->
     <p>
       Batch Start Time:
@@ -101,8 +100,9 @@ export default {
       );
     });
 
+    // Updated: relaxed regex to allow optional seconds and AM/PM.
     const showDetailedResults = computed(() => {
-      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
+      return /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value);
     });
 
     const displayFinalPosition = computed(() => {
@@ -125,9 +125,6 @@ export default {
       }
       return `${ctrl1}, ${ctrl2}`;
     });
-
-    // The following computed property is no longer used for this heading.
-    // const displayedClosestCandidate = computed(() => gcStore.displayedClosestCandidate);
 
     const displayBatchEndTime = computed(() => {
       if (!props.results.batchEndTime) return "";
