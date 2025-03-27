@@ -15,9 +15,10 @@
       </span>
     </p>
 
-    <!-- Pass runtableClosestPositionFull to StartTimeResults -->
+    <!-- Pass the store's startTime as well as results -->
     <StartTimeResults
       :results="{ ...results, selectedPositionLabel: selectedPositionLabel }"
+      :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
       :delayedRunsExist="delayedRunsExist"
@@ -130,6 +131,7 @@ export default {
     const runtableClosestPositionFull = ref("");
 
     return {
+      gcStore,
       selectedGcData,
       formattedSelectedGc,
       results,
@@ -167,8 +169,6 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* current-date-time now does not set an explicit font-size, so it will remain as before,
-   while still being aligned to the right */
 .current-date-time {
   text-align: right;
   font-weight: bold;
