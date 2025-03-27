@@ -392,4 +392,7 @@ export default {
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
+.vue3-timepicker input {
+  text-align: center !important;
+}
 </style>

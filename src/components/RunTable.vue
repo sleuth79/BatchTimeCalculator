@@ -17,11 +17,11 @@
           <td>{{ waitRow.endTime }}</td>
           <td>Wait</td>
         </tr>
-        <!-- Render the computed rows and highlight the closest candidate -->
+        <!-- Render the computed rows and conditionally highlight the candidate -->
         <tr
           v-for="(title, idx) in positionOrder"
           :key="idx"
-          :class="{ highlight: idx === runtableClosestCandidateIndex }"
+          :class="{ highlight: shouldHighlight && idx === runtableClosestCandidateIndex }"
         >
           <td>{{ title }}</td>
           <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
@@ -83,7 +83,7 @@ export default {
       return arr;
     });
 
-    // 6. Helper to build the final run order with three scenarios.
+    // 6. Helper to build the final run order.
     function generatePositionOrder(finalPos, gcType) {
       const order = [];
       order.push("Blank");
@@ -196,10 +196,35 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the new computed value so that parent components can use it
+    // Emit the new computed value so that parent components can use it.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
+
+    // NEW: Compute batch start time parsed.
+    const batchStartTimeParsed = computed(() => {
+      if (!gcStore.startTime.batchStartTime) return null;
+      return parseTimeString(gcStore.startTime.batchStartTime);
+    });
+
+    // NEW: Determine if at least one base run ends before 4:00 PM.
+    const hasCandidateRun = computed(() => {
+      return baseRuns.value.some(run => {
+        if (!run.endTime) return false;
+        const parsed = parseTimeString(run.endTime);
+        return parsed && parsed.hour < 16;
+      });
+    });
+
+    // NEW: Should we highlight the candidate run?
+    const shouldHighlight = computed(() => {
+      if (!batchStartTimeParsed.value) return false;
+      // If the batch starts at or after 4:00 PM, no highlighting.
+      if (batchStartTimeParsed.value.hour >= 16) return false;
+      // If no run ends before 4:00 PM, no highlighting.
+      if (!hasCandidateRun.value) return false;
+      return true;
+    });
 
     return {
       gcStore,
@@ -210,7 +235,8 @@ export default {
       runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel,
-      runtableClosestPositionFull
+      runtableClosestPositionFull,
+      shouldHighlight
     };
   }
 };
@@ -247,8 +273,9 @@ export default {
 .run-table tbody tr:last-child {
   border-bottom: none;
 }
+/* Highlighting style applied only when conditions are met */
 .highlight {
-  background-color: yellow;
+  background-color: #f0f0f0;
 }
 .results {
   margin-top: 20px;
