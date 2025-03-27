@@ -183,15 +183,10 @@ export default {
     );
 
     // FORMAT TIME INPUT:
-    // Remove any non-digits, and if a leading "0" is present, drop it.
-    // Then, format according to:
-    //  • 1–2 digits: assume hour only (no colon yet)
-    //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
-    //           otherwise, use the first digit as hour and the remaining two as minute.
-    //  • 4 or more digits: first check if the first two digits form a valid hour (0–24). If not, treat as one-digit hour.
+    // Remove any non-digits, drop a leading "0", and insert a colon.
+    // If there are 4 or more digits, check if the first two digits form a valid hour.
     const formatTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
-      // Remove a leading 0, if present.
       if (digits.startsWith("0")) {
         digits = digits.slice(1);
       }
@@ -210,7 +205,6 @@ export default {
           formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
         }
       } else {
-        // For four or more digits, try to use two-digit hour first.
         const potentialHour = Number(digits.slice(0, 2));
         if (potentialHour > 24) {
           formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
@@ -222,10 +216,9 @@ export default {
     };
 
     // VALIDATE TIME INPUT on blur:
-    // Re-read digits and rebuild a valid "hh:mm" string.
+    // Rebuild a "hh:mm" string, normalize minutes if needed.
     const validateTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
-      // Remove a leading 0 if present.
       if (digits.startsWith("0")) {
         digits = digits.slice(1);
       }
@@ -248,7 +241,6 @@ export default {
           minute = digits.slice(1, 3);
         }
       } else {
-        // For four or more digits, check if the first two digits form a valid hour.
         const potentialHour = Number(digits.slice(0, 2));
         if (potentialHour > 24) {
           hour = digits.slice(0, 1);
@@ -258,13 +250,23 @@ export default {
           minute = digits.slice(2, 4);
         }
       }
-      const h = Number(hour);
-      const m = Number(minute);
+      
+      let h = Number(hour);
+      let m = Number(minute);
+      
+      // Normalize minutes if 60 or above.
+      if (m >= 60) {
+        const extraHours = Math.floor(m / 60);
+        m = m % 60;
+        h += extraHours;
+      }
+      
       if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) {
         localBatchStartTime.value = "";
         timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
         return;
       }
+      
       localBatchStartTime.value = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
     };
 
@@ -355,16 +357,53 @@ export default {
 
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // --- Keydown handler for the start time input ---
-    // If the field is empty and "0" is pressed, prevent it.
+    // Updated keydown handler for time input:
+    // 1. If the input is empty and the user presses "0", prevent it.
+    // 2. If no colon exists (we're in the hour portion) and there is one digit,
+    //    check that appending the new digit doesn't exceed 24.
+    // 3. If a colon exists and the caret is at the first minute digit,
+    //    only allow digits 0–5.
     const handleTimeKeydown = (event) => {
-      if (event.key === "0" && localBatchStartTime.value === "") {
+      const input = event.target;
+      const currentValue = input.value;
+      const pos = input.selectionStart;
+
+      // Prevent a leading zero.
+      if (event.key === "0" && currentValue === "") {
         event.preventDefault();
+        return;
+      }
+
+      // Only handle digit keys.
+      if (!/[0-9]/.test(event.key)) {
+        return;
+      }
+
+      // Check if a colon already exists.
+      const colonIndex = currentValue.indexOf(":");
+      if (colonIndex === -1) {
+        // No colon yet – we're in the hour portion.
+        // If there's already one digit and the caret is at the end, test the new hour.
+        if (currentValue.length === 1 && pos === 1) {
+          const potentialHour = Number(currentValue + event.key);
+          if (potentialHour > 24) {
+            event.preventDefault();
+            return;
+          }
+        }
+      } else {
+        // There is a colon – check if we are at the minute tens digit.
+        if (pos === colonIndex + 1) {
+          const digit = Number(event.key);
+          if (digit > 5) {
+            event.preventDefault();
+            return;
+          }
+        }
       }
     };
 
-    // --- Keydown handler for the control inputs ---
-    // For each control, if empty and "0" is pressed, prevent it.
+    // Keydown handler for the control inputs (unchanged).
     const handleControlKeydown = (field, event) => {
       if (event.key === "0") {
         if (field === "control1" && localControl1.value === "") {
