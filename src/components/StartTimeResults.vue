@@ -29,8 +29,8 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display candidate or batch end time if no candidate is found -->
-    <p v-if="showDetailedResults && displayFinalPosition">
+    <!-- Display candidate heading only if batch passes 4:00 PM -->
+    <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
       {{ candidateDisplayLabel }}
       <span class="result-value">
         <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
@@ -195,6 +195,26 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
+    // New computed property to determine if the batch passes 4:00 PM.
+    const batchPasses4PM = computed(() => {
+      if (!props.results.batchEndTime) return false;
+      const parts = props.results.batchEndTime.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0]; // e.g., "02:22:26"
+      const ampm = parts[1]; // e.g., "PM"
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return false;
+      let hour = parseInt(timeParts[0], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // 4:00 PM in 24-hour time is 16:00.
+      return hour >= 16;
+    });
+
     // Computed property to decide which candidate label to show.
     const candidateDisplayLabel = computed(() => {
       if (
@@ -216,7 +236,8 @@ export default {
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
       showDetailedResults,
-      candidateDisplayLabel
+      candidateDisplayLabel,
+      batchPasses4PM
     };
   }
 };
