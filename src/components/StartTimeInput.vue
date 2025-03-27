@@ -178,40 +178,68 @@ export default {
       }
     );
 
-    // Format and validate the time input.
+    // Updated formatting function to support inputs without a leading zero.
     const formatTimeInput = () => {
+      // Remove all non-digit characters.
       let value = localBatchStartTime.value.replace(/\D/g, "");
-      if (value.length > 2) {
-        value = value.slice(0, 2) + ":" + value.slice(2, 4);
+      if (value.length === 0) {
+        localBatchStartTime.value = "";
+        return;
       }
-      localBatchStartTime.value = value.slice(0, 5);
+
+      // If input is 1 or 2 digits, assume it's just the hour.
+      if (value.length <= 2) {
+        localBatchStartTime.value = value;
+      } else {
+        // If input is 3 digits, pad with a zero to ensure two-digit hour.
+        if (value.length === 3) {
+          value = "0" + value;
+        }
+        // Insert colon between hour and minute parts.
+        localBatchStartTime.value = value.slice(0, 2) + ":" + value.slice(2, 4);
+      }
       timeInputError.value = "";
-      if (localBatchStartTime.value.length >= 5) {
+
+      // Trigger validation when input length indicates a complete time.
+      if (localBatchStartTime.value.length >= 2) {
         validateTimeInput();
       }
     };
 
+    // Updated validation function
     const validateTimeInput = () => {
-      const timeString = localBatchStartTime.value;
+      let timeString = localBatchStartTime.value;
+
+      // If no colon is present, assume minutes as "00"
+      if (!timeString.includes(":")) {
+        timeString += ":00";
+        localBatchStartTime.value = timeString;
+      }
+
       const parts = timeString.split(":");
       if (parts.length !== 2) {
-        timeInputError.value =
-          "Invalid format. Enter time as hh:mm, with a 0 in front, such as 09:30.";
+        timeInputError.value = "Invalid format. Please enter time as hh:mm (leading zero not required).";
         return;
       }
-      const [hour, minute] = parts.map(Number);
+      const [hourStr, minuteStr] = parts;
+      const hour = Number(hourStr);
+      const minute = Number(minuteStr);
+
       if (
         isNaN(hour) ||
         isNaN(minute) ||
         hour < 0 ||
-        hour > 23 ||
+        hour > 24 ||
         minute < 0 ||
         minute > 59
       ) {
         localBatchStartTime.value = "";
-        timeInputError.value =
-          "Invalid time. Enter time as hh:mm, with a 0 in front, such as 09:30.";
+        timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
+        return;
       }
+
+      // Reformat the input to always show two digits for hours and minutes.
+      localBatchStartTime.value = (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute;
     };
 
     const recalculateResults = () => {
@@ -335,10 +363,9 @@ export default {
 .heading-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: -2px; /* Adjusted to match GC selector spacing */
+  margin-bottom: -2px;
 }
 
-/* Header label styling to match the global config section */
 .heading-batch,
 .heading-controls {
   flex: 1;
@@ -400,7 +427,6 @@ export default {
   margin-bottom: 10px;
 }
 
-/* 15-Minute Wait label set slightly smaller */
 .wait-label {
   font-size: 1rem;
   font-weight: bold;
@@ -427,7 +453,6 @@ export default {
   color: var(--text-highlight);
 }
 
-/* Default label styling */
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
