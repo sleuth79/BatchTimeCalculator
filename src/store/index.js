@@ -2,7 +2,6 @@ import { createPinia, defineStore } from 'pinia';
 import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
-import { selectCandidate } from '../utils/candidateSelection.js';
 
 console.log("DEBUG: useGcStore module loaded");
 
@@ -333,28 +332,36 @@ export const useGcStore = defineStore('gc', {
       console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
-      // Guard: ensure required inputs are provided.
+      // Ensure the batchStartTime is provided.
       if (!this.startTime.batchStartTime) {
         console.log("Guard: Missing batchStartTime");
         this.results = { mode: "start-time" };
         return;
       }
-      // If batchStartTimeAMPM is not provided, derive it from the 24‑hour input.
+      
       let ampmValue = this.startTime.batchStartTimeAMPM;
       if (!ampmValue) {
         const dt = parse24HourTimeToDate(this.startTime.batchStartTime);
         ampmValue = dt.getHours() >= 12 ? "PM" : "AM";
         console.log(`Derived AM/PM from 24‑hour input: ${ampmValue}`);
       }
+      
+      // Always update results with the batch start time info.
+      this.results = {
+        mode: "start-time",
+        batchStartTime: this.startTime.batchStartTime,
+        batchStartTimeAMPM: ampmValue,
+      };
+      
+      // If finalPosition is missing, exit early (keeping the start time in results).
       if (!this.startTime.finalPosition) {
         console.log("Guard: Missing finalPosition");
-        this.results = { mode: "start-time" };
         return;
       }
+      
       const { control1, control2 } = this.startTime.controls;
       if (control1 === null || control1 === "" || control2 === null || control2 === "") {
         console.log("Guard: Missing control1 or control2");
-        this.results = { mode: "start-time" };
         return;
       }
       
@@ -373,11 +380,9 @@ export const useGcStore = defineStore('gc', {
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
       // --- Candidate Selection ---
-      // First run of candidate selection
       let candidate = this.selectClosestCandidate(calcResults);
       console.log("Candidate from first run:", candidate);
       
-      // Refire candidate selection a second time
       candidate = this.selectClosestCandidate(calcResults);
       console.log("Candidate from second run:", candidate);
       this.rawClosestCandidate = candidate;
@@ -413,8 +418,6 @@ export const useGcStore = defineStore('gc', {
       
       console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
-      
-      // (Additional Runs Duration Computation remains unchanged.)
     },
   },
   getters: {
