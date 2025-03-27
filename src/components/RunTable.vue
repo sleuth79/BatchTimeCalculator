@@ -17,7 +17,7 @@
           <td>{{ waitRow.endTime }}</td>
           <td>Wait</td>
         </tr>
-        <!-- Render the computed rows and conditionally highlight the candidate -->
+        <!-- Render the computed rows and conditionally highlight the candidate run -->
         <tr
           v-for="(title, idx) in positionOrder"
           :key="idx"
@@ -163,8 +163,9 @@ export default {
         const parsed = parseTimeString(run.endTime);
         if (!parsed) return;
         const runDate = new Date();
-        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-        if (runDate < cutoff) {
+        runDate.setHours(parsed.hour, parsed.minute, parsed.second || 0, 0);
+        // Changed to <= so runs ending exactly at 4:00 PM count.
+        if (runDate <= cutoff) {
           if (!candidateTime || runDate > candidateTime) {
             candidateTime = runDate;
             candidateIndex = idx;
@@ -190,7 +191,7 @@ export default {
       return positionOrder.value[idx];
     });
 
-    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
+    // NEW: Compute a display string that includes the position label, start time, and end time.
     const runtableClosestPositionFull = computed(() => {
       if (!selectedCandidate.value) return "No candidate found";
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
@@ -207,12 +208,12 @@ export default {
       return parseTimeString(gcStore.startTime.batchStartTime);
     });
 
-    // NEW: Determine if at least one base run ends before 4:00 PM.
+    // NEW: Determine if at least one base run ends at or before 4:00 PM.
     const hasCandidateRun = computed(() => {
       return baseRuns.value.some(run => {
         if (!run.endTime) return false;
         const parsed = parseTimeString(run.endTime);
-        return parsed && parsed.hour < 16;
+        return parsed && parsed.hour < 16 || (parsed && parsed.hour === 16 && parsed.minute === 0);
       });
     });
 
@@ -221,7 +222,7 @@ export default {
       if (!batchStartTimeParsed.value) return false;
       // If the batch starts at or after 4:00 PM, no highlighting.
       if (batchStartTimeParsed.value.hour >= 16) return false;
-      // If no run ends before 4:00 PM, no highlighting.
+      // If no run ends at or before 4:00 PM, no highlighting.
       if (!hasCandidateRun.value) return false;
       return true;
     });
