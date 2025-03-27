@@ -85,7 +85,7 @@ export const useGcStore = defineStore('gc', {
     },
     startTimeResetCounter: 0,
     additionalRuns: null,
-    // Removed candidate selection state (e.g. rawClosestCandidate) and any run order properties.
+    // Removed candidate selection state and any run order properties.
   }),
   actions: {
     async fetchGcData() {
@@ -138,7 +138,22 @@ export const useGcStore = defineStore('gc', {
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
-      // Removed automatic trigger here. The calculation will run only when all inputs are set.
+      // Check if other required fields are provided.
+      if (
+        this.startTime.batchStartTime &&
+        this.startTime.controls.control1 !== null &&
+        this.startTime.controls.control1 !== "" &&
+        this.startTime.controls.control2 !== null &&
+        this.startTime.controls.control2 !== ""
+      ) {
+        this.calculateStartTimeBatch();
+      } else {
+        // Otherwise, update partial results.
+        this.results = {
+          mode: "start-time",
+          startTimeFinalPosition: this.startTime.finalPosition,
+        };
+      }
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
@@ -158,7 +173,7 @@ export const useGcStore = defineStore('gc', {
       console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
-      // If batchStartTime is not provided, update results with partial info and exit.
+      // If batchStartTime is not provided, update partial results and exit.
       if (!this.startTime.batchStartTime) {
         console.log("Guard: Missing batchStartTime");
         this.results = { mode: "start-time" };
@@ -188,7 +203,7 @@ export const useGcStore = defineStore('gc', {
       // Update results with partial data.
       this.results = { ...partialResults };
       
-      // Only perform full calculation if all required fields are provided.
+      // Only perform full calculation if all required inputs are provided.
       if (!this.startTime.finalPosition) {
         console.log("Guard: Missing finalPosition");
         return;
@@ -258,6 +273,5 @@ export const useGcStore = defineStore('gc', {
       baseDate.setHours(baseDate.getHours() + delayHours);
       return formatTime(baseDate);
     },
-    // Removed getters related to candidate selection and full run order.
   },
 });
