@@ -176,11 +176,11 @@ export default {
     );
 
     // FORMAT TIME INPUT:
-    // We assume the user types only digits.
-    //  • 1–2 digits: assume hour only (no colon yet)
+    // The user types only digits.
+    //  • 1–2 digits: assume hour only.
     //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
     //           otherwise, use the first digit as hour and the remaining two as minute.
-    //  • 4 or more digits: use first two as hour and next two as minute.
+    //  • 4 or more digits: use the first two as hour and the next two as minute.
     const formatTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
       if (!digits) {
@@ -201,14 +201,14 @@ export default {
           formatted = digits.slice(0, 1).padStart(2, "0") + ":" + digits.slice(1, 3);
         }
       } else {
-        // 4 or more digits: take first two as hour, next two as minute.
+        // 4 or more digits: take the first two as hour, next two as minute.
         formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
       }
       localBatchStartTime.value = formatted;
     };
 
     // VALIDATE TIME INPUT on blur:
-    // Re-read digits and rebuild a valid "hh:mm" string.
+    // Re-read the digits and rebuild a valid "hh:mm" string.
     const validateTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
       let hour = "";
