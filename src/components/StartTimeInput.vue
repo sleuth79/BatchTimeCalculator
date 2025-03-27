@@ -188,7 +188,7 @@ export default {
     //  • 1–2 digits: assume hour only (no colon yet)
     //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
     //           otherwise, use the first digit as hour and the remaining two as minute.
-    //  • 4 or more digits: use first two as hour and next two as minute.
+    //  • 4 or more digits: first check if the first two digits form a valid hour (0–24). If not, treat as one-digit hour.
     const formatTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
       // Remove a leading 0, if present.
@@ -210,7 +210,13 @@ export default {
           formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
         }
       } else {
-        formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
+        // For four or more digits, try to use two-digit hour first.
+        const potentialHour = Number(digits.slice(0, 2));
+        if (potentialHour > 24) {
+          formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
+        } else {
+          formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
+        }
       }
       localBatchStartTime.value = formatted;
     };
@@ -242,8 +248,15 @@ export default {
           minute = digits.slice(1, 3);
         }
       } else {
-        hour = digits.slice(0, 2);
-        minute = digits.slice(2, 4);
+        // For four or more digits, check if the first two digits form a valid hour.
+        const potentialHour = Number(digits.slice(0, 2));
+        if (potentialHour > 24) {
+          hour = digits.slice(0, 1);
+          minute = digits.slice(1, 3);
+        } else {
+          hour = digits.slice(0, 2);
+          minute = digits.slice(2, 4);
+        }
       }
       const h = Number(hour);
       const m = Number(minute);
