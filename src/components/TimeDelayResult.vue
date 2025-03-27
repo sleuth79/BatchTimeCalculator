@@ -17,7 +17,7 @@
         <!-- Always display headings for additional runs -->
         <p>
           Total Number of Additional Runs:
-          <strong>{{ timeDelayData.additionalRuns || 'N/A' }}</strong>
+          <strong>{{ totalAdditionalRuns !== null ? totalAdditionalRuns : 'N/A' }}</strong>
         </p>
         <p>
           Total Duration of Additional Runs:
@@ -110,6 +110,16 @@ export default {
       return null;
     });
 
+    // New computed property to sum sequentialBatchRuns and miscRuns
+    const totalAdditionalRuns = computed(() => {
+      let total = 0;
+      if (sequentialBatchRuns.value !== null) {
+        total += sequentialBatchRuns.value;
+      }
+      total += Number(gcStore.miscRuns || 0);
+      return total > 0 ? total : null;
+    });
+
     const hasDelayedRuns = computed(() => {
       const description = timeDelayData.value.prerunsDescription;
       const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
@@ -120,32 +130,6 @@ export default {
           description !== 'Delayed Runs') ||
         (totalDelayed > 0)
       );
-    });
-
-    const batchEndTimeAfter730 = computed(() => {
-      const todayStr = new Date().toLocaleDateString();
-      if (additionalRunsEndDate.value === todayStr) {
-        return false;
-      }
-      let timeString = timeDelayData.value.sequentialBatchActive
-        ? timeDelayData.value.sequentialBatchEndTime
-        : timeDelayData.value.additionalRunsEndTime;
-      if (!timeString) return false;
-      const parts = timeString.split(" ");
-      if (parts.length < 2) return false;
-      const timePart = parts[0];
-      const ampm = parts[1];
-      const timeParts = timePart.split(":");
-      if (timeParts.length < 2) return false;
-      let hour = parseInt(timeParts[0], 10);
-      const minute = parseInt(timeParts[1], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      return hour > 7 || (hour === 7 && minute >= 30);
     });
 
     const additionalRunsEndDate = computed(() => {
@@ -183,6 +167,32 @@ export default {
       return runEndDate.toLocaleDateString();
     });
 
+    const batchEndTimeAfter730 = computed(() => {
+      const todayStr = new Date().toLocaleDateString();
+      if (additionalRunsEndDate.value === todayStr) {
+        return false;
+      }
+      let timeString = timeDelayData.value.sequentialBatchActive
+        ? timeDelayData.value.sequentialBatchEndTime
+        : timeDelayData.value.additionalRunsEndTime;
+      if (!timeString) return false;
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return false;
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      return hour > 7 || (hour === 7 && minute >= 30);
+    });
+
     // Computed property to format the time delay required string
     const formattedTimeDelayRequired = computed(() => {
       const val = timeDelayData.value.timeDelayRequired;
@@ -199,6 +209,7 @@ export default {
       timeDelayData,
       resultsComplete,
       sequentialBatchRuns,
+      totalAdditionalRuns,
       hasDelayedRuns,
       batchEndTimeAfter730,
       additionalRunsEndDate,
