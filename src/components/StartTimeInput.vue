@@ -6,15 +6,14 @@
         <label class="heading-batch" for="batch-start-time">Batch Start Time:</label>
         <label class="heading-controls" for="control1">Batch Controls:</label>
       </div>
-      
+
       <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input using vue3-timepicker -->
+        <!-- Batch Start Time Input using vue-flatpickr-component -->
         <div class="batch-time-input">
-          <Timepicker
+          <flat-pickr
             v-model="localBatchStartTime"
-            format="HH:mm"
-            :minute-interval="1"
+            :config="fpConfig"
             id="batch-start-time"
             placeholder="Enter time"
           />
@@ -52,7 +51,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Additional Inputs -->
       <div class="input-group wait-input" v-if="showWaitInput">
         <label class="wait-label">15-Minute Wait:</label>
@@ -81,9 +80,9 @@
 import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
-// Import the vue3-timepicker and its styles.
-import Timepicker from "vue3-timepicker";
-import "vue3-timepicker/dist/VueTimepicker.css";
+// Import FlatPickr component and CSS.
+import FlatPickr from "vue-flatpickr-component";
+import "flatpickr/dist/flatpickr.css";
 
 // Simple debounce utility function.
 function debounce(fn, delay = 300) {
@@ -98,7 +97,7 @@ function debounce(fn, delay = 300) {
 
 export default {
   name: "StartTimeInput",
-  components: { PositionSelector, Timepicker },
+  components: { PositionSelector, FlatPickr },
   props: {
     disabledPositions: {
       type: Array,
@@ -112,8 +111,8 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding (stored as "hh:mm").
-    // With the timepicker, this will be a formatted "HH:mm" string.
+    // Batch Start Time binding (stored as "HH:mm").
+    // The flatpickr component will return a formatted time string.
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -122,6 +121,15 @@ export default {
         gcStore.setBatchStartTime(val);
       },
     });
+
+    // Configure Flatpickr for time-only mode in 24-hour format.
+    const fpConfig = {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i", // Hours:minutes, 24-hour clock.
+      time_24hr: true,
+      // You can add additional options here.
+    };
 
     // Wait toggle binding.
     const localWait15 = computed({
@@ -184,7 +192,6 @@ export default {
       }
     );
 
-    // Control range and validation functions remain unchanged.
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
       if (!isNaN(other) && other !== 0) {
@@ -254,7 +261,7 @@ export default {
 
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // We no longer need custom keydown handlers for time input as the timepicker handles input validation.
+    // Keydown handler for the control inputs (unchanged).
     const handleControlKeydown = (field, event) => {
       if (event.key === "0") {
         if (field === "control1" && localControl1.value === "") {
@@ -281,6 +288,7 @@ export default {
     return {
       isLoading,
       localBatchStartTime,
+      fpConfig,
       localWait15,
       setWait15,
       finalPosition,
@@ -332,12 +340,14 @@ export default {
   align-items: center;
 }
 
-.batch-time-input input,
-.batch-time-input .vue3-timepicker {
+/* Adjust styling for flatpickr instance */
+.batch-time-input .flatpickr-input {
   width: 75px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .time-input-note {
