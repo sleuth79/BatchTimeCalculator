@@ -1,221 +1,162 @@
 <template>
-  <div class="start-time-results">
-    <!-- Header elements remain unchanged -->
+  <div class="results-display">
+    <!-- Header with Results title on the left and current time/date on the right -->
+    <div class="results-header">
+      <h2 class="results-heading">Results</h2>
+      <div class="current-date-time">
+        {{ currentTimeString }} ({{ currentDate }})
+      </div>
+    </div>
+    <!-- Always show Selected GC -->
     <p>
-      Batch Start Time:
-      <span class="result-value">{{ displayBatchStartTime }}</span>
-    </p>
-    <p>
-      Controls:
-      <span class="result-value">{{ displayControls }}</span>
-    </p>
-    <p>
-      Final Position:
-      <span class="result-value">{{ displayFinalPosition }}</span>
-      <span v-if="displayTotalRuns">
-        &nbsp;| Total Runs (Including Controls):
-        <span class="result-value">{{ results.totalRuns }}</span>
+      Selected GC:
+      <span class="result-value">
+        {{ formattedSelectedGc }}
       </span>
     </p>
-    <p v-if="showDetailedResults && results.totalRunTime">
-      Total Run Time:
-      <span class="result-value">{{ results.totalRunTime }}</span>
-    </p>
-    <p v-if="showDetailedResults && results.batchEndTime">
-      Batch End Time:
-      <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
-        {{ displayBatchEndTime }}
-      </span>
-    </p>
-    <!-- Use the property passed from RunTable for the candidate -->
-    <p v-if="showDetailedResults && displayFinalPosition">
-      Closest Position Before 4:00 PM:
-      <span class="result-value">{{ runtableClosestPositionFull }}</span>
-    </p>
-    <div v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool">
-      <hr class="time-gap-hr" />
-      <p>
-        Time Gap to 7:30 AM:
-        <span class="result-value">{{ results.timeGapTo730AM }}</span>
-      </p>
+
+    <!-- Pass runtableClosestPositionFull to StartTimeResults -->
+    <StartTimeResults
+      :results="{ ...results, selectedPositionLabel: selectedPositionLabel }"
+      :runtableClosestPositionFull="runtableClosestPositionFull"
+      :selectedGcData="selectedGcData"
+      :delayedRunsExist="delayedRunsExist"
+      :additionalRunsExist="additionalRunsExist"
+    />
+
+    <!-- Display additional time delay section if applicable -->
+    <div v-if="results && Object.keys(results).length && timeDelaySectionExists">
+      <hr class="section-separator" />
+      <div class="time-delay-section">
+        <TimeDelayResult :timeDelayData="timeDelayResults" />
+      </div>
+    </div>
+
+    <!-- Toggle Button for Run Table -->
+    <template v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
+      <button class="toggle-run-table-button" @click="toggleRunTable">
+        {{ showRunTable ? "Hide Run Table" : "View Run Table" }}
+      </button>
+    </template>
+    
+    <!-- Run Table: Always mount if runs exist; control visibility with v-show -->
+    <div v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
+      <RunTable
+        :runs="runData"
+        v-model:selectedPositionLabel="selectedPositionLabel"
+        v-model:runtableClosestPositionFull="runtableClosestPositionFull"
+        v-show="showRunTable"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useGcStore } from "../store";
+import StartTimeResults from "./StartTimeResults.vue";
+import TimeDelayResult from "./TimeDelayResult.vue";
+import RunTable from "./RunTable.vue";
 
 export default {
-  name: "StartTimeResults",
-  props: {
-    results: {
-      type: Object,
-      default: () => ({})
-    },
-    startTime: {
-      type: Object,
-      default: () => ({})
-    },
-    selectedGcData: {
-      type: Object,
-      default: null
-    },
-    delayedRunsExist: {
-      type: Boolean,
-      default: false
-    },
-    additionalRunsExist: {
-      type: [Boolean, Number],
-      default: false
-    },
-    // This property is passed from the parent (and updated by RunTable)
-    runtableClosestPositionFull: {
-      type: String,
-      default: ""
-    }
+  name: "ResultsDisplay",
+  components: {
+    StartTimeResults,
+    TimeDelayResult,
+    RunTable,
   },
-  setup(props) {
+  props: {
+    showPlaceholders: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  setup() {
     const gcStore = useGcStore();
+
+    const selectedGcData = computed(() => gcStore.selectedGcData);
+    const results = computed(() => gcStore.results);
+    const timeDelayResults = computed(() => gcStore.timeDelayResults);
+
+    const batchStartTime = computed(() => gcStore.startTime.batchStartTime);
+    const batchStartTimeAMPM = computed(() => gcStore.startTime.batchStartTimeAMPM);
+    const wait15 = computed(() => gcStore.startTime.wait15);
+
+    const additionalRunsExist = computed(() => {
+      const tdr = timeDelayResults.value || {};
+      return (
+        Number(tdr.additionalRuns) > 0 ||
+        (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0)
+      );
+    });
+
+    const delayedRunsExist = computed(() => {
+      const tdr = timeDelayResults.value || {};
+      return Number(tdr.totalDelayedRuns) > 0;
+    });
+
+    const timeDelaySectionExists = computed(() => {
+      return additionalRunsExist.value || delayedRunsExist.value;
+    });
+
+    const showRunTable = ref(false);
+    const toggleRunTable = () => {
+      showRunTable.value = !showRunTable.value;
+    };
+
+    const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
+
+    // Simply return the runtime value as stored in the selected GC data.
+    const formattedSelectedGc = computed(() => {
+      if (!gcStore.selectedGcData) return "";
+      return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
+    });
+
+    // Create a reactive current time that updates every second.
+    const currentTime = ref(new Date());
+    setInterval(() => {
+      currentTime.value = new Date();
+    }, 1000);
+
+    // Format current time (24-hour format)
+    const currentTimeString = computed(() =>
+      currentTime.value.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+    );
+    // Format current date as MM/DD/YYYY
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    const displayBatchStartTime = computed(() => {
-      return (
-        props.results.batchStartTime ||
-        props.results.startTime ||
-        props.startTime.batchStartTime ||
-        props.startTime.startTime ||
-        ""
-      );
-    });
-
-    const showDetailedResults = computed(() => {
-      return /^\d{2}:\d{2}$/.test(displayBatchStartTime.value);
-    });
-
-    const displayFinalPosition = computed(() => {
-      return props.results.startTimeFinalPosition || props.startTime.finalPosition || "";
-    });
-
-    const displayTotalRuns = computed(() => !!props.results.totalRuns);
-    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
-
-    const displayControls = computed(() => {
-      const ctrl1 = gcStore.startTime.controls.control1;
-      const ctrl2 = gcStore.startTime.controls.control2;
-      if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
-        return "";
-      }
-      return `${ctrl1}, ${ctrl2}`;
-    });
-
-    const displayBatchEndTime = computed(() => {
-      if (!props.results.batchEndTime) return "";
-      const batchEndStr = props.results.batchEndTime;
-      const startStr = displayBatchStartTime.value;
-      if (!startStr) {
-        return `${batchEndStr} (${currentDate.value})`;
-      }
-      const startParts = startStr.split(":");
-      if (startParts.length < 3) return `${batchEndStr} (${currentDate.value})`;
-      const startHour = parseInt(startParts[0], 10);
-      const startMinute = parseInt(startParts[1], 10);
-      const startSecond = parseInt(startParts[2], 10);
-      const today = new Date();
-      const startDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        startHour,
-        startMinute,
-        startSecond
-      );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
-      if (isNaN(endDateCandidate.getTime())) {
-        return `${batchEndStr} (${currentDate.value})`;
-      }
-      if (endDateCandidate <= startDate) {
-        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
-      }
-      const endDateString = endDateCandidate.toLocaleDateString();
-      return `${batchEndStr} (${endDateString})`;
-    });
-
-    const initialBatchEndTimeAfter730 = computed(() => {
-      if (!props.results.batchEndTime) return false;
-      const batchEndStr = props.results.batchEndTime;
-      const startStr = displayBatchStartTime.value;
-      if (!startStr) return false;
-      const startParts = startStr.split(":");
-      if (startParts.length < 3) return false;
-      const startHour = parseInt(startParts[0], 10);
-      const startMinute = parseInt(startParts[1], 10);
-      const startSecond = parseInt(startParts[2], 10);
-      const today = new Date();
-      const startDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        startHour,
-        startMinute,
-        startSecond
-      );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${props.results.batchEndTime}`);
-      if (isNaN(endDateCandidate.getTime())) return false;
-      if (endDateCandidate <= startDate) {
-        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
-      }
-      if (endDateCandidate.getDate() === startDate.getDate()) return false;
-      const endHour = endDateCandidate.getHours();
-      const endMinute = endDateCandidate.getMinutes();
-      return endHour > 7 || (endHour === 7 && endMinute >= 30);
-    });
+    // Reactive properties for run table selected label and full candidate string.
+    const selectedPositionLabel = ref("");
+    const runtableClosestPositionFull = ref("");
 
     return {
+      selectedGcData,
+      formattedSelectedGc,
+      results,
+      timeDelayResults,
+      batchStartTime,
+      batchStartTimeAMPM,
+      wait15,
+      showRunTable,
+      toggleRunTable,
+      runData,
+      additionalRunsExist,
+      delayedRunsExist,
+      timeDelaySectionExists,
+      currentTimeString,
       currentDate,
-      displayBatchStartTime,
-      displayFinalPosition,
-      displayTotalRuns,
-      additionalRunsExistBool,
-      displayControls,
-      displayBatchEndTime,
-      initialBatchEndTimeAfter730,
-      showDetailedResults
+      selectedPositionLabel,
+      runtableClosestPositionFull,
     };
-  }
+  },
 };
 </script>
 
 <style scoped>
-.start-time-results {
-  padding: 0;
-}
-.start-time-results p {
-  margin-bottom: 0;
-  font-size: 1rem;
-  line-height: 1.2;
-  color: #333;
-}
-.result-value {
-  font-weight: bold;
-  font-size: 1rem;
-}
-.result-date {
-  font-weight: bold;
-  font-size: 1rem;
-  margin-left: 5px;
-}
-hr {
-  border: none;
-  border-top: 1px solid #ccc;
-  margin: 10px 0;
-  padding: 0;
-}
-.time-gap-hr {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-.highlight-orange {
-  color: orange;
-}
+/* ... your existing styles ... */
 </style>
