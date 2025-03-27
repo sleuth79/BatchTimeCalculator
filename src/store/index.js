@@ -61,7 +61,7 @@ export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
     selectedGc: null,
-    results: null,
+    results: {},  // results will be cleared when inputs are reset
     isLoading: false,
     error: null,
     calculationAttempted: false,
@@ -90,7 +90,6 @@ export const useGcStore = defineStore('gc', {
     },
     startTimeResetCounter: 0,
     additionalRuns: null,
-    // Removed candidate selection state and any run order properties.
   }),
   actions: {
     async fetchGcData() {
@@ -114,7 +113,7 @@ export const useGcStore = defineStore('gc', {
     },
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
-      // Update individual properties to clear inputs:
+      // Clear all input fields individually so that reactivity is maintained.
       this.startTime.batchStartTime = null;
       this.startTime.batchStartTimeAMPM = "";
       this.startTime.wait15 = selectedGcType === "Energy";
@@ -123,7 +122,9 @@ export const useGcStore = defineStore('gc', {
       this.startTime.controls.control1 = null;
       this.startTime.controls.control2 = null;
       this.lastStartTimeInputs = null;
-      // Increment counter to force component re-render if keyed
+      // Also clear the results so that the UI shows no results when inputs are null.
+      this.results = {};
+      // Increment counter to force component re-render if keyed on it.
       this.startTimeResetCounter++;
       console.log(`[${new Date().toLocaleTimeString()}] resetStartTime() called. New startTime:`, this.startTime);
     },
