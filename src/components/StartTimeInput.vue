@@ -20,7 +20,7 @@
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time (digits only)</span>
+          <span class="time-input-note">Enter 24 Hour Time (NO 0 FIRST)</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">

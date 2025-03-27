@@ -88,7 +88,7 @@ export default {
       const order = [];
       order.push("Blank");
       order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-      order.push(`1st Control - ${biggerControl.value}`);
+      order.push(`1st Control : ${biggerControl.value}`);
 
       const samples = sampleAllowed.value.filter(n => n <= finalPos);
 
@@ -109,7 +109,7 @@ export default {
         for (const s of group2) {
           order.push(`Position ${s}`);
         }
-        order.push(`3rd Control - ${biggerControl.value}`);
+        order.push(`3rd Control : ${biggerControl.value}`);
         return order;
       }
       const group1 = samples.filter(n => n <= 12);
@@ -122,7 +122,7 @@ export default {
       for (const s of group2) {
         order.push(`Position ${s}`);
       }
-      const thirdLabel = `3rd Control - ${biggerControl.value}`;
+      const thirdLabel = `3rd Control : ${biggerControl.value}`;
       const indexOf22 = order.indexOf("Position 22");
       if (indexOf22 !== -1) {
         order.splice(indexOf22 + 1, 0, thirdLabel);
@@ -139,7 +139,7 @@ export default {
       for (const s of group3) {
         order.push(`Position ${s}`);
       }
-      order.push(`4th Control - ${smallerControl.value}`);
+      order.push(`4th Control : ${smallerControl.value}`);
       return order;
     }
 
