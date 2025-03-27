@@ -341,26 +341,19 @@ export default {
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     // --- Keydown handler for the start time input ---
-    // If the start time is empty and "0" is pressed, prevent it and shift focus to Control 1.
+    // If the field is empty and "0" is pressed, prevent it.
     const handleTimeKeydown = (event) => {
       if (event.key === "0" && localBatchStartTime.value === "") {
         event.preventDefault();
-        if (control1InputRef.value) {
-          control1InputRef.value.focus();
-        }
       }
     };
 
     // --- Keydown handler for the control inputs ---
-    // For control1: if empty and "0" is pressed, prevent it and move focus to Control 2.
-    // For control2: if empty and "0" is pressed, simply prevent it.
+    // For each control, if empty and "0" is pressed, prevent it.
     const handleControlKeydown = (field, event) => {
       if (event.key === "0") {
         if (field === "control1" && localControl1.value === "") {
           event.preventDefault();
-          if (control2InputRef.value) {
-            control2InputRef.value.focus();
-          }
         } else if (field === "control2" && localControl2.value === "") {
           event.preventDefault();
         }
