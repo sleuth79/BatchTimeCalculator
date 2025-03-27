@@ -138,6 +138,7 @@ export const useGcStore = defineStore('gc', {
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
+      // Removed automatic trigger here. The calculation will run only when all inputs are set.
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
@@ -157,7 +158,7 @@ export const useGcStore = defineStore('gc', {
       console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
       console.log("Batch Start Time:", this.startTime.batchStartTime);
       
-      // Ensure the batchStartTime is provided.
+      // If batchStartTime is not provided, update results with partial info and exit.
       if (!this.startTime.batchStartTime) {
         console.log("Guard: Missing batchStartTime");
         this.results = { mode: "start-time" };
@@ -172,17 +173,22 @@ export const useGcStore = defineStore('gc', {
         console.log(`Derived AM/PM from 24‑hour input: ${ampmValue}`);
       }
       
-      // Format the batch start time to a 12‑hour display string (e.g. "1:00:00 PM")
+      // Format the batch start time to a 12‑hour display string (e.g. "10:00:00 AM")
       const formattedBatchStartTime = formatTime(dt);
       
-      // Update results with the properly formatted batch start time.
-      this.results = {
+      // Build partial results using what is available.
+      const partialResults = {
         mode: "start-time",
         batchStartTime: formattedBatchStartTime,
         batchStartTimeAMPM: ampmValue,
+        startTimeFinalPosition: this.startTime.finalPosition,
+        wait15: this.startTime.wait15,
       };
       
-      // If finalPosition is missing, exit early.
+      // Update results with partial data.
+      this.results = { ...partialResults };
+      
+      // Only perform full calculation if all required fields are provided.
       if (!this.startTime.finalPosition) {
         console.log("Guard: Missing finalPosition");
         return;
@@ -194,6 +200,7 @@ export const useGcStore = defineStore('gc', {
         return;
       }
       
+      // All required inputs are provided—perform full calculation.
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
@@ -208,16 +215,12 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      // Update results with the rest of the computed values.
+      // Update results with full calculated values.
       this.results = {
-        mode: "start-time",
+        ...partialResults,
         selectedGc: this.allGcData[this.selectedGc]
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc,
-        batchStartTime: formattedBatchStartTime,
-        batchStartTimeAMPM: ampmValue,
-        startTimeFinalPosition: this.startTime.finalPosition,
-        wait15: this.startTime.wait15,
         totalRuns: calcResults.totalRuns,
         totalRunTime: calcResults.totalRunTime,
         batchEndTime: calcResults.batchEndTime,
