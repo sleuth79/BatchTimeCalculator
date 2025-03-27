@@ -164,17 +164,21 @@ export const useGcStore = defineStore('gc', {
         return;
       }
       
+      // Convert the 24‑hour string to a Date object and derive a formatted 12‑hour time.
+      const dt = parse24HourTimeToDate(this.startTime.batchStartTime);
       let ampmValue = this.startTime.batchStartTimeAMPM;
       if (!ampmValue) {
-        const dt = parse24HourTimeToDate(this.startTime.batchStartTime);
         ampmValue = dt.getHours() >= 12 ? "PM" : "AM";
         console.log(`Derived AM/PM from 24‑hour input: ${ampmValue}`);
       }
       
-      // Update results with the batch start time info.
+      // Format the batch start time to a 12‑hour display string (e.g. "1:00:00 PM")
+      const formattedBatchStartTime = formatTime(dt);
+      
+      // Update results with the properly formatted batch start time.
       this.results = {
         mode: "start-time",
-        batchStartTime: this.startTime.batchStartTime,
+        batchStartTime: formattedBatchStartTime,
         batchStartTimeAMPM: ampmValue,
       };
       
@@ -204,14 +208,13 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      // Candidate selection and full run order logic have been removed.
-      
+      // Update results with the rest of the computed values.
       this.results = {
         mode: "start-time",
         selectedGc: this.allGcData[this.selectedGc]
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc,
-        batchStartTime: this.startTime.batchStartTime,
+        batchStartTime: formattedBatchStartTime,
         batchStartTimeAMPM: ampmValue,
         startTimeFinalPosition: this.startTime.finalPosition,
         wait15: this.startTime.wait15,
