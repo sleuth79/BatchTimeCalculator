@@ -7,19 +7,28 @@ import {
 /**
  * Parses a start time string (e.g. "10:00:30" or "10:00") with an AM/PM indicator.
  * Defaults missing seconds to "00".
+ * 
+ * Updated: If the provided hour is greater than 12, the function assumes the input
+ * is already in 24‑hour format and does not apply further AM/PM conversion.
  */
 function parseStartTime(batchStartTime, ampm) {
   const parts = batchStartTime.split(':');
-  const hours = parseInt(parts[0], 10);
+  let hours = parseInt(parts[0], 10);
   const minutes = parseInt(parts[1], 10);
   const seconds = parseInt(parts[2] || "00", 10);
   
-  let startHour = hours;
-  if (ampm === 'PM' && hours !== 12) startHour += 12;
-  if (ampm === 'AM' && hours === 12) startHour = 0;
+  // Only apply AM/PM conversion if hours is 12 or below (i.e. input is in 12-hour format)
+  if (hours <= 12) {
+    if (ampm === 'PM' && hours !== 12) {
+      hours += 12;
+    }
+    if (ampm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  }
   
   const batchStartTimeDate = new Date();
-  batchStartTimeDate.setHours(startHour, minutes, seconds, 0);
+  batchStartTimeDate.setHours(hours, minutes, seconds, 0);
   return batchStartTimeDate;
 }
 
