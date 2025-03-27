@@ -29,11 +29,16 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display Closest Position Before 4:00 PM using the run table prop -->
+    <!-- Display candidate or batch end time if no candidate is found -->
     <p v-if="showDetailedResults && displayFinalPosition">
-      Closest Position Before 4:00 PM:
+      {{ candidateDisplayLabel }}
       <span class="result-value">
-        {{ runtableClosestPositionFull }}
+        <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
+          {{ results.batchEndTime }}
+        </template>
+        <template v-else>
+          {{ runtableClosestPositionFull }}
+        </template>
       </span>
     </p>
     <div
@@ -190,6 +195,17 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
+    // Computed property to decide which candidate label to show.
+    const candidateDisplayLabel = computed(() => {
+      if (
+        props.runtableClosestPositionFull &&
+        props.runtableClosestPositionFull.startsWith("No candidate found")
+      ) {
+        return "This Batch Ends At:";
+      }
+      return "Closest Position Before 4:00 PM:";
+    });
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -199,42 +215,43 @@ export default {
       displayControls,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
-      showDetailedResults
+      showDetailedResults,
+      candidateDisplayLabel
     };
   }
 };
 </script>
 
 <style scoped>
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.start-time-results {
+  padding: 0;
 }
-
-/* Reduce bottom margin of the Results heading */
-.results-header h2 {
-  margin: 0; /* was: 0 0 5px 0; */
-  font-size: 2.1rem;
-  color: #131313;
-  text-align: left;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+.start-time-results p {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #333;
 }
-
-/* Remove extra top margin from the paragraph following the header */
-.results-display > p {
-  margin-top: 0;
-}
-
-.current-date-time {
-  text-align: right;
+.result-value {
   font-weight: bold;
+  font-size: 1rem;
 }
-
-.toggle-run-table-button {
-  width: 150px;
-  text-align: center;
-  display: block;
-  margin-top: 15px;
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
+}
+hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+  padding: 0;
+}
+.time-gap-hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.highlight-orange {
+  color: orange;
 }
 </style>
