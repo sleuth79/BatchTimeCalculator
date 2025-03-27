@@ -165,16 +165,18 @@ export default {
   align-items: center;
 }
 
-/* Right align the current date/time */
+/* Right align the current date/time and bold it */
 .current-date-time {
   text-align: right;
+  font-weight: bold;
 }
 
 /* Style for the toggle button: the button is aligned left in its container,
-   has a fixed width of 200px, and the text inside is centered */
+   has a fixed width of 150px, centered text, and added top margin for spacing */
 .toggle-run-table-button {
-  width: 200px;
+  width: 150px;
   text-align: center;
   display: block;
+  margin-top: 15px;
 }
 </style>
