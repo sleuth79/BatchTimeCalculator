@@ -15,11 +15,11 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hhmm or hh:mm"
+            placeholder="hh:mm"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time (digits only or with colon)</span>
+          <span class="time-input-note">Enter 24 Hour Time</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -104,7 +104,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding (stored as "hh:mm")
+    // Batch Start Time binding (24‑hour format only)
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -140,9 +140,12 @@ export default {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
-    watch(() => gcStore.startTime.finalPosition, (newVal) => {
-      finalPosition.value = newVal;
-    });
+    watch(
+      () => gcStore.startTime.finalPosition,
+      (newVal) => {
+        finalPosition.value = newVal;
+      }
+    );
 
     watch(() => gcStore.selectedGc, (newGc) => {
       if (newGc && gcStore.allGcData[newGc]?.type === "Energy") {
@@ -165,82 +168,75 @@ export default {
     
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
-    watch([() => localControl1.value, () => localControl2.value], () => {
-      recalculateResults();
-    });
-
-    // FORMAT TIME INPUT
-    // If the user types a colon, simply remove any unwanted characters but don't reformat.
-    const formatTimeInput = () => {
-      let value = localBatchStartTime.value;
-      if (value.includes(":")) {
-        // Remove any characters except digits and colon.
-        value = value.replace(/[^\d:]/g, "");
-        localBatchStartTime.value = value;
-        return;
+    watch(
+      [() => localControl1.value, () => localControl2.value],
+      () => {
+        recalculateResults();
       }
-      
-      // Otherwise, work only with digits.
-      let digits = value.replace(/\D/g, "");
-      if (!digits) {
+    );
+
+    // Updated formatting function:
+    const formatTimeInput = () => {
+      // Remove non-digit characters.
+      let value = localBatchStartTime.value.replace(/\D/g, "");
+      if (!value) {
         localBatchStartTime.value = "";
         return;
       }
-      let formatted = "";
-      if (digits.length <= 2) {
-        // Hour only.
-        formatted = digits;
-      } else if (digits.length === 3) {
-        const firstTwo = Number(digits.slice(0, 2));
-        if (firstTwo >= 10 && firstTwo <= 24) {
-          // Use first two as hour, last as minute.
-          formatted = digits.slice(0, 2) + ":" + digits.slice(2);
-        } else {
-          // Otherwise, first digit as hour and remaining two as minute.
-          formatted = digits.slice(0, 1).padStart(2, "0") + ":" + digits.slice(1, 3);
-        }
+
+      // If the user enters 1 or 2 digits (just an hour), do not add a colon yet.
+      if (value.length <= 2) {
+        localBatchStartTime.value = value;
       } else {
-        // 4 or more digits: take the first two as hour and the next two as minute.
-        formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
+        // For three digits, pad the hour to two digits.
+        if (value.length === 3) {
+          value = "0" + value;
+        }
+        // Insert colon between hour and minute parts.
+        localBatchStartTime.value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
-      localBatchStartTime.value = formatted;
+      timeInputError.value = "";
     };
 
-    // VALIDATE TIME INPUT on blur
-    // Re-read the digits and rebuild a valid "hh:mm" string.
+    // Updated validation function:
     const validateTimeInput = () => {
-      let digits = localBatchStartTime.value.replace(/\D/g, "");
-      let hour = "";
-      let minute = "";
-      if (!digits) {
-        localBatchStartTime.value = "";
+      let timeString = localBatchStartTime.value;
+
+      // If no colon is present, assume minutes are "00"
+      if (!timeString.includes(":")) {
+        // Pad the hour to two digits if needed.
+        if (timeString.length === 1) {
+          timeString = "0" + timeString;
+        }
+        timeString += ":00";
+        localBatchStartTime.value = timeString;
+      }
+
+      const parts = timeString.split(":");
+      if (parts.length !== 2) {
+        timeInputError.value = "Invalid format. Please enter time as hh:mm (leading zero not required).";
         return;
       }
-      if (digits.length <= 2) {
-        hour = digits.padStart(2, "0");
-        minute = "00";
-      } else if (digits.length === 3) {
-        const firstTwo = Number(digits.slice(0, 2));
-        if (firstTwo >= 10 && firstTwo <= 24) {
-          hour = digits.slice(0, 2);
-          minute = digits.slice(2, 3).padStart(2, "0");
-        } else {
-          hour = digits.slice(0, 1).padStart(2, "0");
-          minute = digits.slice(1, 3);
-        }
-      } else {
-        hour = digits.slice(0, 2);
-        minute = digits.slice(2, 4);
-      }
-      const h = Number(hour);
-      const m = Number(minute);
-      if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) {
+      const [hourStr, minuteStr] = parts;
+      const hour = Number(hourStr);
+      const minute = Number(minuteStr);
+
+      if (
+        isNaN(hour) ||
+        isNaN(minute) ||
+        hour < 0 ||
+        hour > 24 ||
+        minute < 0 ||
+        minute > 59
+      ) {
         localBatchStartTime.value = "";
         timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
         return;
       }
+
+      // Always format to hh:mm (e.g., "9:00" becomes "09:00")
       localBatchStartTime.value =
-        (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+        (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute;
     };
 
     const recalculateResults = () => {
@@ -252,10 +248,14 @@ export default {
       recalculateResults();
     };
 
-    watch(() => gcStore.startTime.controls, (newControls) => {
-      localControl1.value = newControls?.control1 ?? "";
-      localControl2.value = newControls?.control2 ?? "";
-    }, { deep: true });
+    watch(
+      () => gcStore.startTime.controls,
+      (newControls) => {
+        localControl1.value = newControls?.control1 ?? "";
+        localControl2.value = newControls?.control2 ?? "";
+      },
+      { deep: true }
+    );
 
     const control1Range = computed(() => {
       const other = Number(localControl2.value);
