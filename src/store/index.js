@@ -46,6 +46,10 @@ function fallbackFormatDuration(ms) {
   We assume the time is for "today."
 */
 function parse24HourTimeToDate(timeStr) {
+  // If there's no colon, assume minutes are "00" and pad hour if necessary.
+  if (!timeStr.includes(":")) {
+    timeStr = timeStr.length === 1 ? "0" + timeStr + ":00" : timeStr.padStart(2, "0") + ":00";
+  }
   const [hourStr, minuteStr] = timeStr.split(":");
   const date = new Date();
   date.setHours(Number(hourStr), Number(minuteStr), 0, 0);
