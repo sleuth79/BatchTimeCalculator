@@ -158,5 +158,23 @@ export default {
 </script>
 
 <style scoped>
-/* ... your existing styles ... */
+/* Flex layout for the header */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Right align the current date/time */
+.current-date-time {
+  text-align: right;
+}
+
+/* Style for the toggle button: the button is aligned left in its container,
+   has a fixed width of 200px, and the text inside is centered */
+.toggle-run-table-button {
+  width: 200px;
+  text-align: center;
+  display: block;
+}
 </style>
