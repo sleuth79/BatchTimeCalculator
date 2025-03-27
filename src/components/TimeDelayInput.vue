@@ -28,7 +28,7 @@
               @input="limitAdditionalRuns"
             />
             <p class="caveat additional-runs-caveat">
-              If no batches are currently running, select a GC and input additional runs to calculate the run time based on the current time of day.
+              If no batches are currently running, select a GC and input misc additional runs to calculate the run time based on the current time of day.
             </p>
           </div>
         </div>

@@ -15,17 +15,16 @@
         </p>
       </div>
       <div>
+        <!-- New headings for additional runs -->
         <p v-if="Number(timeDelayData.additionalRuns) > 0">
-          Misc Additional Runs:
+          Total Number of Additional Runs:
           <strong>{{ timeDelayData.additionalRuns }}</strong>
         </p>
-        <!-- Removed Total Runs heading -->
-        <!-- New heading for Duration of Additional Runs -->
         <p
           v-if="timeDelayData.additionalRunsDuration !== null &&
                 timeDelayData.additionalRunsDuration !== ''"
         >
-          Duration of Additional Runs:
+          Total Duration of Additional Runs:
           <strong>{{ timeDelayData.additionalRunsDuration }}</strong>
         </p>
         <p>
@@ -64,13 +63,6 @@
           Time Gap to 7:30 AM:
           <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
         </p>
-        <!-- Comment out the calibration/delayed runs result line -->
-        <!--
-        <p>
-          Delayed Runs:
-          <strong>{{ timeDelayData.prerunsDescription }}</strong>
-        </p>
-        -->
         <p>
           Total Number of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
@@ -122,8 +114,6 @@ export default {
       return null;
     });
 
-    // We no longer use totalRunsHeading since it's been removed.
-
     const hasDelayedRuns = computed(() => {
       const description = timeDelayData.value.prerunsDescription;
       const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
@@ -136,7 +126,6 @@ export default {
       );
     });
 
-    // Updated: Check if the additional runs end time is after 7:30 PM (i.e. 19:30 in 24‑hour time).
     const batchEndTimeAfter730 = computed(() => {
       const todayStr = new Date().toLocaleDateString();
       if (additionalRunsEndDate.value === todayStr) {
@@ -160,8 +149,7 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // Now check if the time is after 7:30 PM (19:30).
-      return hour > 19 || (hour === 19 && minute >= 30);
+      return hour > 7 || (hour === 7 && minute >= 30);
     });
 
     const additionalRunsEndDate = computed(() => {
