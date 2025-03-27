@@ -12,10 +12,6 @@
         <p>
           Final Position for Sequential Batch:
           <strong>{{ timeDelayData.sequentialFinalPosition }}</strong>
-          <span v-if="sequentialBatchRuns !== null">
-            &nbsp;| Total Runs (Including Controls):
-            <strong>{{ sequentialBatchRuns }}</strong>
-          </span>
         </p>
       </div>
       <div>
@@ -23,13 +19,7 @@
           Misc Additional Runs:
           <strong>{{ timeDelayData.additionalRuns }}</strong>
         </p>
-        <!-- Flip the order: Total Runs comes first -->
-        <!--
-        <p v-if="timeDelayData.totalRuns">
-          {{ totalRunsHeading }}:
-          <strong>{{ timeDelayData.totalRuns }}</strong>
-        </p>
-        -->
+        <!-- Removed Total Runs heading -->
         <!-- New heading for Duration of Additional Runs -->
         <p
           v-if="timeDelayData.additionalRunsDuration !== null &&
@@ -132,7 +122,7 @@ export default {
       return null;
     });
 
-    const totalRunsHeading = computed(() => "Total Runs (Initial Batch + Additional Runs)");
+    // We no longer use totalRunsHeading since it's been removed.
 
     const hasDelayedRuns = computed(() => {
       const description = timeDelayData.value.prerunsDescription;
@@ -146,6 +136,7 @@ export default {
       );
     });
 
+    // Updated: Check if the additional runs end time is after 7:30 PM (i.e. 19:30 in 24‑hour time).
     const batchEndTimeAfter730 = computed(() => {
       const todayStr = new Date().toLocaleDateString();
       if (additionalRunsEndDate.value === todayStr) {
@@ -169,7 +160,8 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      return hour > 7 || (hour === 7 && minute >= 30);
+      // Now check if the time is after 7:30 PM (19:30).
+      return hour > 19 || (hour === 19 && minute >= 30);
     });
 
     const additionalRunsEndDate = computed(() => {
@@ -223,7 +215,6 @@ export default {
       timeDelayData,
       resultsComplete,
       sequentialBatchRuns,
-      totalRunsHeading,
       hasDelayedRuns,
       batchEndTimeAfter730,
       additionalRunsEndDate,

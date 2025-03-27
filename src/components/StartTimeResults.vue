@@ -206,35 +206,35 @@ export default {
 </script>
 
 <style scoped>
-.start-time-results {
-  padding: 0;
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.start-time-results p {
-  margin-bottom: 0;
-  font-size: 1rem;
-  line-height: 1.2;
-  color: #333;
+
+/* Reduce bottom margin of the Results heading */
+.results-header h2 {
+  margin: 0; /* was: 0 0 5px 0; */
+  font-size: 2.1rem;
+  color: #131313;
+  text-align: left;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
-.result-value {
+
+/* Remove extra top margin from the paragraph following the header */
+.results-display > p {
+  margin-top: 0;
+}
+
+.current-date-time {
+  text-align: right;
   font-weight: bold;
-  font-size: 1rem;
 }
-.result-date {
-  font-weight: bold;
-  font-size: 1rem;
-  margin-left: 5px;
-}
-hr {
-  border: none;
-  border-top: 1px solid #ccc;
-  margin: 10px 0;
-  padding: 0;
-}
-.time-gap-hr {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-.highlight-orange {
-  color: orange;
+
+.toggle-run-table-button {
+  width: 150px;
+  text-align: center;
+  display: block;
+  margin-top: 15px;
 }
 </style>
