@@ -15,11 +15,11 @@
             type="text"
             id="batch-start-time"
             v-model="localBatchStartTime"
-            placeholder="hh:mm"
+            placeholder="hhmm"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
-          <span class="time-input-note">Enter 24 Hour Time</span>
+          <span class="time-input-note">Enter 24 Hour Time (digits only)</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -104,7 +104,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding (24‑hour format only)
+    // Batch Start Time binding (stored as "hh:mm")
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -175,68 +175,73 @@ export default {
       }
     );
 
-    // Updated formatting function:
+    // FORMAT TIME INPUT:
+    // We assume the user types only digits.
+    //  • 1–2 digits: assume hour only (no colon yet)
+    //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
+    //           otherwise, use the first digit as hour and the remaining two as minute.
+    //  • 4 or more digits: use first two as hour and next two as minute.
     const formatTimeInput = () => {
-      // Remove non-digit characters.
-      let value = localBatchStartTime.value.replace(/\D/g, "");
-      if (!value) {
+      let digits = localBatchStartTime.value.replace(/\D/g, "");
+      if (!digits) {
         localBatchStartTime.value = "";
         return;
       }
-
-      // If the user enters 1 or 2 digits (just an hour), do not add a colon yet.
-      if (value.length <= 2) {
-        localBatchStartTime.value = value;
-      } else {
-        // For three digits, pad the hour to two digits.
-        if (value.length === 3) {
-          value = "0" + value;
+      let formatted = "";
+      if (digits.length <= 2) {
+        // Hour only.
+        formatted = digits;
+      } else if (digits.length === 3) {
+        const firstTwo = Number(digits.slice(0, 2));
+        if (firstTwo >= 10 && firstTwo <= 24) {
+          // Use first two digits as hour, last digit as minute.
+          formatted = digits.slice(0, 2) + ":" + digits.slice(2);
+        } else {
+          // Otherwise, first digit is hour, remaining two as minute.
+          formatted = digits.slice(0, 1).padStart(2, "0") + ":" + digits.slice(1, 3);
         }
-        // Insert colon between hour and minute parts.
-        localBatchStartTime.value = value.slice(0, 2) + ":" + value.slice(2, 4);
+      } else {
+        // 4 or more digits: take first two as hour, next two as minute.
+        formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
       }
-      timeInputError.value = "";
+      localBatchStartTime.value = formatted;
     };
 
-    // Updated validation function:
+    // VALIDATE TIME INPUT on blur:
+    // Re-read digits and rebuild a valid "hh:mm" string.
     const validateTimeInput = () => {
-      let timeString = localBatchStartTime.value;
-
-      // If no colon is present, assume minutes are "00"
-      if (!timeString.includes(":")) {
-        // Pad the hour to two digits if needed.
-        if (timeString.length === 1) {
-          timeString = "0" + timeString;
-        }
-        timeString += ":00";
-        localBatchStartTime.value = timeString;
-      }
-
-      const parts = timeString.split(":");
-      if (parts.length !== 2) {
-        timeInputError.value = "Invalid format. Please enter time as hh:mm (leading zero not required).";
+      let digits = localBatchStartTime.value.replace(/\D/g, "");
+      let hour = "";
+      let minute = "";
+      if (!digits) {
+        localBatchStartTime.value = "";
         return;
       }
-      const [hourStr, minuteStr] = parts;
-      const hour = Number(hourStr);
-      const minute = Number(minuteStr);
-
-      if (
-        isNaN(hour) ||
-        isNaN(minute) ||
-        hour < 0 ||
-        hour > 24 ||
-        minute < 0 ||
-        minute > 59
-      ) {
+      if (digits.length <= 2) {
+        hour = digits.padStart(2, "0");
+        minute = "00";
+      } else if (digits.length === 3) {
+        const firstTwo = Number(digits.slice(0, 2));
+        if (firstTwo >= 10 && firstTwo <= 24) {
+          hour = digits.slice(0, 2);
+          minute = digits.slice(2, 3).padStart(2, "0");
+        } else {
+          hour = digits.slice(0, 1).padStart(2, "0");
+          minute = digits.slice(1, 3);
+        }
+      } else {
+        hour = digits.slice(0, 2);
+        minute = digits.slice(2, 4);
+      }
+      const h = Number(hour);
+      const m = Number(minute);
+      if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) {
         localBatchStartTime.value = "";
         timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
         return;
       }
-
-      // Always format to hh:mm (e.g., "9:00" becomes "09:00")
       localBatchStartTime.value =
-        (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute;
+        (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
     };
 
     const recalculateResults = () => {
