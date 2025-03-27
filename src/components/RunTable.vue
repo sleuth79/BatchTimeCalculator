@@ -164,7 +164,7 @@ export default {
         if (!parsed) return;
         const runDate = new Date();
         runDate.setHours(parsed.hour, parsed.minute, parsed.second || 0, 0);
-        // Changed to <= so runs ending exactly at 4:00 PM count.
+        // Use <= so runs ending exactly at 4:00 PM count.
         if (runDate <= cutoff) {
           if (!candidateTime || runDate > candidateTime) {
             candidateTime = runDate;
@@ -191,7 +191,7 @@ export default {
       return positionOrder.value[idx];
     });
 
-    // NEW: Compute a display string that includes the position label, start time, and end time.
+    // Compute a display string that includes the position label, start time, and end time.
     const runtableClosestPositionFull = computed(() => {
       if (!selectedCandidate.value) return "No candidate found";
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
@@ -202,22 +202,22 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // NEW: Compute batch start time parsed.
+    // Compute batch start time parsed.
     const batchStartTimeParsed = computed(() => {
       if (!gcStore.startTime.batchStartTime) return null;
       return parseTimeString(gcStore.startTime.batchStartTime);
     });
 
-    // NEW: Determine if at least one base run ends at or before 4:00 PM.
+    // Determine if at least one base run ends at or before 4:00 PM.
     const hasCandidateRun = computed(() => {
       return baseRuns.value.some(run => {
         if (!run.endTime) return false;
         const parsed = parseTimeString(run.endTime);
-        return parsed && parsed.hour < 16 || (parsed && parsed.hour === 16 && parsed.minute === 0);
+        return parsed && (parsed.hour < 16 || (parsed.hour === 16 && parsed.minute === 0));
       });
     });
 
-    // NEW: Should we highlight the candidate run?
+    // Should we highlight the candidate run?
     const shouldHighlight = computed(() => {
       if (!batchStartTimeParsed.value) return false;
       // If the batch starts at or after 4:00 PM, no highlighting.
