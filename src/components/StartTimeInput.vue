@@ -16,7 +16,7 @@
             id="batch-start-time"
             v-model="localBatchStartTime"
             placeholder="hhmm"
-            @keydown="handleBackspace"
+            @keydown="handleTimeKeydown"
             @input="formatTimeInput"
             @blur="validateTimeInput"
           />
@@ -28,9 +28,11 @@
             <input
               type="number"
               id="control1"
+              ref="control1Input"
               v-model.number="localControl1"
               :min="control1Range.min"
               :max="control1Range.max"
+              @keydown="handleControlKeydown('control1', $event)"
               @input="debouncedValidateControl1"
               class="control-input"
             />
@@ -39,9 +41,11 @@
             <input
               type="number"
               id="control2"
+              ref="control2Input"
               v-model.number="localControl2"
               :min="control2Range.min"
               :max="control2Range.max"
+              @keydown="handleControlKeydown('control2', $event)"
               @input="debouncedValidateControl2"
               class="control-input"
             />
@@ -177,32 +181,33 @@ export default {
     );
 
     // FORMAT TIME INPUT:
-    // We assume the user types only digits.
+    // Remove any non-digits, and if a leading "0" is present, drop it.
+    // Then, format according to:
     //  • 1–2 digits: assume hour only (no colon yet)
     //  • 3 digits: if the first two digits form a valid hour (10–24), then use them as hour and the last as minute;
     //           otherwise, use the first digit as hour and the remaining two as minute.
     //  • 4 or more digits: use first two as hour and next two as minute.
     const formatTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
+      // Remove a leading 0, if present.
+      if (digits.startsWith("0")) {
+        digits = digits.slice(1);
+      }
       if (!digits) {
         localBatchStartTime.value = "";
         return;
       }
       let formatted = "";
       if (digits.length <= 2) {
-        // Hour only.
         formatted = digits;
       } else if (digits.length === 3) {
         const firstTwo = Number(digits.slice(0, 2));
         if (firstTwo >= 10 && firstTwo <= 24) {
-          // Use first two digits as hour, last digit as minute.
           formatted = digits.slice(0, 2) + ":" + digits.slice(2);
         } else {
-          // Otherwise, first digit is hour, remaining two as minute.
-          formatted = digits.slice(0, 1).padStart(2, "0") + ":" + digits.slice(1, 3);
+          formatted = digits.slice(0, 1) + ":" + digits.slice(1, 3);
         }
       } else {
-        // 4 or more digits: take first two as hour, next two as minute.
         formatted = digits.slice(0, 2) + ":" + digits.slice(2, 4);
       }
       localBatchStartTime.value = formatted;
@@ -212,6 +217,10 @@ export default {
     // Re-read digits and rebuild a valid "hh:mm" string.
     const validateTimeInput = () => {
       let digits = localBatchStartTime.value.replace(/\D/g, "");
+      // Remove a leading 0 if present.
+      if (digits.startsWith("0")) {
+        digits = digits.slice(1);
+      }
       let hour = "";
       let minute = "";
       if (!digits) {
@@ -219,7 +228,7 @@ export default {
         return;
       }
       if (digits.length <= 2) {
-        hour = digits.padStart(2, "0");
+        hour = digits;
         minute = "00";
       } else if (digits.length === 3) {
         const firstTwo = Number(digits.slice(0, 2));
@@ -227,7 +236,7 @@ export default {
           hour = digits.slice(0, 2);
           minute = digits.slice(2, 3).padStart(2, "0");
         } else {
-          hour = digits.slice(0, 1).padStart(2, "0");
+          hour = digits.slice(0, 1);
           minute = digits.slice(1, 3);
         }
       } else {
@@ -241,8 +250,7 @@ export default {
         timeInputError.value = "Invalid time. Enter a valid time between 00:00 and 24:59.";
         return;
       }
-      localBatchStartTime.value =
-        (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+      localBatchStartTime.value = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
     };
 
     const recalculateResults = () => {
@@ -332,13 +340,36 @@ export default {
 
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // NEW: Handler to allow Backspace functionality on the start time input.
-    const handleBackspace = (event) => {
-      if (event.key === "Backspace" || event.keyCode === 8) {
-        // Allow the backspace key to function normally.
-        return;
+    // --- Keydown handler for the start time input ---
+    // If the start time is empty and "0" is pressed, prevent it and shift focus to Control 1.
+    const handleTimeKeydown = (event) => {
+      if (event.key === "0" && localBatchStartTime.value === "") {
+        event.preventDefault();
+        if (control1InputRef.value) {
+          control1InputRef.value.focus();
+        }
       }
     };
+
+    // --- Keydown handler for the control inputs ---
+    // For control1: if empty and "0" is pressed, prevent it and move focus to Control 2.
+    // For control2: if empty and "0" is pressed, simply prevent it.
+    const handleControlKeydown = (field, event) => {
+      if (event.key === "0") {
+        if (field === "control1" && localControl1.value === "") {
+          event.preventDefault();
+          if (control2InputRef.value) {
+            control2InputRef.value.focus();
+          }
+        } else if (field === "control2" && localControl2.value === "") {
+          event.preventDefault();
+        }
+      }
+    };
+
+    // Create refs for the control input elements.
+    const control1InputRef = ref(null);
+    const control2InputRef = ref(null);
 
     return {
       isLoading,
@@ -362,7 +393,10 @@ export default {
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
-      handleBackspace,
+      handleTimeKeydown,
+      handleControlKeydown,
+      control1Input: control1InputRef,
+      control2Input: control2InputRef,
     };
   },
 };
