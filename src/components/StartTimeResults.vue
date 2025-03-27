@@ -14,10 +14,6 @@
     <p>
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
-      <span v-if="displayTotalRuns">
-        &nbsp;| Total Runs (Including Controls):
-        <span class="result-value">{{ results.totalRuns }}</span>
-      </span>
     </p>
     <!-- Additional details -->
     <p v-if="showDetailedResults && results.totalRunTime">
@@ -100,7 +96,7 @@ export default {
       );
     });
 
-    // Updated: relaxed regex to allow optional seconds and AM/PM.
+    // Relaxed regex to allow optional seconds and AM/PM.
     const showDetailedResults = computed(() => {
       return /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value);
     });
@@ -116,14 +112,15 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Use store's controls directly.
+    // Updated displayControls: format as "X  | Y" with left control padded to 2 characters.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
       if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
         return "";
       }
-      return `${ctrl1}, ${ctrl2}`;
+      const ctrl1Str = ctrl1.toString().padEnd(2, " ");
+      return `${ctrl1Str} | ${ctrl2}`;
     });
 
     const displayBatchEndTime = computed(() => {
