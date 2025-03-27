@@ -136,12 +136,10 @@ export default {
 
     // Final Position binding: local ref synced with store.
     const finalPosition = ref(gcStore.startTime.finalPosition);
-    // Update store when local finalPosition changes.
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
-    // Watch store and update local finalPosition when it resets.
     watch(
       () => gcStore.startTime.finalPosition,
       (newVal) => {
@@ -168,7 +166,6 @@ export default {
       timeInputError.value = "";
     });
     
-    // When local control values change, recalculate the results.
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
     watch(
@@ -178,20 +175,20 @@ export default {
       }
     );
 
-    // Updated formatting function to support inputs without a leading zero.
+    // Updated formatting function:
     const formatTimeInput = () => {
-      // Remove all non-digit characters.
+      // Remove non-digit characters.
       let value = localBatchStartTime.value.replace(/\D/g, "");
-      if (value.length === 0) {
+      if (!value) {
         localBatchStartTime.value = "";
         return;
       }
 
-      // If input is 1 or 2 digits, assume it's just the hour.
+      // If the user enters 1 or 2 digits (just an hour), do not add a colon yet.
       if (value.length <= 2) {
         localBatchStartTime.value = value;
       } else {
-        // If input is 3 digits, pad with a zero to ensure two-digit hour.
+        // For three digits, pad the hour to two digits.
         if (value.length === 3) {
           value = "0" + value;
         }
@@ -199,19 +196,18 @@ export default {
         localBatchStartTime.value = value.slice(0, 2) + ":" + value.slice(2, 4);
       }
       timeInputError.value = "";
-
-      // Trigger validation when input length indicates a complete time.
-      if (localBatchStartTime.value.length >= 2) {
-        validateTimeInput();
-      }
     };
 
-    // Updated validation function
+    // Updated validation function:
     const validateTimeInput = () => {
       let timeString = localBatchStartTime.value;
 
-      // If no colon is present, assume minutes as "00"
+      // If no colon is present, assume minutes are "00"
       if (!timeString.includes(":")) {
+        // Pad the hour to two digits if needed.
+        if (timeString.length === 1) {
+          timeString = "0" + timeString;
+        }
         timeString += ":00";
         localBatchStartTime.value = timeString;
       }
@@ -238,8 +234,9 @@ export default {
         return;
       }
 
-      // Reformat the input to always show two digits for hours and minutes.
-      localBatchStartTime.value = (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute;
+      // Always format to hh:mm (e.g., "9:00" becomes "09:00")
+      localBatchStartTime.value =
+        (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute;
     };
 
     const recalculateResults = () => {
@@ -251,7 +248,6 @@ export default {
       recalculateResults();
     };
 
-    // Local Control Inputs & Dynamic Allowed Ranges
     watch(
       () => gcStore.startTime.controls,
       (newControls) => {
@@ -325,11 +321,9 @@ export default {
       };
     };
 
-    // Create debounced versions of the validation functions.
     const debouncedValidateControl1 = debounce(validateControl1, 300);
     const debouncedValidateControl2 = debounce(validateControl2, 300);
 
-    // Expose the parent's disabledPositions prop via computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
     return {
