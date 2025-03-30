@@ -1,8 +1,8 @@
 <template>
   <div class="run-table">
-    <table v-if="hasAnyRows">
+    <h3>Initial Batch</h3>
+    <table v-if="initialPositionOrder.length">
       <thead>
-        <!-- Common header for all runs -->
         <tr class="header-row">
           <th>Run Name</th>
           <th>Start Time</th>
@@ -11,70 +11,50 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Initial Batch Rows (from new code) -->
-        <template v-if="initialRows.length">
-          <tr class="title-row">
-            <td colspan="4" class="batch-header">Initial Batch</td>
-          </tr>
-          <tr v-for="(row, index) in initialRows" :key="'initial-' + index">
-            <td>{{ row.title }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
-            <td>{{ row.runNumber }}</td>
-          </tr>
-        </template>
-
-        <!-- Sequential Batch Rows -->
-        <template v-if="sequentialRows.length">
-          <tr class="title-row">
-            <td colspan="4" class="batch-header">Sequential Batch</td>
-          </tr>
-          <tr v-for="(row, index) in sequentialRows" :key="'seq-' + index">
-            <td class="run-column">{{ row.position }}</td>
-            <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
-          </tr>
-        </template>
-
-        <!-- Additional Runs Rows -->
-        <template v-if="additionalRows.length">
-          <tr class="title-row">
-            <td colspan="4" class="batch-header">Additional Runs</td>
-          </tr>
-          <tr v-for="(row, index) in additionalRows" :key="'add-' + index">
-            <td class="run-column">{{ row.position }}</td>
-            <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
-          </tr>
-          <!-- Total Duration of Additional Runs Row -->
-          <tr class="title-row">
-            <td colspan="4" class="batch-header">
-              Total Duration of Additional Runs: {{ additionalDurationFormatted }}
-            </td>
-          </tr>
-        </template>
-
-        <!-- Time Delay Row (if applicable) -->
-        <tr v-if="timeDelayRequired !== ''" class="title-row">
-          <td colspan="4" class="batch-header time-delay-header">
-            Time Delay: {{ timeDelayRequired }}
-          </td>
+        <!-- Render wait row if present -->
+        <tr v-if="runsHasWait">
+          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
+          <td>{{ waitRow.startTime }}</td>
+          <td>{{ waitRow.endTime }}</td>
+          <td>Wait</td>
         </tr>
+        <!-- Render the computed rows and highlight the closest candidate -->
+        <tr
+          v-for="(title, idx) in initialPositionOrder"
+          :key="'initial-' + idx"
+          :class="{ highlight: idx === runtableClosestCandidateIndex }"
+        >
+          <td>{{ title }}</td>
+          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
+          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
+          <td>{{ idx + 1 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-        <!-- Delayed Runs Rows -->
-        <template v-if="prebatchRows.length">
-          <tr class="title-row">
-            <td colspan="4" class="batch-header">Delayed Runs</td>
-          </tr>
-          <tr v-for="(row, index) in prebatchRows" :key="'del-' + index">
-            <td class="run-column">{{ row.position }}</td>
-            <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
-          </tr>
-        </template>
+  <!-- Sequential Batch Section: Only shown if a sequential final position exists -->
+  <div class="run-table" v-if="sequentialPositionOrder.length">
+    <h3>Sequential Batch</h3>
+    <table>
+      <thead>
+        <tr class="header-row">
+          <th>Run Name</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Run #</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(title, idx) in sequentialPositionOrder"
+          :key="'sequential-' + idx"
+        >
+          <td>{{ title }}</td>
+          <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
+          <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
+          <td>{{ idx + 1 }}</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -84,254 +64,200 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
-import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
-
-// Helper to convert a runtime string into milliseconds.
-function parseRunTime(timeStr) {
-  if (!timeStr) return 0;
-  if (typeof timeStr === "number") return timeStr * 60000;
-  const parts = timeStr.split(":");
-  if (parts.length === 2) {
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseInt(parts[1], 10);
-    return (minutes * 60 + seconds) * 1000;
-  } else if (parts.length === 3) {
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    const seconds = parseInt(parts[2], 10);
-    return (hours * 3600 + minutes * 60 + seconds) * 1000;
-  }
-  return 0;
-}
 
 export default {
   name: "RunTable",
   props: {
-    // No external "runs" prop is needed now,
-    // as we build rows from store data.
+    runs: {
+      type: Array,
+      required: true,
+      default: () => []
+    }
   },
-  setup() {
+  setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // ----- NEW CODE (First Batch) -----
-    // Re-create the new code’s computed properties for the initial batch.
-    // Here we build initialRows by mapping over the computed positionOrder.
+    // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
-      gcStore.results && gcStore.results.runs &&
-      String(gcStore.results.runs[0]?.position || "").toLowerCase() === "wait"
+      props.runs.length > 0 &&
+      String(props.runs[0].position).toLowerCase() === "wait"
     );
-    const waitRow = computed(() =>
-      runsHasWait.value ? gcStore.results.runs[0] : null
-    );
+    const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
+
+    // 2. Base runs = everything except the wait row (if present).
     const baseRuns = computed(() =>
-      runsHasWait.value ? gcStore.results.runs.slice(1) : gcStore.results?.runs || []
+      runsHasWait.value ? props.runs.slice(1) : props.runs
     );
-    const positionOrder = computed(() => {
-      // Using your new generatePositionOrder logic from your new code.
-      // For brevity, we assume positionOrder was computed already in your new code.
-      // (Replace this with your actual generatePositionOrder function if needed.)
-      if (!gcStore.startTime.finalPosition) return [];
-      const fp = Number(gcStore.startTime.finalPosition);
-      // Here we mimic the new code’s ordering:
-      let order = [];
-      for (let i = 1; i <= fp; i++) {
-        order.push(`Run ${i}`);
+
+    // 3. finalPosition from store (initial batch)
+    const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
+
+    // 4. Control values from store.
+    const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
+    const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
+    const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
+    const smallerControl = computed(() => Math.min(c1.value || 0, c2.value || 0));
+
+    // 5. Build a “master” list of allowed sample positions (3..32), excluding
+    //    the control numbers themselves and 16.
+    const sampleAllowed = computed(() => {
+      const arr = [];
+      for (let num = 3; num <= 32; num++) {
+        if (num === biggerControl.value || num === smallerControl.value || num === 16)
+          continue;
+        arr.push(num);
       }
-      return order;
-    });
-    const initialRows = computed(() => {
-      // For the initial batch, use the new code’s mapping.
-      return positionOrder.value.map((title, idx) => ({
-        title,
-        startTime: (baseRuns.value[idx] && baseRuns.value[idx].startTime) || "",
-        endTime: (baseRuns.value[idx] && baseRuns.value[idx].endTime) || "",
-        runNumber: idx + 1,
-      }));
+      return arr;
     });
 
-    // ----- OLD CODE (Extended Sections) -----
-    // Sequential Batch Rows
-    const sequentialRows = computed(() => {
-      const { sequentialFinalPosition, startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
-      if (!sequentialFinalPosition || !timeDelayResults.sequentialBatchActive) return [];
-      const gcType = String(allGcData[selectedGc]?.type || "").trim().toLowerCase();
-      const totalNonWaitRows = sequentialFinalPosition <= 15 ? sequentialFinalPosition + 2 : sequentialFinalPosition + 1;
-      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
-      let baseTime = new Date(startTime.batchEndTime);
-      if (startTime.wait15) {
-        baseTime = new Date(baseTime.getTime() + 15 * 60000);
-      }
-      const rows = [];
-      // Use last initial row number as offset – here we take initialRows length if exists.
-      const offset = initialRows.value.length ? initialRows.value[initialRows.value.length - 1].runNumber : 0;
-      for (let i = 0; i < totalNonWaitRows; i++) {
-        let computedTitle = "";
-        if (i === 0) {
-          computedTitle = "Blank";
-        } else if (i === 1) {
-          computedTitle = gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
-        } else if (i === 2) {
-          computedTitle = "Initial Control";
-        } else if (i === totalNonWaitRows - 1) {
-          computedTitle = "Final Control";
-        } else {
-          computedTitle = "Position " + i;
+    // 6. Helper to build the final run order with three scenarios.
+    function generatePositionOrder(finalPos, gcType) {
+      const order = [];
+      order.push("Blank");
+      order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
+      order.push(`1st Control : ${biggerControl.value}`);
+
+      const samples = sampleAllowed.value.filter(n => n <= finalPos);
+
+      if (finalPos < 13) {
+        for (const s of samples) {
+          order.push(`Position ${s}`);
         }
-        const rowStart = new Date(baseTime.getTime() + i * runtime);
-        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
-        rows.push({
-          position: offset + i + 1,
-          computedTitle,
-          startTime: formatTimeWithAmPmAndSeconds(rowStart),
-          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
-          endDate: rowEnd,
-        });
+        order.push(`2nd Control : ${smallerControl.value}`);
+        return order;
       }
-      return rows;
-    });
-
-    // Additional Runs Rows
-    const additionalRows = computed(() => {
-      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
-      const additionalCount = timeDelayResults && timeDelayResults.additionalRuns
-        ? Number(timeDelayResults.additionalRuns)
-        : 0;
-      if (!additionalCount) return [];
-      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
-      let baseTime;
-      if (sequentialRows.value.length) {
-        baseTime = sequentialRows.value[sequentialRows.value.length - 1].endDate;
+      if (finalPos < 23) {
+        const group1 = samples.filter(n => n <= 12);
+        const group2 = samples.filter(n => n > 12);
+        for (const s of group1) {
+          order.push(`Position ${s}`);
+        }
+        order.push(`2nd Control : ${smallerControl.value}`);
+        for (const s of group2) {
+          order.push(`Position ${s}`);
+        }
+        order.push(`3rd Control : ${biggerControl.value}`);
+        return order;
+      }
+      const group1 = samples.filter(n => n <= 12);
+      const group2 = samples.filter(n => n >= 13 && n <= 22);
+      const group3 = samples.filter(n => n > 22);
+      for (const s of group1) {
+        order.push(`Position ${s}`);
+      }
+      order.push(`2nd Control : ${smallerControl.value}`);
+      for (const s of group2) {
+        order.push(`Position ${s}`);
+      }
+      const thirdLabel = `3rd Control : ${biggerControl.value}`;
+      const indexOf22 = order.indexOf("Position 22");
+      if (indexOf22 !== -1) {
+        order.splice(indexOf22 + 1, 0, thirdLabel);
+      } else if (biggerControl.value === 22) {
+        const indexOf21 = order.indexOf("Position 21");
+        if (indexOf21 !== -1) {
+          order.splice(indexOf21 + 1, 0, thirdLabel);
+        } else {
+          order.push(thirdLabel);
+        }
       } else {
-        baseTime = new Date(startTime.batchEndTime);
+        order.push(thirdLabel);
       }
-      // Use last run number from initial + sequential rows as offset.
-      let lastRunNumber = initialRows.value.length;
-      if (sequentialRows.value.length) {
-        lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
+      for (const s of group3) {
+        order.push(`Position ${s}`);
       }
-      const rows = [];
-      for (let i = 0; i < additionalCount; i++) {
-        const runNumber = lastRunNumber + i + 1;
-        const computedTitle = `Add Run ${i + 1}`;
-        const rowStart = new Date(baseTime.getTime() + i * runtime);
-        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
-        rows.push({
-          position: runNumber,
-          computedTitle,
-          startTime: formatTimeWithAmPmAndSeconds(rowStart),
-          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
-          endDate: rowEnd,
-        });
-      }
-      return rows;
+      order.push(`4th Control : ${smallerControl.value}`);
+      return order;
+    }
+
+    // 7. Compute initial and sequential position orders.
+    const initialPositionOrder = computed(() => {
+      const fp = finalPosition.value;
+      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      return generatePositionOrder(fp, gcType);
+    });
+    const sequentialPositionOrder = computed(() => {
+      if (!gcStore.sequentialFinalPosition) return [];
+      const seqFP = Number(gcStore.sequentialFinalPosition);
+      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      return generatePositionOrder(seqFP, gcType);
     });
 
-    // Delayed (Prebatch) Runs Rows
-    const prebatchRows = computed(() => {
-      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
-      const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns
-        ? Number(timeDelayResults.totalDelayedRuns)
-        : 0;
-      if (!prebatchCount) return [];
-      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
-      let baseTime;
-      if (additionalRows.value.length) {
-        baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
-      } else if (sequentialRows.value.length) {
-        baseTime = sequentialRows.value[sequentialRows.value.length - 1].endDate;
-      } else if (startTime.batchEndTime) {
-        baseTime = new Date(startTime.batchEndTime);
-      } else {
-        baseTime = new Date();
-      }
-      let delayedStart;
-      if (timeDelayResults.delayedRunsStartTimeDate) {
-        delayedStart = new Date(timeDelayResults.delayedRunsStartTimeDate);
-      } else {
-        const delayHours = parseInt(timeDelayResults.timeDelayRequired, 10) || 0;
-        delayedStart = new Date(baseTime.getTime() + delayHours * 3600000);
-      }
-      const rows = [];
-      // Use last run number from previous sections as offset.
-      let lastRunNumber = initialRows.value.length;
-      if (sequentialRows.value.length) {
-        lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
-      }
-      if (additionalRows.value.length) {
-        lastRunNumber = additionalRows.value[additionalRows.value.length - 1].position;
-      }
-      for (let i = 0; i < prebatchCount; i++) {
-        const runNumber = lastRunNumber + i + 1;
-        const computedTitle = `Delayed Run ${i + 1}`;
-        const rowStart = new Date(delayedStart.getTime() + i * runtime);
-        const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
-        rows.push({
-          position: runNumber,
-          computedTitle,
-          startTime: formatTimeWithAmPmAndSeconds(rowStart),
-          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
-          endDate: rowEnd,
-        });
-      }
-      return rows;
+    // 8. Split baseRuns into initial and sequential groups.
+    const initialBaseRuns = computed(() =>
+      baseRuns.value.slice(0, initialPositionOrder.value.length)
+    );
+    const sequentialBaseRuns = computed(() => {
+      const startIndex = initialPositionOrder.value.length;
+      return baseRuns.value.slice(startIndex);
     });
 
-    // Total Duration of Additional Runs
-    const additionalDurationFormatted = computed(() => {
-      const allGcData = gcStore.allGcData;
-      const selectedGc = gcStore.selectedGc;
-      if (!selectedGc || !allGcData[selectedGc]) return "";
-      const runtimeStr = allGcData[selectedGc].runTime;
-      const runtimeMs = parseRunTime(runtimeStr);
-      let totalRunsCount = 0;
-      if (gcStore.timeDelayResults.sequentialBatchActive && gcStore.startTime.finalPosition) {
-        const seqPos = Number(gcStore.startTime.finalPosition);
-        const sequentialRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
-        const misc = Number(gcStore.miscAdditionalRuns || 0);
-        totalRunsCount = sequentialRuns + misc;
-      } else {
-        totalRunsCount = Number(gcStore.miscAdditionalRuns || 0);
-      }
-      let durationMs = totalRunsCount * runtimeMs;
-      const gcType = String(allGcData[selectedGc].type || "").trim().toLowerCase();
-      if (gcType === "energy" && gcStore.startTime.finalPosition) {
-        durationMs += 15 * 60000;
-      }
-      const hours = Math.floor(durationMs / 3600000);
-      const minutes = Math.floor((durationMs % 3600000) / 60000);
-      let formatted = "";
-      if (hours > 0) formatted += `${hours}h `;
-      formatted += `${minutes}m`;
-      return formatted.trim();
+    // 9. Compute the index of the initial batch run that is the closest candidate to 4:00 PM.
+    const runtableClosestCandidateIndex = computed(() => {
+      const base = initialBaseRuns.value;
+      if (!base || base.length === 0) return -1;
+      const cutoff = new Date();
+      cutoff.setHours(16, 0, 0, 0);
+      let candidateIndex = -1;
+      let candidateTime = null;
+      base.forEach((run, idx) => {
+        if (!run.endTime) return;
+        const parsed = parseTimeString(run.endTime);
+        if (!parsed) return;
+        const runDate = new Date();
+        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+        if (runDate < cutoff) {
+          if (!candidateTime || runDate > candidateTime) {
+            candidateTime = runDate;
+            candidateIndex = idx;
+          }
+        }
+      });
+      return candidateIndex;
     });
 
-    // Time Delay Info (if any)
-    const timeDelayRequired = computed(() => {
-      return gcStore.timeDelayResults && gcStore.timeDelayResults.timeDelayRequired
-        ? gcStore.timeDelayResults.timeDelayRequired
-        : "";
+    // 10. Compute the selected candidate run from initialBaseRuns.
+    const selectedCandidate = computed(() => {
+      const idx = runtableClosestCandidateIndex.value;
+      if (idx < 0) return null;
+      return initialBaseRuns.value[idx];
     });
 
-    // Determine if any rows exist
-    const hasAnyRows = computed(() => {
-      return (
-        initialRows.value.length ||
-        sequentialRows.value.length ||
-        additionalRows.value.length ||
-        prebatchRows.value.length
-      );
+    // 11. Compute a label for the selected candidate using the table's displayed order.
+    const selectedPositionLabel = computed(() => {
+      const idx = runtableClosestCandidateIndex.value;
+      if (idx < 0 || !initialPositionOrder.value || idx >= initialPositionOrder.value.length) {
+        return "No candidate found";
+      }
+      return initialPositionOrder.value[idx];
     });
+
+    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
+    const runtableClosestPositionFull = computed(() => {
+      if (!selectedCandidate.value) return "No candidate found";
+      return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
+    });
+
+    // Emit the new computed value so that parent components can use it
+    watch(runtableClosestPositionFull, (newVal) => {
+      emit("update:runtableClosestPositionFull", newVal);
+    }, { immediate: true });
 
     return {
-      initialRows,
-      sequentialRows,
-      additionalRows,
-      prebatchRows,
-      timeDelayRequired,
-      additionalDurationFormatted,
-      hasAnyRows,
+      gcStore,
+      // Expose the new computed properties
+      initialPositionOrder,
+      sequentialPositionOrder,
+      runsHasWait,
+      waitRow,
+      initialBaseRuns,
+      sequentialBaseRuns,
+      runtableClosestCandidateIndex,
+      selectedCandidate,
+      selectedPositionLabel,
+      runtableClosestPositionFull
     };
-  },
+  }
 };
 </script>
 
@@ -354,34 +280,28 @@ export default {
   border: none;
   text-align: center;
 }
-.run-column {
-  width: 80px;
-}
-.title-row .batch-header,
 .header-row {
   background-color: #f5f5f5;
   color: #333;
   font-weight: 600;
   letter-spacing: 0.05em;
 }
-.batch-header {
-  text-align: left;
-  font-size: 1.2rem;
-  background-color: #f5f5f5;
-  color: #333;
-  border: none;
-  padding: 10px 10px 5px;
-}
-.time-delay-header {
-  background-color: #f5f5f5;
-  color: #333;
-  font-style: italic;
-  font-size: 0.85rem;
-}
 .run-table tbody tr {
   border-bottom: 1px solid #eee;
 }
 .run-table tbody tr:last-child {
   border-bottom: none;
+}
+.highlight {
+  background-color: yellow;
+}
+.results {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #eef;
+  border: 1px solid #ccc;
+}
+.results h3 {
+  margin: 0 0 10px;
 }
 </style>
