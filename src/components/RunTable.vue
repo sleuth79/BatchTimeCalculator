@@ -22,7 +22,7 @@
         <tr
           v-for="(title, idx) in initialPositionOrder"
           :key="'initial-' + idx"
-          :class="{ highlight: idx === runtableClosestCandidateIndex }"
+          :class="{ highlight: shouldHighlightCandidate && idx === runtableClosestCandidateIndex }"
         >
           <td>{{ title }}</td>
           <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
@@ -75,7 +75,6 @@
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
             <td>{{ row.endTime }}</td>
-            <!-- When no initial batch exists, run numbers start at 1 -->
             <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
@@ -307,9 +306,22 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
+    // NEW: Determine if the batch end time is at or after 4:00 PM.
+    // Only if the last initial run's end time is 4:00 PM or later do we highlight a candidate.
+    const shouldHighlightCandidate = computed(() => {
+      if (!initialBaseRuns.value || initialBaseRuns.value.length === 0) return false;
+      const lastRunStr = initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
+      const parsed = parseTimeString(lastRunStr);
+      if (!parsed) return false;
+      const lastRunDate = new Date();
+      lastRunDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+      const cutoff = new Date();
+      cutoff.setHours(16, 0, 0, 0);
+      return lastRunDate >= cutoff;
+    });
+
     // 12. Compute the last main run number (initial + sequential).
     const lastMainRunNumber = computed(() => {
-      // If no initial batch inputs are provided, treat this as zero.
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
 
@@ -320,22 +332,22 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // Use sequentialBaseRuns endTime if initial batch exists; otherwise use batchEndTime.
+      // Use sequentialBaseRuns endTime if available; otherwise use initialBatchEndTime if available; otherwise use batchEndTime.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
+      } else if (initialBatchEndTime.value) {
+        baseTime = new Date(initialBatchEndTime.value);
       } else {
         baseTime = new Date(startTime.batchEndTime);
       }
-      // If no initial batch inputs, reset numbering to zero.
       const base = lastMainRunNumber.value || 0;
       const rows = [];
       for (let i = 0; i < additionalCount; i++) {
-        // Compute run number and also a display number that resets to 1 when base is zero.
         const runNumber = base + i + 1;
         const positionDisplay = base ? runNumber : i + 1;
         const computedTitle = `Add Run ${i + 1}`;
         const rowStart = new Date(baseTime.getTime() + i * runtime);
-        const rowEnd   = new Date(baseTime.getTime() + (i + 1) * runtime);
+        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
         rows.push({
           position: runNumber,
           positionDisplay,
@@ -374,8 +386,7 @@ export default {
       const rows = [];
       for (let i = 0; i < prebatchCount; i++) {
         const rowStart = new Date(delayedStart.getTime() + i * runtime);
-        const rowEnd   = new Date(delayedStart.getTime() + (i + 1) * runtime);
-        // Reset run numbering if no initial batch exists.
+        const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
         const runNumber = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) + i + 1;
         const positionDisplay = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) ? runNumber : i + 1;
         rows.push({
@@ -441,8 +452,8 @@ export default {
       timeDelayRequired,
       delayedRunSelected,
       lastMainRunNumber,
-      // Expose the new property for the parent's use.
       initialBatchEndTime,
+      shouldHighlightCandidate
     };
   }
 };
