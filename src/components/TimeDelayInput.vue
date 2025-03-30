@@ -4,8 +4,8 @@
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
       <div>
-        <!-- Sequential Batch Optional Field - only shown if the initial batch is calculated -->
-        <div class="sequential-batch-section" v-if="initialBatchCalculated">
+        <!-- Sequential Batch Final Position Selector - only shown if the initial batch is calculated -->
+        <div class="sequential-final-position" v-if="initialBatchCalculated">
           <label>
             Final Position For Sequential Batch:
           </label>
@@ -17,20 +17,20 @@
             field="sequential"
             v-model="sequentialFinalPosition"
           />
-          <!-- Additional Runs input -->
-          <div class="additional-runs-input">
-            <label>Misc Additional Runs:</label>
-            <input
-              type="number"
-              v-model="miscAdditionalRunsInput"
-              min="0"
-              max="99"
-              @input="limitAdditionalRuns"
-            />
-            <p class="caveat additional-runs-caveat">
-              If no batches are currently running, select a GC and input misc additional runs to calculate the run time based on the current time of day.
-            </p>
-          </div>
+        </div>
+        <!-- Misc Additional Runs Input (always visible) -->
+        <div class="additional-runs-input">
+          <label>Misc Additional Runs:</label>
+          <input
+            type="number"
+            v-model="miscAdditionalRunsInput"
+            min="0"
+            max="99"
+            @input="limitAdditionalRuns"
+          />
+          <p class="caveat additional-runs-caveat">
+            If no batches are currently running, select a GC and input misc additional runs to calculate the run time based on the current time of day.
+          </p>
         </div>
 
         <!-- Separator line between Additional Runs and Delayed Runs -->
