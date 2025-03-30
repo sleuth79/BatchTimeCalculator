@@ -1,8 +1,5 @@
 <template>
   <div class="run-table">
-    <!-- DEBUG: Output sequentialRows for verification -->
-    <pre>{{ sequentialRows }}</pre>
-
     <!-- Initial Batch Table -->
     <table v-if="initialPositionOrder.length">
       <thead>
@@ -344,11 +341,6 @@ export default {
           positionDisplay: idx + 1
         };
       });
-    });
-
-    // DEBUG: Watch sequentialRows and log its value.
-    watch(sequentialRows, (newVal) => {
-      console.log("sequentialRows:", newVal);
     });
 
     // 15. Additional Runs computed from timeDelayResults.additionalRuns.
