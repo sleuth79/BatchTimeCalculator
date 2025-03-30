@@ -34,14 +34,18 @@
     </div>
 
     <!-- Toggle Button for Run Table -->
-    <template v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
+    <template
+      v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
+    >
       <button class="toggle-run-table-button" @click="toggleRunTable">
         {{ showRunTable ? "Hide Run Table" : "View Run Table" }}
       </button>
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show -->
-    <div v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist">
+    <div
+      v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
+    >
       <RunTable
         :runs="runData"
         v-model:selectedPositionLabel="selectedPositionLabel"
