@@ -1,67 +1,75 @@
 <template>
   <div class="run-table">
-    <h3>Initial Batch</h3>
-    <table v-if="initialPositionOrder.length">
-      <thead>
-        <tr class="header-row">
-          <th>Run Name</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-          <th>Run #</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Render wait row if present -->
-        <tr v-if="runsHasWait">
-          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
-          <td>{{ waitRow.startTime }}</td>
-          <td>{{ waitRow.endTime }}</td>
-          <td>Wait</td>
-        </tr>
-        <!-- Render the computed rows and highlight the closest candidate -->
-        <tr
-          v-for="(title, idx) in initialPositionOrder"
-          :key="'initial-' + idx"
-          :class="{ highlight: idx === runtableClosestCandidateIndex }"
-        >
-          <td>{{ title }}</td>
-          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
-          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
-          <td>{{ idx + 1 }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <!-- Toggle button to show/hide the entire run table -->
+    <button @click="toggleRunTable">
+      {{ showRunTable ? 'Hide Run Table' : 'Show Run Table' }}
+    </button>
 
-  <!-- Sequential Batch Section: Only shown if a sequential final position exists -->
-  <div class="run-table" v-if="sequentialPositionOrder.length">
-    <h3>Sequential Batch</h3>
-    <table>
-      <thead>
-        <tr class="header-row">
-          <th>Run Name</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-          <th>Run #</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="(title, idx) in sequentialPositionOrder"
-          :key="'sequential-' + idx"
-        >
-          <td>{{ title }}</td>
-          <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
-          <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
-          <td>{{ idx + 1 }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Run Table Sections, only shown when toggled on -->
+    <div v-if="showRunTable">
+      <!-- Initial Batch Section (no heading for this one) -->
+      <table v-if="initialPositionOrder.length">
+        <thead>
+          <tr class="header-row">
+            <th>Run Name</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Run #</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Render wait row if present -->
+          <tr v-if="runsHasWait">
+            <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
+            <td>{{ waitRow.startTime }}</td>
+            <td>{{ waitRow.endTime }}</td>
+            <td>Wait</td>
+          </tr>
+          <!-- Render initial batch rows -->
+          <tr
+            v-for="(title, idx) in initialPositionOrder"
+            :key="'initial-' + idx"
+            :class="{ highlight: idx === runtableClosestCandidateIndex }"
+          >
+            <td>{{ title }}</td>
+            <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
+            <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
+            <td>{{ idx + 1 }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sequential Batch Section (only rendered if sequential batch exists) -->
+      <div v-if="hasSequentialBatch">
+        <h3>Sequential Batch</h3>
+        <table>
+          <thead>
+            <tr class="header-row">
+              <th>Run Name</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Run #</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(title, idx) in sequentialPositionOrder"
+              :key="'sequential-' + idx"
+            >
+              <td>{{ title }}</td>
+              <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
+              <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
+              <td>{{ idx + 1 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { computed, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
 
@@ -77,6 +85,12 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
+    // Toggle for showing/hiding the run table.
+    const showRunTable = ref(false);
+    const toggleRunTable = () => {
+      showRunTable.value = !showRunTable.value;
+    };
+
     // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
       props.runs.length > 0 &&
@@ -89,7 +103,7 @@ export default {
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // 3. finalPosition from store (initial batch)
+    // 3. finalPosition from store (for the initial batch)
     const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
 
     // 4. Control values from store.
@@ -98,8 +112,7 @@ export default {
     const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
     const smallerControl = computed(() => Math.min(c1.value || 0, c2.value || 0));
 
-    // 5. Build a “master” list of allowed sample positions (3..32), excluding
-    //    the control numbers themselves and 16.
+    // 5. Build a “master” list of allowed sample positions (3..32), excluding the control numbers and 16.
     const sampleAllowed = computed(() => {
       const arr = [];
       for (let num = 3; num <= 32; num++) {
@@ -170,14 +183,14 @@ export default {
       return order;
     }
 
-    // 7. Compute initial and sequential position orders.
+    // 7. Compute the initial and sequential position orders.
     const initialPositionOrder = computed(() => {
       const fp = finalPosition.value;
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       return generatePositionOrder(fp, gcType);
     });
     const sequentialPositionOrder = computed(() => {
-      if (!gcStore.sequentialFinalPosition) return [];
+      if (gcStore.sequentialFinalPosition === null || gcStore.sequentialFinalPosition === undefined) return [];
       const seqFP = Number(gcStore.sequentialFinalPosition);
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       return generatePositionOrder(seqFP, gcType);
@@ -192,7 +205,13 @@ export default {
       return baseRuns.value.slice(startIndex);
     });
 
-    // 9. Compute the index of the initial batch run that is the closest candidate to 4:00 PM.
+    // 9. Computed flag for sequential batch.
+    const hasSequentialBatch = computed(() => {
+      return gcStore.sequentialFinalPosition !== null &&
+             gcStore.sequentialFinalPosition !== undefined;
+    });
+
+    // 10. Compute the index of the initial batch run that is the closest candidate to 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
@@ -216,14 +235,14 @@ export default {
       return candidateIndex;
     });
 
-    // 10. Compute the selected candidate run from initialBaseRuns.
+    // 11. Compute the selected candidate run from initialBaseRuns.
     const selectedCandidate = computed(() => {
       const idx = runtableClosestCandidateIndex.value;
       if (idx < 0) return null;
       return initialBaseRuns.value[idx];
     });
 
-    // 11. Compute a label for the selected candidate using the table's displayed order.
+    // 12. Compute a label for the selected candidate using the table's displayed order.
     const selectedPositionLabel = computed(() => {
       const idx = runtableClosestCandidateIndex.value;
       if (idx < 0 || !initialPositionOrder.value || idx >= initialPositionOrder.value.length) {
@@ -232,22 +251,24 @@ export default {
       return initialPositionOrder.value[idx];
     });
 
-    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
+    // NEW: Compute a display string that includes the position label, start time, and end time.
     const runtableClosestPositionFull = computed(() => {
       if (!selectedCandidate.value) return "No candidate found";
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the new computed value so that parent components can use it
+    // Emit the new computed value so that parent components can use it.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
     return {
       gcStore,
-      // Expose the new computed properties
+      showRunTable,
+      toggleRunTable,
       initialPositionOrder,
       sequentialPositionOrder,
+      hasSequentialBatch,
       runsHasWait,
       waitRow,
       initialBaseRuns,
@@ -267,6 +288,9 @@ export default {
   padding: 0;
   background-color: #ffffff;
   font-family: "Aptos", sans-serif;
+}
+.run-table button {
+  margin-bottom: 10px;
 }
 .run-table table {
   width: 100%;
@@ -294,14 +318,5 @@ export default {
 }
 .highlight {
   background-color: yellow;
-}
-.results {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #eef;
-  border: 1px solid #ccc;
-}
-.results h3 {
-  margin: 0 0 10px;
 }
 </style>
