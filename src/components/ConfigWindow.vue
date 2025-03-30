@@ -23,7 +23,7 @@
         </tbody>
       </table>
 
-      <!-- Removed inner box wrapper -->
+      <!-- Settings Modification Section -->
       <SettingsModification
         :config="config"
         :sortedEntries="sortedEntries"
@@ -33,6 +33,13 @@
       <div class="revert-section">
         <button class="revert-button" @click="revertToDefaults">
           Revert to Defaults
+        </button>
+      </div>
+
+      <!-- Dark Mode Toggle Button Underneath Revert Button -->
+      <div class="dark-mode-section">
+        <button class="dark-mode-button" @click="toggleDarkMode">
+          Toggle Dark Mode
         </button>
       </div>
     </div>
@@ -51,7 +58,6 @@ export default {
     const isLoading = ref(true);
     const error = ref(null);
 
-    // Default Configuration with runTime values in mm:ss format.
     const defaultConfig = {
       "2024": { "name": "2024", "runTime": "24:53", "type": "Energy" },
       "1708": { "name": "1708", "runTime": "19:02", "type": "Energy" },
@@ -61,10 +67,8 @@ export default {
       "2180": { "name": "2180", "runTime": "18:22", "type": "Sulphur" }
     };
 
-    // Determine API endpoint (local vs Netlify function)
     const API_URL = "/.netlify/functions/update-config";
 
-    // Fetch Configuration with cache busting
     const fetchConfig = async () => {
       try {
         const response = await fetch(API_URL + `?v=${Date.now()}`);
@@ -74,7 +78,6 @@ export default {
         config.value = data;
       } catch (err) {
         error.value = "Could not load configuration. Using default settings.";
-        // Clone the default configuration.
         config.value = JSON.parse(JSON.stringify(defaultConfig));
       } finally {
         isLoading.value = false;
@@ -83,7 +86,6 @@ export default {
 
     onMounted(fetchConfig);
 
-    // Sort GC Entries by Type and Numerically (ascending order by GC name)
     const sortedEntries = computed(() => {
       if (!config.value) return [];
       return Object.entries(config.value)
@@ -94,7 +96,6 @@ export default {
         });
     });
 
-    // Update Configuration and force a full page reload upon success.
     const handleUpdateConfig = async (updatedConfig) => {
       try {
         const plainConfig = JSON.parse(JSON.stringify(updatedConfig));
@@ -125,7 +126,6 @@ export default {
       }
     };
 
-    // Revert Configuration to Default Values
     const revertToDefaults = () => {
       if (
         confirm(
@@ -137,6 +137,11 @@ export default {
       }
     };
 
+    // New dark mode toggle function
+    const toggleDarkMode = () => {
+      document.body.classList.toggle("dark-mode");
+    };
+
     return {
       config,
       sortedEntries,
@@ -144,12 +149,11 @@ export default {
       error,
       handleUpdateConfig,
       revertToDefaults,
+      toggleDarkMode,
     };
   },
   methods: {
     // Converts a runtime value to mm:ss format.
-    // If the runtime is a number, it converts the decimal minutes to mm:ss.
-    // If it's already a string with a colon, it returns it as-is.
     formatRuntime(runtime) {
       if (typeof runtime === "number") {
         const totalSeconds = Math.round(runtime * 60);
@@ -171,11 +175,10 @@ export default {
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  /* Drop shadow around the config box */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  max-height: 100vh; /* Ensures the window doesn't exceed the viewport height */
-  overflow-y: auto; /* Adds vertical scrolling when content overflows */
+  max-height: 100vh;
+  overflow-y: auto;
   font-family: 'Aptos', sans-serif;
 }
 
@@ -184,11 +187,9 @@ export default {
   font-size: 2.1rem;
   color: #131313;
   text-align: left;
-  /* Subtle drop shadow to make the title pop */
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Config Table with rounded edges and matching drop shadow */
 .config-table {
   width: 100%;
   table-layout: fixed;
@@ -196,11 +197,10 @@ export default {
   margin-top: 8px;
   font-size: 0.85rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  border-radius: 8px; /* Rounded edges for the table */
-  overflow: hidden;  /* Ensures rounded edges are visible */
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Style table cells */
 .config-table th,
 .config-table td {
   padding: 8px 12px;
@@ -209,15 +209,12 @@ export default {
   width: 33.33%;
 }
 
-/* Header styling */
 .config-table th {
   background-color: #f2f2f2;
   font-weight: bold;
-  /* Adding text shadow for extra pop */
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Revert section styling */
 .revert-section {
   margin-top: 14px;
   display: flex;
@@ -225,14 +222,8 @@ export default {
   align-items: center;
 }
 
-.warning-text {
-  font-size: 0.75rem;
-  color: #b00;
-  margin: 0;
-}
-
 .revert-button {
-  background-color: #d32f2f; /* red color */
+  background-color: #d32f2f;
   color: #fff;
   padding: 7px 7px;
   border: none;
@@ -246,8 +237,36 @@ export default {
   background-color: #b71c1c;
 }
 
+.dark-mode-section {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.dark-mode-button {
+  background-color: #333;
+  color: #fff;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  width: auto;
+}
+
+.dark-mode-button:hover {
+  background-color: #555;
+}
+
 .error-message {
   color: rgb(187, 51, 51);
   font-weight: bold;
+}
+
+/* Optional: Global dark mode styles. You may place these in a global CSS file if preferred. */
+.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
 }
 </style>
