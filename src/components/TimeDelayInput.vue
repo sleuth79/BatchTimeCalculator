@@ -113,6 +113,12 @@ export default {
       gcStore.calculateStartTimeBatch();
     });
 
+    // NEW: Watch miscRuns to update the store and recalc.
+    watch(miscRuns, (newVal) => {
+      gcStore.miscRuns = newVal;
+      gcStore.calculateStartTimeBatch();
+    });
+
     // Check if selected GC is Energy.
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
@@ -508,7 +514,6 @@ export default {
     watch(computedFinalPositions, (newVal) => {
       // Update sequentialFinalPosition with the value from the store getter.
       sequentialFinalPosition.value = newVal.sequentialFinalPosition;
-      // You might also update other state here if needed.
     });
 
     return {
