@@ -1,6 +1,6 @@
 <template>
   <div class="run-table">
-    <!-- Initial Batch Table (always rendered on mount, without a heading) -->
+    <!-- Initial Batch Table: Only rendered if finalPosition exists -->
     <table v-if="initialPositionOrder.length">
       <thead>
         <tr class="header-row">
@@ -75,7 +75,8 @@
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
             <td>{{ row.endTime }}</td>
-            <td>{{ row.position }}</td>
+            <!-- When no initial batch exists, run numbers start at 1 -->
+            <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
       </table>
@@ -105,7 +106,7 @@
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
             <td>{{ row.endTime }}</td>
-            <td>{{ row.position }}</td>
+            <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
       </table>
@@ -161,8 +162,13 @@ export default {
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // 3. Initial batch final position from store.
-    const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
+    // 3. Only generate initial batch order if finalPosition is provided.
+    const initialPositionOrder = computed(() => {
+      if (!gcStore.startTime.finalPosition) return [];
+      const fp = Number(gcStore.startTime.finalPosition);
+      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
+      return generatePositionOrder(fp, gcType);
+    });
 
     // 4. Controls from store.
     const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
@@ -187,9 +193,7 @@ export default {
       order.push("Blank");
       order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
       order.push(`1st Control : ${biggerControl.value}`);
-
       const samples = sampleAllowed.value.filter(n => n <= finalPos);
-
       if (finalPos < 13) {
         for (const s of samples) {
           order.push(`Position ${s}`);
@@ -241,12 +245,7 @@ export default {
       return order;
     }
 
-    // 7. Compute initial and sequential position orders.
-    const initialPositionOrder = computed(() => {
-      const fp = finalPosition.value;
-      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      return generatePositionOrder(fp, gcType);
-    });
+    // 7. Sequential batch order.
     const sequentialPositionOrder = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const seqFP = Number(gcStore.sequentialFinalPosition);
@@ -266,7 +265,7 @@ export default {
     // 9. Flag for sequential batch.
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
-    // 10. Compute the index of the initial batch run closest to 4:00 PM.
+    // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
@@ -290,7 +289,7 @@ export default {
       return candidateIndex;
     });
 
-    // 11. Selected candidate and its label.
+    // 11. Selected candidate and label.
     const selectedCandidate = computed(() => {
       const idx = runtableClosestCandidateIndex.value;
       if (idx < 0) return null;
@@ -308,34 +307,38 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Additional computed properties for Additional and Delayed Runs
-
-    // Last main run number (initial + sequential)
+    // 12. Compute the last main run number (initial + sequential).
     const lastMainRunNumber = computed(() => {
+      // If no initial batch inputs are provided, treat this as zero.
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
 
-    // Additional Runs computed from timeDelayResults.additionalRuns.
+    // 13. Additional Runs computed from timeDelayResults.additionalRuns.
     const additionalRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const additionalCount = timeDelayResults && timeDelayResults.additionalRuns ? timeDelayResults.additionalRuns : 0;
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
+      // Use sequentialBaseRuns endTime if initial batch exists; otherwise use batchEndTime.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
       } else {
         baseTime = new Date(startTime.batchEndTime);
       }
-      const base = lastMainRunNumber.value;
+      // If no initial batch inputs, reset numbering to zero.
+      const base = lastMainRunNumber.value || 0;
       const rows = [];
       for (let i = 0; i < additionalCount; i++) {
+        // Compute run number and also a display number that resets to 1 when base is zero.
         const runNumber = base + i + 1;
+        const positionDisplay = base ? runNumber : i + 1;
         const computedTitle = `Add Run ${i + 1}`;
         const rowStart = new Date(baseTime.getTime() + i * runtime);
         const rowEnd   = new Date(baseTime.getTime() + (i + 1) * runtime);
         rows.push({
           position: runNumber,
+          positionDisplay,
           computedTitle,
           startTime: formatTimeWithAmPmAndSeconds(rowStart),
           endTime: formatTimeWithAmPmAndSeconds(rowEnd),
@@ -345,7 +348,7 @@ export default {
       return rows;
     });
 
-    // Delayed Runs computed from timeDelayResults.totalDelayedRuns.
+    // 14. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
@@ -372,8 +375,12 @@ export default {
       for (let i = 0; i < prebatchCount; i++) {
         const rowStart = new Date(delayedStart.getTime() + i * runtime);
         const rowEnd   = new Date(delayedStart.getTime() + (i + 1) * runtime);
+        // Reset run numbering if no initial batch exists.
+        const runNumber = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) + i + 1;
+        const positionDisplay = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) ? runNumber : i + 1;
         rows.push({
-          position: lastMainRunNumber.value + (additionalRows.value.length || 0) + i + 1,
+          position: runNumber,
+          positionDisplay,
           computedTitle: `Delayed Run ${i + 1}`,
           startTime: formatTimeWithAmPmAndSeconds(rowStart),
           endTime: formatTimeWithAmPmAndSeconds(rowEnd),
@@ -383,13 +390,13 @@ export default {
       return rows;
     });
 
-    // Computed for the delay time string.
+    // 15. Computed for the delay time string.
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
       return timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
     });
 
-    // Flag to indicate if delayed runs should be shown.
+    // 16. Flag to indicate if delayed runs should be shown.
     const delayedRunSelected = computed(() => {
       const { timeDelayResults } = gcStore;
       return (
