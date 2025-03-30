@@ -401,7 +401,7 @@ label {
   color: var(--text-highlight) !important;
 }
 
-/* Override the selected option styling */
+/* In a global stylesheet or using ::v-deep in scoped CSS */
 ::v-deep .vue3-timepicker .timepicker-option--selected {
   background-color: var(--highlight-color) !important;
   color: var(--text-highlight) !important;
