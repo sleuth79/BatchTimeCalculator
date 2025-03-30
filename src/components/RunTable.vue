@@ -1,9 +1,9 @@
 <template>
   <div class="run-table">
-    <!-- DEBUG: Temporary output for sequentialRows -->
+    <!-- DEBUG: Output sequentialRows for verification -->
     <pre>{{ sequentialRows }}</pre>
-    
-    <!-- Initial Batch Table: Only rendered if finalPosition exists -->
+
+    <!-- Initial Batch Table -->
     <table v-if="initialPositionOrder.length">
       <thead>
         <tr class="header-row">
@@ -14,14 +14,12 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Render wait row if present -->
         <tr v-if="runsHasWait">
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
           <td>{{ waitRow.startTime }}</td>
           <td>{{ waitRow.endTime }}</td>
           <td>Wait</td>
         </tr>
-        <!-- Render initial batch rows -->
         <tr
           v-for="(title, idx) in initialPositionOrder"
           :key="'initial-' + idx"
@@ -35,7 +33,7 @@
       </tbody>
     </table>
 
-    <!-- Sequential Batch Section (displayed only if sequentialFinalPosition is set) -->
+    <!-- Sequential Batch Section -->
     <div v-if="hasSequentialBatch">
       <h4>Sequential Batch</h4>
       <table>
@@ -81,13 +79,6 @@
       </table>
     </div>
 
-    <!-- Time Delay Row -->
-    <div v-if="delayedRunSelected">
-      <h4 class="time-delay-header">
-        Time Delay: {{ timeDelayRequired }}
-      </h4>
-    </div>
-
     <!-- Delayed Runs Section -->
     <div v-if="prebatchRows.length">
       <h4>Delayed Runs</h4>
@@ -109,6 +100,13 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Time Delay Row -->
+    <div v-if="delayedRunSelected">
+      <h4 class="time-delay-header">
+        Time Delay: {{ timeDelayRequired }}
+      </h4>
     </div>
   </div>
 </template>
@@ -306,7 +304,7 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // NEW: Determine if the batch end time is at or after 4:00 PM.
+    // 12. Determine if the batch end time is at or after 4:00 PM.
     const shouldHighlightCandidate = computed(() => {
       if (!initialBaseRuns.value || initialBaseRuns.value.length === 0) return false;
       const lastRunStr = initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
@@ -319,18 +317,16 @@ export default {
       return lastRunDate >= cutoff;
     });
 
-    // 12. Compute the last main run number (initial + sequential).
+    // 13. Compute the last main run number (initial + sequential).
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
 
-    // 13. Generate sequential batch rows using the ordering logic.
+    // 14. Generate sequential batch rows using the ordering logic.
     const sequentialRows = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
       let baseTime;
-      // Use the first sequential run’s startTime if available;
-      // otherwise use the initial batch end time as the base.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
       } else if (initialBatchEndTime.value) {
@@ -355,7 +351,7 @@ export default {
       console.log("sequentialRows:", newVal);
     });
 
-    // 14. Additional Runs computed from timeDelayResults.additionalRuns.
+    // 15. Additional Runs computed from timeDelayResults.additionalRuns.
     const additionalRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const additionalCount = timeDelayResults && timeDelayResults.additionalRuns ? timeDelayResults.additionalRuns : 0;
@@ -390,7 +386,7 @@ export default {
       return rows;
     });
 
-    // 15. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
+    // 16. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
@@ -432,13 +428,13 @@ export default {
       return rows;
     });
 
-    // 16. Computed for the delay time string.
+    // 17. Computed for the delay time string.
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
       return timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
     });
 
-    // 17. Flag to indicate if delayed runs should be shown.
+    // 18. Flag to indicate if delayed runs should be shown.
     const delayedRunSelected = computed(() => {
       const { timeDelayResults } = gcStore;
       return (
@@ -448,19 +444,17 @@ export default {
       );
     });
 
-    // NEW: Compute the end time of the last run in the initial batch.
+    // 19. Compute the end time of the last run in the initial batch.
     const initialBatchEndTime = computed(() => {
       if (initialBaseRuns.value && initialBaseRuns.value.length) {
         return initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
       }
       return "";
     });
-    // Emit this new value to the parent.
     watch(initialBatchEndTime, (newVal) => {
       emit("update:initialBatchEndTime", newVal);
     }, { immediate: true });
 
-    // Emit the computed closest position.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });

@@ -100,8 +100,16 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // --- Local Input States ---
-    const sequentialFinalPosition = ref(null);
+    // Instead of a local ref, create a computed property for sequentialFinalPosition that gets/sets from the store.
+    const sequentialFinalPosition = computed({
+      get() {
+        return gcStore.sequentialFinalPosition;
+      },
+      set(value) {
+        gcStore.setSequentialFinalPosition(value);
+      },
+    });
+
     // Renamed local variable for Additional Runs input:
     const miscAdditionalRuns = ref(null);
     const prebatchSelected = ref(false);
@@ -134,6 +142,7 @@ export default {
 
     // Reset local inputs when store signals a reset.
     watch(() => gcStore.startTimeResetCounter, () => {
+      // Instead of setting sequentialFinalPosition locally, update the store.
       sequentialFinalPosition.value = null;
       miscAdditionalRuns.value = null;
       prebatchSelected.value = false;
@@ -508,13 +517,6 @@ export default {
         };
         emit('update-time-delay', initialPayload);
       }
-    });
-
-    // --- NEW: Use the store getter "finalPositions" to update sequentialFinalPosition in sync.
-    const computedFinalPositions = computed(() => gcStore.finalPositions);
-    watch(computedFinalPositions, (newVal) => {
-      // Update sequentialFinalPosition with the value from the store getter.
-      sequentialFinalPosition.value = newVal.sequentialFinalPosition;
     });
 
     return {
