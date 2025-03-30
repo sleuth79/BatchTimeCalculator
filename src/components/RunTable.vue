@@ -406,6 +406,18 @@ export default {
       );
     });
 
+    // NEW: Compute the end time of the last run in the initial batch.
+    const initialBatchEndTime = computed(() => {
+      if (initialBaseRuns.value && initialBaseRuns.value.length) {
+        return initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
+      }
+      return "";
+    });
+    // Emit this new value to the parent.
+    watch(initialBatchEndTime, (newVal) => {
+      emit("update:initialBatchEndTime", newVal);
+    }, { immediate: true });
+
     // Emit the computed closest position.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
@@ -429,6 +441,8 @@ export default {
       timeDelayRequired,
       delayedRunSelected,
       lastMainRunNumber,
+      // Expose the new property for the parent's use.
+      initialBatchEndTime,
     };
   }
 };

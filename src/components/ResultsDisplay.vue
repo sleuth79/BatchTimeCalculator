@@ -15,9 +15,11 @@
       </span>
     </p>
 
-    <!-- Pass the store's startTime as well as results -->
+    <!-- Pass the store's startTime as well as results.
+         Override the batchEndTime in results with initialBatchEndTime so that
+         both the displayed batch end time and the time gap calculation use the run table value. -->
     <StartTimeResults
-      :results="{ ...results, selectedPositionLabel: selectedPositionLabel }"
+      :results="{ ...results, batchEndTime: initialBatchEndTime, selectedPositionLabel: selectedPositionLabel }"
       :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
@@ -42,7 +44,8 @@
       </button>
     </template>
     
-    <!-- Run Table: Always mount if runs exist; control visibility with v-show -->
+    <!-- Run Table: Always mount if runs exist; control visibility with v-show.
+         Bind the new v-model:initialBatchEndTime so that any changes in RunTable are passed upward. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -50,6 +53,7 @@
         :runs="runData"
         v-model:selectedPositionLabel="selectedPositionLabel"
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
+        v-model:initialBatchEndTime="initialBatchEndTime"
         v-show="showRunTable"
       />
     </div>
@@ -110,7 +114,6 @@ export default {
     };
 
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
-
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
       return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
@@ -133,6 +136,8 @@ export default {
 
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
+    // NEW: Reactive property to hold the batch end time computed from RunTable.
+    const initialBatchEndTime = ref("");
 
     return {
       gcStore,
@@ -153,6 +158,7 @@ export default {
       currentDate,
       selectedPositionLabel,
       runtableClosestPositionFull,
+      initialBatchEndTime,
     };
   },
 };

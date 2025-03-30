@@ -20,7 +20,8 @@
       Batch Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
     </p>
-    <p v-if="showDetailedResults && results.batchEndTime">
+    <!-- Batch End Time now uses the new prop if available -->
+    <p v-if="showDetailedResults && displayBatchEndTime">
       Batch End Time:
       <span
         class="result-value"
@@ -34,7 +35,7 @@
       {{ candidateDisplayLabel }}
       <span class="result-value">
         <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
-          {{ results.batchEndTime }}
+          {{ displayBatchEndTime }}
         </template>
         <template v-else>
           {{ runtableClosestPositionFull }}
@@ -64,7 +65,6 @@ export default {
       type: Object,
       default: () => ({})
     },
-    // You can still pass startTime for other computed values if needed.
     startTime: {
       type: Object,
       default: () => ({})
@@ -81,8 +81,12 @@ export default {
       type: [Boolean, Number],
       default: false
     },
-    // Prop to receive the full closest position string from the run table
     runtableClosestPositionFull: {
+      type: String,
+      default: ""
+    },
+    // NEW: Accept the run table's computed batch end time.
+    initialBatchEndTime: {
       type: String,
       default: ""
     }
@@ -128,7 +132,9 @@ export default {
       return `${ctrl1Str} | ${ctrl2}`;
     });
 
+    // Use the new prop if available; otherwise fallback to original logic.
     const displayBatchEndTime = computed(() => {
+      if (props.initialBatchEndTime) return props.initialBatchEndTime;
       if (!props.results.batchEndTime) return "";
       const batchEndStr = props.results.batchEndTime;
       const startStr = displayBatchStartTime.value;
@@ -165,7 +171,8 @@ export default {
 
     const initialBatchEndTimeAfter730 = computed(() => {
       if (!props.results.batchEndTime) return false;
-      const batchEndStr = props.results.batchEndTime;
+      // Use the new prop if available.
+      const batchEndStr = props.initialBatchEndTime || props.results.batchEndTime;
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
       const startParts = startStr.split(":");
@@ -183,7 +190,7 @@ export default {
         startSecond
       );
       let endDateCandidate = new Date(
-        `${startDate.toDateString()} ${props.results.batchEndTime}`
+        `${startDate.toDateString()} ${batchEndStr}`
       );
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
@@ -197,8 +204,9 @@ export default {
 
     // New computed property to determine if the batch passes 4:00 PM.
     const batchPasses4PM = computed(() => {
-      if (!props.results.batchEndTime) return false;
-      const parts = props.results.batchEndTime.split(" ");
+      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
+      if (!batchTime) return false;
+      const parts = batchTime.split(" ");
       if (parts.length < 2) return false;
       const timePart = parts[0]; // e.g., "02:22:26"
       const ampm = parts[1]; // e.g., "PM"
