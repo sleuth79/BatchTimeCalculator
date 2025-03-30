@@ -17,7 +17,7 @@
     </p>
     <!-- Additional details -->
     <p v-if="showDetailedResults && results.totalRunTime">
-      Total Run Time:
+      Batch Run Time:
       <span class="result-value">{{ results.totalRunTime }}</span>
     </p>
     <p v-if="showDetailedResults && results.batchEndTime">

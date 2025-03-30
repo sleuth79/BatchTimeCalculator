@@ -21,7 +21,7 @@
         </p>
         <p>
           Total Duration of Additional Runs:
-          <strong>{{ timeDelayData.additionalRunsDuration || 'N/A' }}</strong>
+          <strong>{{ additionalRunsDurationFormatted !== '' ? additionalRunsDurationFormatted : 'N/A' }}</strong>
         </p>
         <p>
           <template v-if="timeDelayData.sequentialBatchActive">
@@ -92,7 +92,7 @@ export default {
   name: 'TimeDelayResult',
   setup() {
     const gcStore = useGcStore();
-    // Directly reference the store's reactive timeDelayResults object.
+    // Reference the store's reactive timeDelayResults object.
     const timeDelayData = computed(() => gcStore.timeDelayResults);
 
     const resultsComplete = computed(() => {
@@ -111,7 +111,7 @@ export default {
       return null;
     });
 
-    // Computed property: sum sequentialBatchRuns and miscAdditionalRuns from the store.
+    // Computed property for the total additional runs.
     const totalAdditionalRuns = computed(() => {
       const miscAdditional = Number(gcStore.miscAdditionalRuns || 0);
       if (timeDelayData.value.sequentialFinalPosition !== null) {
@@ -122,6 +122,32 @@ export default {
       return miscAdditional || null;
     });
 
+    // We'll derive the GC runtime (in minutes) from selectedGcData.
+    const runtimeMinutes = computed(() => {
+      const data = gcStore.selectedGcData;
+      return data ? parseFloat(data.runTime) : 0;
+    });
+    const runtimeSeconds = computed(() => Math.round(runtimeMinutes.value * 60));
+
+    // Computed property for the formatted additional runs duration.
+    const additionalRunsDurationFormatted = computed(() => {
+      if (totalAdditionalRuns.value === null) return '';
+      let durationSeconds = totalAdditionalRuns.value * runtimeSeconds.value;
+      // If Energy GC is selected and sequential batch is in use, add 15 minutes (900 seconds)
+      if (gcStore.selectedGc &&
+          gcStore.selectedGc.toLowerCase().includes('energy') &&
+          timeDelayData.value.sequentialFinalPosition !== null) {
+        durationSeconds += 900;
+      }
+      const hours = Math.floor(durationSeconds / 3600);
+      const minutes = Math.floor((durationSeconds % 3600) / 60);
+      let formatted = '';
+      if (hours > 0) formatted += `${hours}h `;
+      formatted += `${minutes}m`;
+      return formatted.trim();
+    });
+
+    // For consistency, re-use your existing computed properties.
     const hasDelayedRuns = computed(() => {
       const description = timeDelayData.value.prerunsDescription;
       const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
@@ -211,6 +237,7 @@ export default {
       resultsComplete,
       sequentialBatchRuns,
       totalAdditionalRuns,
+      additionalRunsDurationFormatted,
       hasDelayedRuns,
       batchEndTimeAfter730,
       additionalRunsEndDate,
