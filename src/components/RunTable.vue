@@ -315,6 +315,7 @@ export default {
     });
 
     // 13. Compute the last main run number (initial + sequential).
+    // Note: Now sequentialRows includes the 15-Min Wait row (if Energy) so we use sequentialRows.value here.
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialRows.value.length;
     });
@@ -329,8 +330,8 @@ export default {
       let baseTime;
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
-      } else if (gcStore.startTime.batchEndTime) {
-        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
+      } else if (initialBatchEndTime.value) {
+        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else {
         baseTime = new Date();
       }
@@ -344,6 +345,7 @@ export default {
           endTime: formatTimeWithAmPmAndSeconds(waitRowEnd),
           positionDisplay: initialCount + 1
         });
+        // Use waitRowEnd as the new base for sequential rows.
         const newBase = waitRowEnd;
         sequentialPositionOrder.value.forEach((title, idx) => {
           const rowStart = new Date(newBase.getTime() + idx * runtime);
@@ -377,19 +379,14 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // If sequential rows exist and have a valid endTime, use that.
+      // If sequential rows exist, use the last sequential row's end time.
       if (sequentialRows.value.length > 0) {
-        const lastSeqEnd = sequentialRows.value[sequentialRows.value.length - 1].endTime;
-        // Only use the endTime if it's a non-empty string.
-        if (lastSeqEnd && lastSeqEnd.trim() !== "") {
-          baseTime = new Date(`${new Date().toDateString()} ${lastSeqEnd}`);
-        } else {
-          baseTime = new Date();
-        }
-      } else if (gcStore.startTime.batchEndTime && gcStore.startTime.batchEndTime.trim() !== "") {
-        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
+        // Prepend today's date to ensure a valid Date.
+        baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
+      } else if (initialBatchEndTime.value) {
+        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else {
-        baseTime = new Date();
+        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       }
       const base = lastMainRunNumber.value || 0;
       const rows = [];
@@ -422,7 +419,7 @@ export default {
       } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
         baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
-      } else if (startTime.batchEndTime && startTime.batchEndTime.trim() !== "") {
+      } else if (startTime.batchEndTime) {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {
         baseTime = timeDelayResults.delayedRunsStartTimeDate ? new Date(timeDelayResults.delayedRunsStartTimeDate) : new Date();
@@ -500,17 +497,9 @@ export default {
       prebatchRows,
       timeDelayRequired,
       delayedRunSelected,
-      totalPreruns,
-      totalRuns,
-      hideInputs,
-      limitAdditionalRuns,
-      limitMiscDelayedRuns,
-      calibrationRuns,
-      gcType: props.gcType,
-      isEnergy,
-      currentTimeString,
-      disabledPositions: computed(() => props.disabledPositions),
-      initialBatchCalculated
+      lastMainRunNumber,
+      initialBatchEndTime,
+      shouldHighlightCandidate
     };
   }
 };
