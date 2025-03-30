@@ -315,6 +315,7 @@ export default {
     });
 
     // 13. Compute the last main run number (initial + sequential).
+    // Note: Now sequentialRows includes the 15-Min Wait row (if Energy) so we use sequentialRows.value here.
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialRows.value.length;
     });
@@ -380,7 +381,8 @@ export default {
       let baseTime;
       // If sequential rows exist, use the last sequential row's end time.
       if (sequentialRows.value.length > 0) {
-        baseTime = new Date(sequentialRows.value[sequentialRows.value.length - 1].endTime);
+        // Prepend today's date to ensure a valid Date.
+        baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
       } else if (initialBatchEndTime.value) {
         baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else {
