@@ -4,8 +4,8 @@
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
       <div>
-        <!-- Sequential Batch Optional Field -->
-        <div class="sequential-batch-section">
+        <!-- Sequential Batch Optional Field - only shown if the initial batch is calculated -->
+        <div class="sequential-batch-section" v-if="initialBatchCalculated">
           <label>
             Final Position For Sequential Batch:
           </label>
@@ -100,7 +100,7 @@ export default {
   setup(props, { emit }) {
     const gcStore = useGcStore();
 
-    // Instead of a local ref, create a computed property for sequentialFinalPosition that gets/sets from the store.
+    // Use a computed property so that v-model updates the store directly.
     const sequentialFinalPosition = computed({
       get() {
         return gcStore.sequentialFinalPosition;
@@ -142,7 +142,6 @@ export default {
 
     // Reset local inputs when store signals a reset.
     watch(() => gcStore.startTimeResetCounter, () => {
-      // Instead of setting sequentialFinalPosition locally, update the store.
       sequentialFinalPosition.value = null;
       miscAdditionalRuns.value = null;
       prebatchSelected.value = false;
@@ -417,6 +416,9 @@ export default {
 
     const hideInputs = computed(() => false);
 
+    // Computed property to determine if the initial batch is calculated.
+    const initialBatchCalculated = computed(() => !!gcStore.startTime.finalPosition);
+
     // Watcher to emit payload when any input changes.
     watch(
       [
@@ -544,8 +546,9 @@ export default {
       gcType: props.gcType,
       isEnergy,
       currentTimeString,
-      // Expose disabledPositions from the parent prop.
-      disabledPositions: computed(() => props.disabledPositions)
+      disabledPositions: computed(() => props.disabledPositions),
+      // Expose our computed property to control the sequential batch display.
+      initialBatchCalculated
     };
   },
 };
