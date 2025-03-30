@@ -119,13 +119,7 @@ export default {
       return arr;
     });
 
-    // Watch for changes in the sequentialFinalPosition and log the final sequential position.
-    watch(
-      () => gcStore.sequentialFinalPosition,
-      (newVal) => {
-        console.log("Final sequential position changed:", newVal);
-      }
-    );
+    // Removed watch block for sequentialFinalPosition console log.
 
     // Reset function that calls the store's resetStartTime and also clears finalPosition and selectedGc.
     const resetInputs = () => {
