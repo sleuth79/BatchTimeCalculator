@@ -75,7 +75,7 @@ export const useGcStore = defineStore('gc', {
     },
     lastStartTimeInputs: null,
     sequentialFinalPosition: null, // preserved as requested
-    miscDelayedRuns: 0,           // used for delayed runs
+    miscDelayedRuns: 0,
     timeDelayResults: {
       prerunsDescription: 'None',
       totalDelayedRuns: 0,
@@ -123,9 +123,10 @@ export const useGcStore = defineStore('gc', {
       this.startTimeResetCounter++;
     },
     setSequentialFinalPosition(position) {
+      console.log("setSequentialFinalPosition called with position:", position);
       this.sequentialFinalPosition = this.sequentialFinalPosition === position ? null : position;
+      console.log("Final sequential batch position updated to:", this.sequentialFinalPosition);
       this.calculateStartTimeBatch();
-      console.log("Final sequential batch position:", this.sequentialFinalPosition);
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
