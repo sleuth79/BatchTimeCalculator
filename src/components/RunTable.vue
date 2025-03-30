@@ -316,13 +316,16 @@ export default {
 
     // 13. Compute the last main run number (initial + sequential).
     const lastMainRunNumber = computed(() => {
-      return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
+      return initialPositionOrder.value.length + sequentialRows.value.length;
     });
 
     // 14. Generate sequential batch rows using the ordering logic.
     const sequentialRows = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
+      const initialCount = initialPositionOrder.value.length;
+      const isEnergy = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase() === "energy";
+      let rows = [];
       let baseTime;
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
@@ -331,16 +334,41 @@ export default {
       } else {
         baseTime = new Date();
       }
-      return sequentialPositionOrder.value.map((title, idx) => {
-        const rowStart = new Date(baseTime.getTime() + idx * runtime);
-        const rowEnd = new Date(baseTime.getTime() + (idx + 1) * runtime);
-        return {
-          computedTitle: title,
-          startTime: formatTimeWithAmPmAndSeconds(rowStart),
-          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
-          positionDisplay: idx + 1
-        };
-      });
+      if (isEnergy) {
+        // Prepend a 15-Min Wait row.
+        const waitRowStart = baseTime;
+        const waitRowEnd = new Date(baseTime.getTime() + 15 * 60000);
+        rows.push({
+          computedTitle: "15-Min Wait",
+          startTime: formatTimeWithAmPmAndSeconds(waitRowStart),
+          endTime: formatTimeWithAmPmAndSeconds(waitRowEnd),
+          positionDisplay: initialCount + 1
+        });
+        // Use waitRowEnd as the new base for sequential rows.
+        const newBase = waitRowEnd;
+        sequentialPositionOrder.value.forEach((title, idx) => {
+          const rowStart = new Date(newBase.getTime() + idx * runtime);
+          const rowEnd = new Date(newBase.getTime() + (idx + 1) * runtime);
+          rows.push({
+            computedTitle: title,
+            startTime: formatTimeWithAmPmAndSeconds(rowStart),
+            endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+            positionDisplay: initialCount + 2 + idx
+          });
+        });
+      } else {
+        sequentialPositionOrder.value.forEach((title, idx) => {
+          const rowStart = new Date(baseTime.getTime() + idx * runtime);
+          const rowEnd = new Date(baseTime.getTime() + (idx + 1) * runtime);
+          rows.push({
+            computedTitle: title,
+            startTime: formatTimeWithAmPmAndSeconds(rowStart),
+            endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+            positionDisplay: initialCount + idx + 1
+          });
+        });
+      }
+      return rows;
     });
 
     // 15. Additional Runs computed from timeDelayResults.additionalRuns.
@@ -350,9 +378,9 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
-        baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
+      // If sequential rows exist, use the last sequential row's end time.
+      if (sequentialRows.value.length > 0) {
+        baseTime = new Date(sequentialRows.value[sequentialRows.value.length - 1].endTime);
       } else if (initialBatchEndTime.value) {
         baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else {
@@ -362,13 +390,12 @@ export default {
       const rows = [];
       for (let i = 0; i < additionalCount; i++) {
         const runNumber = base + i + 1;
-        const positionDisplay = base ? runNumber : i + 1;
         const computedTitle = `Add Run ${i + 1}`;
         const rowStart = new Date(baseTime.getTime() + i * runtime);
         const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
         rows.push({
           position: runNumber,
-          positionDisplay,
+          positionDisplay: runNumber,
           computedTitle,
           startTime: formatTimeWithAmPmAndSeconds(rowStart),
           endTime: formatTimeWithAmPmAndSeconds(rowEnd),
@@ -407,10 +434,9 @@ export default {
         const rowStart = new Date(delayedStart.getTime() + i * runtime);
         const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
         const runNumber = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) + i + 1;
-        const positionDisplay = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) ? runNumber : i + 1;
         rows.push({
           position: runNumber,
-          positionDisplay,
+          positionDisplay: runNumber,
           computedTitle: `Delayed Run ${i + 1}`,
           startTime: formatTimeWithAmPmAndSeconds(rowStart),
           endTime: formatTimeWithAmPmAndSeconds(rowEnd),

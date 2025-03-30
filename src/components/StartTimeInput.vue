@@ -395,8 +395,16 @@ label {
 .vue3-timepicker input {
   text-align: center !important;
 }
+/* Override the input element inside the timepicker */
+::v-deep .vue3-timepicker input {
+  background-color: var(--highlight-color) !important;
+  color: var(--text-highlight) !important;
+}
+
+/* Override the selected option styling */
 ::v-deep .vue3-timepicker .timepicker-option--selected {
   background-color: var(--highlight-color) !important;
   color: var(--text-highlight) !important;
 }
+
 </style>
