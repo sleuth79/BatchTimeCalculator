@@ -113,13 +113,16 @@ export default {
 
     // New computed property: sum sequentialBatchRuns and miscRuns from the store.
     const totalAdditionalRuns = computed(() => {
-      let total = 0;
-      if (sequentialBatchRuns.value !== null) {
-        total += sequentialBatchRuns.value;
+     const miscAdditional = Number(gcStore.miscRuns || 0);
+      // Check if sequential final position is provided
+      if (timeDelayData.value.sequentialFinalPosition !== null) {
+        const seqPos = Number(timeDelayData.value.sequentialFinalPosition);
+        // Calculate sequential batch runs based on final position.
+        const sequentialRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
+       return sequentialRuns + miscAdditional;
       }
-      // Make sure miscRuns is a number (defaults to 0 if not set)
-      total += Number(gcStore.miscRuns || 0);
-      return total > 0 ? total : null;
+      // If no sequential batch final position, show only misc runs
+      return miscAdditional || null;
     });
 
     const hasDelayedRuns = computed(() => {
