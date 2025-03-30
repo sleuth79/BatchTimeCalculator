@@ -1,5 +1,8 @@
 <template>
   <div class="run-table">
+    <!-- DEBUG: Temporary output for sequentialRows -->
+    <pre>{{ sequentialRows }}</pre>
+    
     <!-- Initial Batch Table: Only rendered if finalPosition exists -->
     <table v-if="initialPositionOrder.length">
       <thead>
@@ -321,15 +324,14 @@ export default {
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
 
-    // NEW: Generate sequential batch rows using the ordering logic.
+    // 13. Generate sequential batch rows using the ordering logic.
     const sequentialRows = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
       let baseTime;
-      // Use the first sequential run’s startTime if available,
+      // Use the first sequential run’s startTime if available;
       // otherwise use the initial batch end time as the base.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        // Prepend the current date to the time string to ensure a valid Date.
         baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
       } else if (initialBatchEndTime.value) {
         baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
@@ -348,7 +350,12 @@ export default {
       });
     });
 
-    // 13. Additional Runs computed from timeDelayResults.additionalRuns.
+    // DEBUG: Watch sequentialRows and log its value.
+    watch(sequentialRows, (newVal) => {
+      console.log("sequentialRows:", newVal);
+    });
+
+    // 14. Additional Runs computed from timeDelayResults.additionalRuns.
     const additionalRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const additionalCount = timeDelayResults && timeDelayResults.additionalRuns ? timeDelayResults.additionalRuns : 0;
@@ -383,7 +390,7 @@ export default {
       return rows;
     });
 
-    // 14. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
+    // 15. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
@@ -425,13 +432,13 @@ export default {
       return rows;
     });
 
-    // 15. Computed for the delay time string.
+    // 16. Computed for the delay time string.
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
       return timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
     });
 
-    // 16. Flag to indicate if delayed runs should be shown.
+    // 17. Flag to indicate if delayed runs should be shown.
     const delayedRunSelected = computed(() => {
       const { timeDelayResults } = gcStore;
       return (
