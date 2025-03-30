@@ -300,32 +300,41 @@ export default {
 </script>
 
 <style scoped>
-.heading-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: -2px;
+.run-table {
+  margin-top: 20px;
+  padding: 0;
+  background-color: #ffffff;
+  font-family: "Aptos", sans-serif;
+}
+.run-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+.run-table th,
+.run-table td {
+  padding: 4px 10px;
+  border: none;
+  text-align: center;
+}
+.header-row {
+  background-color: #f5f5f5;
+  color: #333;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.run-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+.run-table tbody tr:last-child {
+  border-bottom: none;
+}
+.highlight {
+  background-color: yellow;
 }
 
-.heading-batch,
-.heading-controls {
-  flex: 1;
-  text-align: left;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.input-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.batch-time-input {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
+/* For the start time input selector box */
 .batch-time-input input,
 .batch-time-input .vue3-timepicker {
   width: 75px;
@@ -334,7 +343,10 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
-/* Removed .time-input-note styling and mark styling */
+/* Ensure the vue3-timepicker input itself gets the drop shadow */
+::v-deep .vue3-timepicker input {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12) !important;
+}
 
 .controls-inputs {
   flex: 1;
@@ -392,19 +404,4 @@ export default {
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
-.vue3-timepicker input {
-  text-align: center !important;
-}
-/* Override the input element inside the timepicker */
-::v-deep .vue3-timepicker input {
-  background-color: var(--highlight-color) !important;
-  color: var(--text-highlight) !important;
-}
-
-/* In a global stylesheet or using ::v-deep in scoped CSS */
-::v-deep .vue3-timepicker .timepicker-option--selected {
-  background-color: var(--highlight-color) !important;
-  color: var(--text-highlight) !important;
-}
-
 </style>
