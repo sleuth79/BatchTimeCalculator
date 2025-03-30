@@ -307,7 +307,6 @@ export default {
     });
 
     // NEW: Determine if the batch end time is at or after 4:00 PM.
-    // Only if the last initial run's end time is 4:00 PM or later do we highlight a candidate.
     const shouldHighlightCandidate = computed(() => {
       if (!initialBaseRuns.value || initialBaseRuns.value.length === 0) return false;
       const lastRunStr = initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
@@ -332,13 +331,14 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // Use sequentialBaseRuns endTime if available; otherwise use initialBatchEndTime if available; otherwise use batchEndTime.
+      // Use sequentialBaseRuns endTime if available; otherwise use initialBatchEndTime if available;
+      // otherwise build a Date using the batchEndTime string and the current date.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
       } else if (initialBatchEndTime.value) {
         baseTime = new Date(initialBatchEndTime.value);
       } else {
-        baseTime = new Date(startTime.batchEndTime);
+        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       }
       const base = lastMainRunNumber.value || 0;
       const rows = [];
@@ -372,7 +372,7 @@ export default {
       } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
       } else if (startTime.batchEndTime) {
-        baseTime = new Date(startTime.batchEndTime);
+        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {
         baseTime = timeDelayResults.delayedRunsStartTimeDate ? new Date(timeDelayResults.delayedRunsStartTimeDate) : new Date();
       }
