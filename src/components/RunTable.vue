@@ -381,12 +381,13 @@ export default {
       let baseTime;
       // If sequential rows exist, use the last sequential row's end time.
       if (sequentialRows.value.length > 0) {
-        // Prepend today's date to ensure a valid Date.
         baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
       } else if (initialBatchEndTime.value) {
         baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
-      } else {
+      } else if (startTime.batchEndTime) {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+      } else {
+        baseTime = new Date();
       }
       const base = lastMainRunNumber.value || 0;
       const rows = [];
@@ -545,4 +546,3 @@ export default {
   margin-bottom: 4px; /* Reduced bottom margin */
 }
 </style>
-
