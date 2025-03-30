@@ -134,9 +134,12 @@ export default {
       if (totalAdditionalRuns.value === null) return '';
       let durationSeconds = totalAdditionalRuns.value * runtimeSeconds.value;
       // If Energy GC is selected and sequential batch is in use, add 15 minutes (900 seconds)
-      if (gcStore.selectedGc &&
-          gcStore.selectedGc.toLowerCase().includes('energy') &&
-          timeDelayData.value.sequentialFinalPosition !== null) {
+      if (
+       gcStore.selectedGcData &&
+       gcStore.selectedGcData.type &&
+       gcStore.selectedGcData.type.toLowerCase() === 'energy' &&
+       timeDelayData.value.sequentialFinalPosition !== null
+      ) {
         durationSeconds += 900;
       }
       const hours = Math.floor(durationSeconds / 3600);
