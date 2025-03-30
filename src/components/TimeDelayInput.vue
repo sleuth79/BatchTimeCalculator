@@ -612,6 +612,9 @@ export default {
   display: block;
   margin-bottom: 10px;
 }
+.additional-runs-input {
+  margin-bottom: 8px; /* Added space under the misc runs input box */
+}
 .additional-runs-input label {
   display: inline-flex;
   align-items: center;
