@@ -77,7 +77,6 @@
   </div>
 </template>
 
-
 <script>
 import { ref, computed, watch, onMounted } from 'vue';
 import PositionSelector from './PositionSelector.vue';
