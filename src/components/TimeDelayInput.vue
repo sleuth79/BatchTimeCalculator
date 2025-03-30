@@ -4,8 +4,8 @@
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
       <div>
-        <!-- Sequential Batch Final Position Selector - now shown after the initial batch calculation (batchEndTime exists) -->
-        <div class="sequential-final-position" v-if="results && results.batchEndTime">
+        <!-- Sequential Batch Final Position Selector - now shown after initial batch calculation (results exist) -->
+        <div class="sequential-final-position" v-if="results && Object.keys(results).length > 0">
           <label>
             Final Position For Sequential Batch:
           </label>
