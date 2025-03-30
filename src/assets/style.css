@@ -25,6 +25,77 @@ body {
   flex-direction: column;
   height: 100%;
 }
+/* Dark Mode Overrides */
+.dark-mode html,
+.dark-mode body {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* App container */
+.dark-mode #app {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Config window and sections */
+.dark-mode .config-window,
+.dark-mode .config-section,
+.dark-mode .results-display {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-color: #333;
+}
+
+/* Tables */
+.dark-mode .config-table th,
+.dark-mode .config-table td {
+  border-color: #333;
+}
+
+.dark-mode .config-table th {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+/* Buttons */
+.dark-mode button {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+.dark-mode button:hover {
+  background-color: #444;
+}
+
+/* Inputs and Selects */
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+/* GC boxes and other clickable elements */
+.dark-mode .gc-box,
+.dark-mode .mode-box,
+.dark-mode .ampm-box,
+.dark-mode .box,
+.dark-mode .position-selector td {
+  background-color: #1e1e1e;
+  border-color: #333;
+  color: #e0e0e0;
+}
+
+.dark-mode .gc-box:hover,
+.dark-mode .mode-box:hover,
+.dark-mode .ampm-box:hover,
+.dark-mode .box:hover,
+.dark-mode .position-selector td:hover {
+  background-color: #2a2a2a;
+}
 
 /* Container for ConfigSection and ResultsDisplay */
 #app > .content-wrapper {
