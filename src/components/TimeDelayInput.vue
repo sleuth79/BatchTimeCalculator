@@ -6,7 +6,7 @@
       <div>
         <!-- Sequential Batch Section -->
         <div class="sequential-batch-section">
-          <!-- Only display the Final Position For Sequential Batch selector if the initial batch has been calculated -->
+          <!-- Only show the final position selector if the initial batch has been calculated -->
           <template v-if="initialBatchCalculated">
             <label>
               Final Position For Sequential Batch:
@@ -20,7 +20,7 @@
               v-model="sequentialFinalPosition"
             />
           </template>
-          <!-- Always display the Additional Runs input -->
+          <!-- Always show the Additional Runs input -->
           <div class="additional-runs-input">
             <label>Misc Additional Runs:</label>
             <input
@@ -201,10 +201,9 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ]);
 
-    // initialBatchCalculated is true if the batch end time is set.
-    const initialBatchCalculated = computed(() => {
-      return !!gcStore.startTime.batchEndTime;
-    });
+    // The sequential final position should only be visible if the initial batch has been calculated.
+    // We define initialBatchCalculated as true if the batchEndTime is set in the store.
+    const initialBatchCalculated = computed(() => !!gcStore.startTime.batchEndTime);
 
     // --- Helper Computations for Time Calculations ---
     const batch1End = computed(() => {
