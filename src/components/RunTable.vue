@@ -1,14 +1,41 @@
 <template>
   <div class="run-table">
-    <!-- Toggle button to show/hide the entire run table -->
-    <button @click="toggleRunTable">
-      {{ showRunTable ? 'Hide Run Table' : 'Show Run Table' }}
-    </button>
+    <!-- Initial Batch Table (always rendered on mount, without a heading) -->
+    <table v-if="initialPositionOrder.length">
+      <thead>
+        <tr class="header-row">
+          <th>Run Name</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Run #</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Render wait row if present -->
+        <tr v-if="runsHasWait">
+          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
+          <td>{{ waitRow.startTime }}</td>
+          <td>{{ waitRow.endTime }}</td>
+          <td>Wait</td>
+        </tr>
+        <!-- Render initial batch rows -->
+        <tr
+          v-for="(title, idx) in initialPositionOrder"
+          :key="'initial-' + idx"
+          :class="{ highlight: idx === runtableClosestCandidateIndex }"
+        >
+          <td>{{ title }}</td>
+          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
+          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
+          <td>{{ idx + 1 }}</td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Run Table Sections, only shown when toggled on -->
-    <div v-if="showRunTable">
-      <!-- Initial Batch Section (no heading for this one) -->
-      <table v-if="initialPositionOrder.length">
+    <!-- Sequential Batch Section (displayed only if sequentialFinalPosition is set) -->
+    <div v-if="hasSequentialBatch">
+      <h3>Sequential Batch</h3>
+      <table>
         <thead>
           <tr class="header-row">
             <th>Run Name</th>
@@ -18,58 +45,23 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Render wait row if present -->
-          <tr v-if="runsHasWait">
-            <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
-            <td>{{ waitRow.startTime }}</td>
-            <td>{{ waitRow.endTime }}</td>
-            <td>Wait</td>
-          </tr>
-          <!-- Render initial batch rows -->
           <tr
-            v-for="(title, idx) in initialPositionOrder"
-            :key="'initial-' + idx"
-            :class="{ highlight: idx === runtableClosestCandidateIndex }"
+            v-for="(title, idx) in sequentialPositionOrder"
+            :key="'sequential-' + idx"
           >
             <td>{{ title }}</td>
-            <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
-            <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
+            <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
+            <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
             <td>{{ idx + 1 }}</td>
           </tr>
         </tbody>
       </table>
-
-      <!-- Sequential Batch Section (only rendered if sequential batch exists) -->
-      <div v-if="hasSequentialBatch">
-        <h3>Sequential Batch</h3>
-        <table>
-          <thead>
-            <tr class="header-row">
-              <th>Run Name</th>
-              <th>Start Time</th>
-              <th>End Time</th>
-              <th>Run #</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(title, idx) in sequentialPositionOrder"
-              :key="'sequential-' + idx"
-            >
-              <td>{{ title }}</td>
-              <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
-              <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
-              <td>{{ idx + 1 }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, watch } from "vue";
+import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
 
@@ -84,12 +76,6 @@ export default {
   },
   setup(props, { emit }) {
     const gcStore = useGcStore();
-
-    // Toggle for showing/hiding the run table.
-    const showRunTable = ref(false);
-    const toggleRunTable = () => {
-      showRunTable.value = !showRunTable.value;
-    };
 
     // 1. Check if there's a "Wait" row at the top.
     const runsHasWait = computed(() =>
@@ -190,7 +176,7 @@ export default {
       return generatePositionOrder(fp, gcType);
     });
     const sequentialPositionOrder = computed(() => {
-      if (gcStore.sequentialFinalPosition === null || gcStore.sequentialFinalPosition === undefined) return [];
+      if (!gcStore.sequentialFinalPosition) return [];
       const seqFP = Number(gcStore.sequentialFinalPosition);
       const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
       return generatePositionOrder(seqFP, gcType);
@@ -206,10 +192,7 @@ export default {
     });
 
     // 9. Computed flag for sequential batch.
-    const hasSequentialBatch = computed(() => {
-      return gcStore.sequentialFinalPosition !== null &&
-             gcStore.sequentialFinalPosition !== undefined;
-    });
+    const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute the index of the initial batch run that is the closest candidate to 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
@@ -257,15 +240,13 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // Emit the new computed value so that parent components can use it.
+    // Emit the computed value for parent components.
     watch(runtableClosestPositionFull, (newVal) => {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
     return {
       gcStore,
-      showRunTable,
-      toggleRunTable,
       initialPositionOrder,
       sequentialPositionOrder,
       hasSequentialBatch,
@@ -288,9 +269,6 @@ export default {
   padding: 0;
   background-color: #ffffff;
   font-family: "Aptos", sans-serif;
-}
-.run-table button {
-  margin-bottom: 10px;
 }
 .run-table table {
   width: 100%;
