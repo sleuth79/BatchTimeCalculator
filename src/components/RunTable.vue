@@ -315,7 +315,6 @@ export default {
     });
 
     // 13. Compute the last main run number (initial + sequential).
-    // Note: Now sequentialRows includes the 15-Min Wait row (if Energy) so we use sequentialRows.value here.
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialRows.value.length;
     });
@@ -330,8 +329,8 @@ export default {
       let baseTime;
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
-      } else if (initialBatchEndTime.value) {
-        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+      } else if (gcStore.startTime.batchEndTime) {
+        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
       } else {
         baseTime = new Date();
       }
@@ -345,7 +344,6 @@ export default {
           endTime: formatTimeWithAmPmAndSeconds(waitRowEnd),
           positionDisplay: initialCount + 1
         });
-        // Use waitRowEnd as the new base for sequential rows.
         const newBase = waitRowEnd;
         sequentialPositionOrder.value.forEach((title, idx) => {
           const rowStart = new Date(newBase.getTime() + idx * runtime);
@@ -381,12 +379,11 @@ export default {
       let baseTime;
       // If sequential rows exist, use the last sequential row's end time.
       if (sequentialRows.value.length > 0) {
-        // Prepend today's date to ensure a valid Date.
         baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
-      } else if (initialBatchEndTime.value) {
-        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+      } else if (gcStore.startTime.batchEndTime) {
+        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
       } else {
-        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+        baseTime = new Date();
       }
       const base = lastMainRunNumber.value || 0;
       const rows = [];
@@ -497,9 +494,17 @@ export default {
       prebatchRows,
       timeDelayRequired,
       delayedRunSelected,
-      lastMainRunNumber,
-      initialBatchEndTime,
-      shouldHighlightCandidate
+      totalPreruns,
+      totalRuns,
+      hideInputs,
+      limitAdditionalRuns,
+      limitMiscDelayedRuns,
+      calibrationRuns,
+      gcType: props.gcType,
+      isEnergy,
+      currentTimeString,
+      disabledPositions: computed(() => props.disabledPositions),
+      initialBatchCalculated
     };
   }
 };
