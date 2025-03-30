@@ -76,6 +76,13 @@
       </table>
     </div>
 
+    <!-- Time Delay Row (moved before Delayed Runs Section) -->
+    <div v-if="delayedRunSelected">
+      <h4 class="time-delay-header">
+        Time Delay: {{ timeDelayRequired }}
+      </h4>
+    </div>
+
     <!-- Delayed Runs Section -->
     <div v-if="prebatchRows.length">
       <h4>Delayed Runs</h4>
@@ -97,13 +104,6 @@
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- Time Delay Row -->
-    <div v-if="delayedRunSelected">
-      <h4 class="time-delay-header">
-        Time Delay: {{ timeDelayRequired }}
-      </h4>
     </div>
   </div>
 </template>
@@ -539,4 +539,10 @@ export default {
 .highlight {
   background-color: yellow;
 }
+/* New rules for headings */
+.run-table h4 {
+  text-align: center;
+  margin-bottom: 4px; /* Reduced bottom margin */
+}
 </style>
+
