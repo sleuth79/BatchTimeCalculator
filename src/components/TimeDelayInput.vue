@@ -6,7 +6,7 @@
       <div>
         <!-- Sequential Batch Section -->
         <div class="sequential-batch-section">
-          <!-- Only show the final position selector if the initial batch has been calculated -->
+          <!-- Only show the Final Position For Sequential Batch selector if the initial batch has been calculated -->
           <template v-if="initialBatchCalculated">
             <label>
               Final Position For Sequential Batch:
@@ -201,8 +201,8 @@ export default {
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ]);
 
-    // The sequential final position should only be visible if the initial batch has been calculated.
-    // We define initialBatchCalculated as true if the batchEndTime is set in the store.
+    // Computed property to determine if the initial batch is calculated.
+    // We now base this on whether gcStore.startTime.batchEndTime exists.
     const initialBatchCalculated = computed(() => !!gcStore.startTime.batchEndTime);
 
     // --- Helper Computations for Time Calculations ---
@@ -411,127 +411,182 @@ export default {
 
     const hideInputs = computed(() => false);
 
-    // Computed property to determine if the initial batch is calculated.
-    const initialBatchCalculated = computed(() => !!gcStore.startTime.batchEndTime);
-
-    // Watcher to emit payload when any input changes.
-    watch(
-      [
-        sequentialFinalPosition,
-        miscAdditionalRuns,
-        prebatchSelected,
-        calibrationSelected,
-        miscDelayedRuns,
-        () => props.batch1EndTime,
-        () => props.gcRuntime,
-        () => props.primaryFinalPosition,
-      ],
-      () => {
-        if (!(
-          (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
-          delayedRunSelected.value ||
-          miscAdditionalRuns.value
-        )) {
-          const fallbackPayload = {
-            sequentialBatchActive: false,
-            sequentialFinalPosition: null,
-            sequentialBatchEndTime: '',
-            additionalRuns: miscAdditionalRuns.value,
-            additionalRunsEndTime: '',
-            additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
-            prerunsDescription: prerunsDescription.value,
-            totalDelayedRuns: totalPreruns.value,
-            totalRuns: totalRuns.value,
-            timeDelayRequired: timeDelayRequiredLocal.value,
-            timeGapTo730AM: timeGapTo730AM.value,
-            delayedRunsStartTime: '',
-            delayedRunsEndTime: '',
-            totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
-          };
-          emit('update-time-delay', fallbackPayload);
-          return;
-        }
-        const payload = {
-          sequentialBatchActive: (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0),
-          sequentialFinalPosition: sequentialFinalPosition.value ? Number(sequentialFinalPosition.value) : null,
-          sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
-          additionalRuns: miscAdditionalRuns.value,
-          additionalRunsEndTime: additionalRunsEndTime.value,
-          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
-          prerunsDescription: prerunsDescription.value,
-          totalDelayedRuns: totalPreruns.value,
-          totalRuns: totalRuns.value,
-          timeDelayRequired: timeDelayRequiredLocal.value,
-          timeGapTo730AM: timeGapTo730AM.value,
-          delayedRunsStartTime: delayedRunsStartTimeComputed.value,
-          delayedRunsEndTime: delayedRunSelected.value ? delayedRunsEndTimeComputed.value : '',
-          totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
-        };
-        emit('update-time-delay', payload);
-      },
-      { deep: true }
-    );
-
-    onMounted(() => {
-      if (!(
-        (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
-        delayedRunSelected.value ||
-        miscAdditionalRuns.value
-      )) {
-        const emptyPayload = {
-          sequentialBatchActive: false,
-          sequentialFinalPosition: null,
-          sequentialBatchEndTime: '',
-          additionalRuns: miscAdditionalRuns.value,
-          additionalRunsEndTime: '',
-          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
-          prerunsDescription: prerunsDescription.value,
-          totalDelayedRuns: totalPreruns.value,
-          totalRuns: totalRuns.value,
-          timeDelayRequired: '',
-          timeGapTo730AM: '',
-          delayedRunsStartTime: '',
-          delayedRunsEndTime: '',
-          totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
-        };
-        emit('update-time-delay', emptyPayload);
+    // 14. Generate sequential batch rows using the ordering logic.
+    const sequentialRows = computed(() => {
+      if (!gcStore.sequentialFinalPosition) return [];
+      const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
+      const initialCount = initialPositionOrder.value.length;
+      const isEnergy = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase() === "energy";
+      let rows = [];
+      let baseTime;
+      if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
+        baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
+      } else if (gcStore.startTime.batchEndTime) {
+        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
       } else {
-        const initialPayload = {
-          sequentialBatchActive: (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0),
-          sequentialFinalPosition: sequentialFinalPosition.value ? Number(sequentialFinalPosition.value) : null,
-          sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
-          additionalRuns: miscAdditionalRuns.value,
-          additionalRunsEndTime: additionalRunsEndTime.value,
-          additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
-          prerunsDescription: prerunsDescription.value,
-          totalDelayedRuns: totalPreruns.value,
-          totalRuns: totalRuns.value,
-          timeDelayRequired: timeDelayRequiredLocal.value,
-          timeGapTo730AM: timeGapTo730AM.value,
-          delayedRunsStartTime: delayedRunsStartTimeComputed.value,
-          delayedRunsEndTime: delayedRunSelected.value ? delayedRunsEndTimeComputed.value : '',
-          totalDelayedDurationFormatted: totalDelayedDurationFormatted.value,
-        };
-        emit('update-time-delay', initialPayload);
+        baseTime = new Date();
       }
+      if (isEnergy) {
+        // Prepend a 15-Min Wait row.
+        const waitRowStart = baseTime;
+        const waitRowEnd = new Date(baseTime.getTime() + 15 * 60000);
+        rows.push({
+          computedTitle: "15-Min Wait",
+          startTime: formatTimeWithAmPmAndSeconds(waitRowStart),
+          endTime: formatTimeWithAmPmAndSeconds(waitRowEnd),
+          positionDisplay: initialCount + 1
+        });
+        // Use waitRowEnd as the new base for sequential rows.
+        const newBase = waitRowEnd;
+        sequentialPositionOrder.value.forEach((title, idx) => {
+          const rowStart = new Date(newBase.getTime() + idx * runtime);
+          const rowEnd = new Date(newBase.getTime() + (idx + 1) * runtime);
+          rows.push({
+            computedTitle: title,
+            startTime: formatTimeWithAmPmAndSeconds(rowStart),
+            endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+            positionDisplay: initialCount + 2 + idx
+          });
+        });
+      } else {
+        sequentialPositionOrder.value.forEach((title, idx) => {
+          const rowStart = new Date(baseTime.getTime() + idx * runtime);
+          const rowEnd = new Date(baseTime.getTime() + (idx + 1) * runtime);
+          rows.push({
+            computedTitle: title,
+            startTime: formatTimeWithAmPmAndSeconds(rowStart),
+            endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+            positionDisplay: initialCount + idx + 1
+          });
+        });
+      }
+      return rows;
     });
 
+    // 15. Additional Runs computed from timeDelayResults.additionalRuns.
+    const additionalRows = computed(() => {
+      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
+      const additionalCount = timeDelayResults && timeDelayResults.additionalRuns ? timeDelayResults.additionalRuns : 0;
+      if (!additionalCount) return [];
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
+      let baseTime;
+      // If sequential rows exist, use the last sequential row's end time.
+      if (sequentialRows.value.length > 0) {
+        baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
+      } else if (gcStore.startTime.batchEndTime) {
+        baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
+      } else {
+        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+      }
+      const base = lastMainRunNumber.value || 0;
+      const rows = [];
+      for (let i = 0; i < additionalCount; i++) {
+        const runNumber = base + i + 1;
+        const computedTitle = `Add Run ${i + 1}`;
+        const rowStart = new Date(baseTime.getTime() + i * runtime);
+        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
+        rows.push({
+          position: runNumber,
+          positionDisplay: runNumber,
+          computedTitle,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          endDate: rowEnd,
+        });
+      }
+      return rows;
+    });
+
+    // 16. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
+    const prebatchRows = computed(() => {
+      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
+      const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
+      if (!prebatchCount) return [];
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
+      let baseTime;
+      if (additionalRows.value.length) {
+        baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
+      } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
+        const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
+        baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
+      } else if (startTime.batchEndTime) {
+        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+      } else {
+        baseTime = timeDelayResults.delayedRunsStartTimeDate ? new Date(timeDelayResults.delayedRunsStartTimeDate) : new Date();
+      }
+      let delayedStart;
+      if (timeDelayResults.delayedRunsStartTimeDate) {
+        delayedStart = new Date(timeDelayResults.delayedRunsStartTimeDate);
+      } else {
+        const delayHours = parseInt(timeDelayRequired.value, 10) || 0;
+        delayedStart = new Date(baseTime.getTime() + delayHours * 3600000);
+      }
+      const rows = [];
+      for (let i = 0; i < prebatchCount; i++) {
+        const rowStart = new Date(delayedStart.getTime() + i * runtime);
+        const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
+        const runNumber = (lastMainRunNumber.value || 0) + (additionalRows.value.length || 0) + i + 1;
+        rows.push({
+          position: runNumber,
+          positionDisplay: runNumber,
+          computedTitle: `Delayed Run ${i + 1}`,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          endDate: rowEnd,
+        });
+      }
+      return rows;
+    });
+
+    // 17. Computed for the delay time string.
+    const timeDelayRequired = computed(() => {
+      const { timeDelayResults } = gcStore;
+      return timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
+    });
+
+    // 18. Flag to indicate if delayed runs should be shown.
+    const delayedRunSelected = computed(() => {
+      const { timeDelayResults } = gcStore;
+      return (
+        timeDelayResults &&
+        (timeDelayResults.prerunsDescription !== 'None' ||
+          Number(timeDelayResults.totalDelayedRuns) > 0)
+      );
+    });
+
+    // 19. Compute the end time of the last run in the initial batch.
+    const initialBatchEndTime = computed(() => {
+      if (initialBaseRuns.value && initialBaseRuns.value.length) {
+        return initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
+      }
+      return "";
+    });
+    watch(initialBatchEndTime, (newVal) => {
+      emit("update:initialBatchEndTime", newVal);
+    }, { immediate: true });
+
+    watch(runtableClosestPositionFull, (newVal) => {
+      emit("update:runtableClosestPositionFull", newVal);
+    }, { immediate: true });
+
     return {
-      sequentialFinalPosition,
-      miscAdditionalRuns,
-      miscAdditionalRunsInput,
-      prebatchSelected,
-      calibrationSelected,
-      togglePrebatch,
-      toggleCalibration,
-      miscDelayedRunsInput,
-      miscDelayedRuns,
-      sequentialBatchEndTime,
-      additionalRunsEndTime,
-      timeDelayRequired: timeDelayRequiredLocal,
-      timeGapTo730AM,
-      prerunsDescription,
-      allowedPositionsForSequential,
+      gcStore,
+      initialPositionOrder,
+      sequentialPositionOrder,
+      hasSequentialBatch,
+      sequentialRows,
+      runsHasWait,
+      waitRow,
+      initialBaseRuns,
+      sequentialBaseRuns,
+      runtableClosestCandidateIndex,
+      selectedCandidate,
+      selectedPositionLabel,
+      runtableClosestPositionFull,
+      additionalRows,
+      prebatchRows,
+      timeDelayRequired,
+      delayedRunSelected,
       totalPreruns,
       totalRuns,
       hideInputs,
