@@ -45,14 +45,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="(title, idx) in sequentialPositionOrder"
-            :key="'sequential-' + idx"
-          >
-            <td>{{ title }}</td>
-            <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].startTime) || "" }}</td>
-            <td>{{ (sequentialBaseRuns[idx] && sequentialBaseRuns[idx].endTime) || "" }}</td>
-            <td>{{ idx + 1 }}</td>
+          <tr v-for="(row, idx) in sequentialRows" :key="'sequential-' + idx">
+            <td>{{ row.computedTitle }}</td>
+            <td>{{ row.startTime }}</td>
+            <td>{{ row.endTime }}</td>
+            <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
       </table>
@@ -161,7 +158,7 @@ export default {
       runsHasWait.value ? props.runs.slice(1) : props.runs
     );
 
-    // 3. Only generate initial batch order if finalPosition is provided.
+    // 3. Generate initial batch order if finalPosition is provided.
     const initialPositionOrder = computed(() => {
       if (!gcStore.startTime.finalPosition) return [];
       const fp = Number(gcStore.startTime.finalPosition);
@@ -244,7 +241,7 @@ export default {
       return order;
     }
 
-    // 7. Sequential batch order.
+    // 7. Sequential batch order (using sequentialFinalPosition).
     const sequentialPositionOrder = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const seqFP = Number(gcStore.sequentialFinalPosition);
@@ -324,6 +321,33 @@ export default {
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
 
+    // NEW: Generate sequential batch rows using the ordering logic.
+    const sequentialRows = computed(() => {
+      if (!gcStore.sequentialFinalPosition) return [];
+      const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
+      let baseTime;
+      // Use the first sequential run’s startTime if available,
+      // otherwise use the initial batch end time as the base.
+      if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
+        // Prepend the current date to the time string to ensure a valid Date.
+        baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
+      } else if (initialBatchEndTime.value) {
+        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+      } else {
+        baseTime = new Date();
+      }
+      return sequentialPositionOrder.value.map((title, idx) => {
+        const rowStart = new Date(baseTime.getTime() + idx * runtime);
+        const rowEnd = new Date(baseTime.getTime() + (idx + 1) * runtime);
+        return {
+          computedTitle: title,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          positionDisplay: idx + 1
+        };
+      });
+    });
+
     // 13. Additional Runs computed from timeDelayResults.additionalRuns.
     const additionalRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
@@ -331,8 +355,6 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // Use sequentialBaseRuns endTime if available; otherwise use initialBatchEndTime if available;
-      // otherwise build a Date using the batchEndTime string and the current date.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
         baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
@@ -441,6 +463,7 @@ export default {
       initialPositionOrder,
       sequentialPositionOrder,
       hasSequentialBatch,
+      sequentialRows,
       runsHasWait,
       waitRow,
       initialBaseRuns,
