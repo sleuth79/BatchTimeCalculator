@@ -34,7 +34,7 @@
 
     <!-- Sequential Batch Section (displayed only if sequentialFinalPosition is set) -->
     <div v-if="hasSequentialBatch">
-      <h3>Sequential Batch</h3>
+      <h4>Sequential Batch</h4>
       <table>
         <thead>
           <tr class="header-row">
@@ -60,7 +60,7 @@
 
     <!-- Additional Runs Section -->
     <div v-if="additionalRows.length">
-      <h3>Additional Runs</h3>
+      <h4>Additional Runs</h4>
       <table>
         <thead>
           <tr class="header-row">
@@ -72,7 +72,7 @@
         </thead>
         <tbody>
           <tr v-for="(row, idx) in additionalRows" :key="'additional-' + idx">
-            <td>{{ row.position }}</td>
+            <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
             <td>{{ row.endTime }}</td>
             <td>{{ row.position }}</td>
@@ -83,14 +83,14 @@
 
     <!-- Time Delay Row -->
     <div v-if="delayedRunSelected">
-      <h3 class="time-delay-header">
+      <h4 class="time-delay-header">
         Time Delay: {{ timeDelayRequired }}
-      </h3>
+      </h4>
     </div>
 
     <!-- Delayed Runs Section -->
     <div v-if="prebatchRows.length">
-      <h3>Delayed Runs</h3>
+      <h4>Delayed Runs</h4>
       <table>
         <thead>
           <tr class="header-row">
@@ -102,7 +102,7 @@
         </thead>
         <tbody>
           <tr v-for="(row, idx) in prebatchRows" :key="'prebatch-' + idx">
-            <td>{{ row.position }}</td>
+            <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
             <td>{{ row.endTime }}</td>
             <td>{{ row.position }}</td>
@@ -290,7 +290,7 @@ export default {
       return candidateIndex;
     });
 
-    // 11. Selected candidate and label.
+    // 11. Selected candidate and its label.
     const selectedCandidate = computed(() => {
       const idx = runtableClosestCandidateIndex.value;
       if (idx < 0) return null;
@@ -310,7 +310,7 @@ export default {
 
     // Additional computed properties for Additional and Delayed Runs
 
-    // The last main run number is the total number of runs from the initial and sequential batches.
+    // Last main run number (initial + sequential)
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialPositionOrder.value.length;
     });
@@ -333,7 +333,7 @@ export default {
         const runNumber = base + i + 1;
         const computedTitle = `Add Run ${i + 1}`;
         const rowStart = new Date(baseTime.getTime() + i * runtime);
-        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
+        const rowEnd   = new Date(baseTime.getTime() + (i + 1) * runtime);
         rows.push({
           position: runNumber,
           computedTitle,
@@ -371,7 +371,7 @@ export default {
       const rows = [];
       for (let i = 0; i < prebatchCount; i++) {
         const rowStart = new Date(delayedStart.getTime() + i * runtime);
-        const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
+        const rowEnd   = new Date(delayedStart.getTime() + (i + 1) * runtime);
         rows.push({
           position: lastMainRunNumber.value + (additionalRows.value.length || 0) + i + 1,
           computedTitle: `Delayed Run ${i + 1}`,
