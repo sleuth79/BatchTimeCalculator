@@ -22,7 +22,7 @@
             <label>Misc Additional Runs:</label>
             <input
               type="number"
-              v-model="additionalRunsInput"
+              v-model="miscAdditionalRunsInput"
               min="0"
               max="99"
               @input="limitAdditionalRuns"
@@ -60,10 +60,10 @@
               <span class="misc-label">Misc Delayed Runs:</span>
               <input
                 type="number"
-                v-model="miscRunsInput"
+                v-model="miscDelayedRunsInput"
                 min="0"
                 max="99"
-                @input="limitMiscRuns"
+                @input="limitMiscDelayedRuns"
               />
             </div>
           </div>
@@ -102,20 +102,21 @@ export default {
 
     // --- Local Input States ---
     const sequentialFinalPosition = ref(null);
-    const additionalRuns = ref(null);
+    // Renamed local variable for Additional Runs input:
+    const miscAdditionalRuns = ref(null);
     const prebatchSelected = ref(false);
     const calibrationSelected = ref(false);
-    const miscRuns = ref(0);
+    const miscDelayedRuns = ref(0);
 
-    // Watch additionalRuns to update store state and recalc.
-    watch(additionalRuns, (newVal) => {
-      gcStore.additionalRuns = newVal;
+    // Watch miscAdditionalRuns to update the store and recalc.
+    watch(miscAdditionalRuns, (newVal) => {
+      gcStore.miscAdditionalRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
-    // NEW: Watch miscRuns to update the store and recalc.
-    watch(miscRuns, (newVal) => {
-      gcStore.miscRuns = newVal;
+    // Watch miscDelayedRuns to update the store and recalc.
+    watch(miscDelayedRuns, (newVal) => {
+      gcStore.miscDelayedRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
@@ -134,30 +135,30 @@ export default {
     // Reset local inputs when store signals a reset.
     watch(() => gcStore.startTimeResetCounter, () => {
       sequentialFinalPosition.value = null;
-      additionalRuns.value = null;
+      miscAdditionalRuns.value = null;
       prebatchSelected.value = false;
       calibrationSelected.value = false;
-      miscRuns.value = 0;
+      miscDelayedRuns.value = 0;
     });
 
     // Computed setters for capping inputs.
-    const additionalRunsInput = computed({
+    const miscAdditionalRunsInput = computed({
       get() {
-        return additionalRuns.value === null ? '' : additionalRuns.value;
+        return miscAdditionalRuns.value === null ? '' : miscAdditionalRuns.value;
       },
       set(val) {
         const num = parseInt(val, 10);
-        additionalRuns.value = isNaN(num) ? null : (num > 99 ? 99 : num);
+        miscAdditionalRuns.value = isNaN(num) ? null : (num > 99 ? 99 : num);
       },
     });
 
-    const miscRunsInput = computed({
+    const miscDelayedRunsInput = computed({
       get() {
-        return miscRuns.value === 0 ? '' : miscRuns.value;
+        return miscDelayedRuns.value === 0 ? '' : miscDelayedRuns.value;
       },
       set(val) {
         const num = parseInt(val, 10);
-        miscRuns.value = isNaN(num) ? 0 : (num > 99 ? 99 : num);
+        miscDelayedRuns.value = isNaN(num) ? 0 : (num > 99 ? 99 : num);
       },
     });
 
@@ -167,16 +168,16 @@ export default {
       if (value.length > 2) {
         const truncated = value.slice(0, 2);
         e.target.value = truncated;
-        additionalRunsInput.value = parseInt(truncated, 10);
+        miscAdditionalRunsInput.value = parseInt(truncated, 10);
       }
     };
 
-    const limitMiscRuns = (e) => {
+    const limitMiscDelayedRuns = (e) => {
       const value = e.target.value.toString();
       if (value.length > 2) {
         const truncated = value.slice(0, 2);
         e.target.value = truncated;
-        miscRunsInput.value = parseInt(truncated, 10);
+        miscDelayedRunsInput.value = parseInt(truncated, 10);
       }
     };
 
@@ -215,7 +216,7 @@ export default {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const seqPos = Number(sequentialFinalPosition.value);
         const baseRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
-        const extra = additionalRuns.value ? Number(additionalRuns.value) : 0;
+        const extra = miscAdditionalRuns.value ? Number(miscAdditionalRuns.value) : 0;
         return baseRuns + extra;
       }
       return 0;
@@ -232,8 +233,8 @@ export default {
           computedTime.setDate(computedTime.getDate() + 1);
         }
         return computedTime;
-      } else if (additionalRuns.value) {
-        const secs = Number(additionalRuns.value) * runtimeSeconds.value;
+      } else if (miscAdditionalRuns.value) {
+        const secs = Number(miscAdditionalRuns.value) * runtimeSeconds.value;
         let computedTime = new Date(batch1End.value.getTime() + secs * 1000);
         if (computedTime.getDate() === batch1End.value.getDate()) {
           computedTime.setDate(computedTime.getDate() + 1);
@@ -246,14 +247,14 @@ export default {
     const sequentialBatchEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
-      } else if (additionalRuns.value) {
+      } else if (miscAdditionalRuns.value) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
       }
       return '';
     });
 
     const additionalRunsEndTime = computed(() => {
-      if (additionalRuns.value) {
+      if (miscAdditionalRuns.value) {
         return formatTimeWithAmPmAndSeconds(baseEndTime.value);
       }
       return '';
@@ -272,7 +273,7 @@ export default {
       let total = 0;
       if (prebatchSelected.value) total += 4;
       if (calibrationSelected.value) total += calibrationRuns.value;
-      total += miscRuns.value || 0;
+      total += miscDelayedRuns.value || 0;
       return total;
     });
 
@@ -285,7 +286,7 @@ export default {
       return (
         prebatchSelected.value ||
         calibrationSelected.value ||
-        miscRuns.value > 0
+        miscDelayedRuns.value > 0
       );
     });
 
@@ -300,7 +301,7 @@ export default {
       if (sequentialPos > 0) {
         effectiveSequential = sequentialPos <= 15 ? sequentialPos + 2 : sequentialPos + 1;
       }
-      const additional = Number(additionalRuns.value) || 0;
+      const additional = Number(miscAdditionalRuns.value) || 0;
       return effectiveInitial + effectiveSequential + additional;
     });
 
@@ -384,7 +385,7 @@ export default {
           arr.push(`Calibration (${cal})`);
         }
       }
-      if (miscRuns.value > 0) arr.push(`Misc Runs: ${miscRuns.value}`);
+      if (miscDelayedRuns.value > 0) arr.push(`Misc Runs: ${miscDelayedRuns.value}`);
       return arr.length ? arr.join(", ") : "None";
     });
 
@@ -411,10 +412,10 @@ export default {
     watch(
       [
         sequentialFinalPosition,
-        additionalRuns,
+        miscAdditionalRuns,
         prebatchSelected,
         calibrationSelected,
-        miscRuns,
+        miscDelayedRuns,
         () => props.batch1EndTime,
         () => props.gcRuntime,
         () => props.primaryFinalPosition,
@@ -423,13 +424,13 @@ export default {
         if (!(
           (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
           delayedRunSelected.value ||
-          additionalRuns.value
+          miscAdditionalRuns.value
         )) {
           const fallbackPayload = {
             sequentialBatchActive: false,
             sequentialFinalPosition: null,
             sequentialBatchEndTime: '',
-            additionalRuns: additionalRuns.value,
+            additionalRuns: miscAdditionalRuns.value,
             additionalRunsEndTime: '',
             additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
             prerunsDescription: prerunsDescription.value,
@@ -448,7 +449,7 @@ export default {
           sequentialBatchActive: (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0),
           sequentialFinalPosition: sequentialFinalPosition.value ? Number(sequentialFinalPosition.value) : null,
           sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
-          additionalRuns: additionalRuns.value,
+          additionalRuns: miscAdditionalRuns.value,
           additionalRunsEndTime: additionalRunsEndTime.value,
           additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
@@ -469,13 +470,13 @@ export default {
       if (!(
         (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) ||
         delayedRunSelected.value ||
-        additionalRuns.value
+        miscAdditionalRuns.value
       )) {
         const emptyPayload = {
           sequentialBatchActive: false,
           sequentialFinalPosition: null,
           sequentialBatchEndTime: '',
-          additionalRuns: additionalRuns.value,
+          additionalRuns: miscAdditionalRuns.value,
           additionalRunsEndTime: '',
           additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
@@ -493,7 +494,7 @@ export default {
           sequentialBatchActive: (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0),
           sequentialFinalPosition: sequentialFinalPosition.value ? Number(sequentialFinalPosition.value) : null,
           sequentialBatchEndTime: formatTimeWithAmPmAndSeconds(baseEndTime.value),
-          additionalRuns: additionalRuns.value,
+          additionalRuns: miscAdditionalRuns.value,
           additionalRunsEndTime: additionalRunsEndTime.value,
           additionalRunsDuration: gcStore.timeDelayResults.additionalRunsDuration,
           prerunsDescription: prerunsDescription.value,
@@ -518,14 +519,14 @@ export default {
 
     return {
       sequentialFinalPosition,
-      additionalRuns,
-      additionalRunsInput,
+      miscAdditionalRuns,
+      miscAdditionalRunsInput,
       prebatchSelected,
       calibrationSelected,
       togglePrebatch,
       toggleCalibration,
-      miscRunsInput,
-      miscRuns,
+      miscDelayedRunsInput,
+      miscDelayedRuns,
       sequentialBatchEndTime,
       additionalRunsEndTime,
       timeDelayRequired: timeDelayRequiredLocal,
@@ -536,7 +537,7 @@ export default {
       totalRuns,
       hideInputs,
       limitAdditionalRuns,
-      limitMiscRuns,
+      limitMiscDelayedRuns,
       calibrationRuns,
       gcType: props.gcType,
       isEnergy,

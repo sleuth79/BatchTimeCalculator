@@ -79,7 +79,7 @@ export const useGcStore = defineStore('gc', {
     },
     lastStartTimeInputs: null,
     sequentialFinalPosition: null, // preserved as requested
-    miscRuns: 0,
+    miscDelayedRuns: 0,           // used for delayed runs
     timeDelayResults: {
       prerunsDescription: 'None',
       totalDelayedRuns: 0,
@@ -89,7 +89,8 @@ export const useGcStore = defineStore('gc', {
       additionalRunsDuration: '',
     },
     startTimeResetCounter: 0,
-    additionalRuns: null,
+    // Renamed property for additional runs to avoid confusion:
+    miscAdditionalRuns: null,     // used for additional runs (formerly additionalRuns)
   }),
   actions: {
     async fetchGcData() {
@@ -124,6 +125,8 @@ export const useGcStore = defineStore('gc', {
       this.lastStartTimeInputs = null;
       // Also clear the results so that the UI shows no results when inputs are null.
       this.results = {};
+      // Reset the additional runs property
+      this.miscAdditionalRuns = null;
       // Increment counter to force component re-render if keyed on it.
       this.startTimeResetCounter++;
       console.log(`[${new Date().toLocaleTimeString()}] resetStartTime() called. New startTime:`, this.startTime);

@@ -111,17 +111,14 @@ export default {
       return null;
     });
 
-    // New computed property: sum sequentialBatchRuns and miscRuns from the store.
+    // Computed property: sum sequentialBatchRuns and miscAdditionalRuns from the store.
     const totalAdditionalRuns = computed(() => {
-     const miscAdditional = Number(gcStore.miscRuns || 0);
-      // Check if sequential final position is provided
+      const miscAdditional = Number(gcStore.miscAdditionalRuns || 0);
       if (timeDelayData.value.sequentialFinalPosition !== null) {
         const seqPos = Number(timeDelayData.value.sequentialFinalPosition);
-        // Calculate sequential batch runs based on final position.
         const sequentialRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
-       return sequentialRuns + miscAdditional;
+        return sequentialRuns + miscAdditional;
       }
-      // If no sequential batch final position, show only misc runs
       return miscAdditional || null;
     });
 
@@ -198,7 +195,6 @@ export default {
       return hour > 7 || (hour === 7 && minute >= 30);
     });
 
-    // Computed property to format the time delay required string.
     const formattedTimeDelayRequired = computed(() => {
       const val = timeDelayData.value.timeDelayRequired;
       if (val === '0 hours') {
