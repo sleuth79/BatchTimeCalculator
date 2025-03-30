@@ -3,8 +3,6 @@ import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
 
-console.log("DEBUG: useGcStore module loaded");
-
 export const pinia = createPinia();
 
 /*
@@ -46,9 +44,7 @@ function fallbackFormatDuration(ms) {
   We assume the time is for "today."
 */
 function parse24HourTimeToDate(timeStr) {
-  // If the time string doesn't include a colon, assume minutes are "00"
   if (!timeStr.includes(":")) {
-    // Pad hour to two digits if necessary and add ":00"
     timeStr = timeStr.length === 1 ? "0" + timeStr + ":00" : timeStr.padStart(2, "0") + ":00";
   }
   const [hourStr, minuteStr] = timeStr.split(":");
@@ -61,14 +57,14 @@ export const useGcStore = defineStore('gc', {
   state: () => ({
     allGcData: {},
     selectedGc: null,
-    results: {},  // results will be cleared when inputs are reset
+    results: {},
     isLoading: false,
     error: null,
     calculationAttempted: false,
     // Start‑time state: User enters batchStartTime as a 24‑hour string.
     startTime: {
-      batchStartTime: null, // e.g. "10:00"
-      batchStartTimeAMPM: "", // This will be derived for display
+      batchStartTime: null,
+      batchStartTimeAMPM: "",
       wait15: null,
       finalPosition: null,
       batchEndTime: null,
@@ -90,7 +86,7 @@ export const useGcStore = defineStore('gc', {
     },
     startTimeResetCounter: 0,
     // Renamed property for additional runs to avoid confusion:
-    miscAdditionalRuns: null,     // used for additional runs (formerly additionalRuns)
+    miscAdditionalRuns: null,
   }),
   actions: {
     async fetchGcData() {
@@ -114,7 +110,6 @@ export const useGcStore = defineStore('gc', {
     },
     resetStartTime() {
       const selectedGcType = this.selectedGc && this.allGcData[this.selectedGc]?.type;
-      // Clear all input fields individually so that reactivity is maintained.
       this.startTime.batchStartTime = null;
       this.startTime.batchStartTimeAMPM = "";
       this.startTime.wait15 = selectedGcType === "Energy";
@@ -123,17 +118,14 @@ export const useGcStore = defineStore('gc', {
       this.startTime.controls.control1 = null;
       this.startTime.controls.control2 = null;
       this.lastStartTimeInputs = null;
-      // Also clear the results so that the UI shows no results when inputs are null.
       this.results = {};
-      // Reset the additional runs property
       this.miscAdditionalRuns = null;
-      // Increment counter to force component re-render if keyed on it.
       this.startTimeResetCounter++;
-      console.log(`[${new Date().toLocaleTimeString()}] resetStartTime() called. New startTime:`, this.startTime);
     },
     setSequentialFinalPosition(position) {
       this.sequentialFinalPosition = this.sequentialFinalPosition === position ? null : position;
       this.calculateStartTimeBatch();
+      console.log("Final sequential batch position:", this.sequentialFinalPosition);
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
@@ -148,7 +140,6 @@ export const useGcStore = defineStore('gc', {
     },
     setStartTimeFinalPosition(position) {
       this.startTime.finalPosition = position;
-      // Check if other required fields are provided.
       if (
         this.startTime.batchStartTime &&
         this.startTime.controls.control1 !== null &&
@@ -158,7 +149,6 @@ export const useGcStore = defineStore('gc', {
       ) {
         this.calculateStartTimeBatch();
       } else {
-        // Otherwise, update partial results.
         this.results = {
           mode: "start-time",
           startTimeFinalPosition: this.startTime.finalPosition,
@@ -167,41 +157,30 @@ export const useGcStore = defineStore('gc', {
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      console.log("Control1 updated to:", value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      console.log("Control2 updated to:", value);
       setTimeout(() => {
         this.calculateStartTimeBatch();
       }, 0);
     },
     calculateStartTimeBatch() {
-      console.log("Calculating Start Time Batch with controls:", JSON.stringify(this.startTime.controls));
-      console.log("Batch Start Time:", this.startTime.batchStartTime);
-      
-      // If batchStartTime is not provided, update partial results and exit.
       if (!this.startTime.batchStartTime) {
-        console.log("Guard: Missing batchStartTime");
         this.results = { mode: "start-time" };
         return;
       }
       
-      // Convert the 24‑hour string to a Date object and derive a formatted 12‑hour time.
       const dt = parse24HourTimeToDate(this.startTime.batchStartTime);
       let ampmValue = this.startTime.batchStartTimeAMPM;
       if (!ampmValue) {
         ampmValue = dt.getHours() >= 12 ? "PM" : "AM";
-        console.log(`Derived AM/PM from 24‑hour input: ${ampmValue}`);
       }
       
-      // Format the batch start time to a 12‑hour display string (e.g. "10:00:00 AM")
       const formattedBatchStartTime = formatTime(dt);
       
-      // Build partial results using what is available.
       const partialResults = {
         mode: "start-time",
         batchStartTime: formattedBatchStartTime,
@@ -210,22 +189,17 @@ export const useGcStore = defineStore('gc', {
         wait15: this.startTime.wait15,
       };
       
-      // Update results with partial data.
       this.results = { ...partialResults };
       
-      // Only perform full calculation if all required inputs are provided.
       if (!this.startTime.finalPosition) {
-        console.log("Guard: Missing finalPosition");
         return;
       }
       
       const { control1, control2 } = this.startTime.controls;
       if (control1 === null || control1 === "" || control2 === null || control2 === "") {
-        console.log("Guard: Missing control1 or control2");
         return;
       }
       
-      // All required inputs are provided—perform full calculation.
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
@@ -240,7 +214,6 @@ export const useGcStore = defineStore('gc', {
       );
       this.startTime.batchEndTime = calcResults.batchEndTimeDate || new Date();
       
-      // Update results with full calculated values.
       this.results = {
         ...partialResults,
         selectedGc: this.allGcData[this.selectedGc]
@@ -254,7 +227,6 @@ export const useGcStore = defineStore('gc', {
         runs: calcResults.runs,
       };
       
-      console.log("Calculation complete. Current startTime state:", JSON.stringify(this.startTime, null, 2));
       this.lastStartTimeInputs = { ...this.startTime };
     },
   },
