@@ -377,10 +377,16 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // If sequential rows exist, use the last sequential row's end time.
+      // If sequential rows exist and have a valid endTime, use that.
       if (sequentialRows.value.length > 0) {
-        baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
-      } else if (gcStore.startTime.batchEndTime) {
+        const lastSeqEnd = sequentialRows.value[sequentialRows.value.length - 1].endTime;
+        // Only use the endTime if it's a non-empty string.
+        if (lastSeqEnd && lastSeqEnd.trim() !== "") {
+          baseTime = new Date(`${new Date().toDateString()} ${lastSeqEnd}`);
+        } else {
+          baseTime = new Date();
+        }
+      } else if (gcStore.startTime.batchEndTime && gcStore.startTime.batchEndTime.trim() !== "") {
         baseTime = new Date(`${new Date().toDateString()} ${gcStore.startTime.batchEndTime}`);
       } else {
         baseTime = new Date();
@@ -416,7 +422,7 @@ export default {
       } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
         baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
-      } else if (startTime.batchEndTime) {
+      } else if (startTime.batchEndTime && startTime.batchEndTime.trim() !== "") {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {
         baseTime = timeDelayResults.delayedRunsStartTimeDate ? new Date(timeDelayResults.delayedRunsStartTimeDate) : new Date();
