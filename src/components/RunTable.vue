@@ -2,40 +2,34 @@
   <div class="run-table">
     <table v-if="hasAnyRows">
       <thead>
-        <!-- Initial Batch Header -->
-        <template v-if="initialBatchRows.length">
-          <tr class="title-row">
-            <th colspan="4" class="batch-header">Initial Batch</th>
-          </tr>
-          <tr class="header-row">
-            <th class="run-column">Run</th>
-            <th>Run Title</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-          </tr>
-        </template>
+        <!-- Common header for all runs -->
+        <tr class="header-row">
+          <th>Run Name</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Run #</th>
+        </tr>
       </thead>
       <tbody>
-        <!-- Initial Batch Rows -->
-        <tr
-          v-for="(row, index) in initialBatchRows"
-          :key="'initial-' + index"
-        >
-          <td class="run-column">{{ row.position }}</td>
-          <td>{{ row.computedTitle }}</td>
-          <td>{{ row.startTime }}</td>
-          <td>{{ row.endTime }}</td>
-        </tr>
+        <!-- Initial Batch Rows (from new code) -->
+        <template v-if="initialRows.length">
+          <tr class="title-row">
+            <td colspan="4" class="batch-header">Initial Batch</td>
+          </tr>
+          <tr v-for="(row, index) in initialRows" :key="'initial-' + index">
+            <td>{{ row.title }}</td>
+            <td>{{ row.startTime }}</td>
+            <td>{{ row.endTime }}</td>
+            <td>{{ row.runNumber }}</td>
+          </tr>
+        </template>
 
         <!-- Sequential Batch Rows -->
         <template v-if="sequentialRows.length">
           <tr class="title-row">
             <td colspan="4" class="batch-header">Sequential Batch</td>
           </tr>
-          <tr
-            v-for="(row, index) in sequentialRows"
-            :key="'seq-' + index"
-          >
+          <tr v-for="(row, index) in sequentialRows" :key="'seq-' + index">
             <td class="run-column">{{ row.position }}</td>
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
@@ -48,10 +42,7 @@
           <tr class="title-row">
             <td colspan="4" class="batch-header">Additional Runs</td>
           </tr>
-          <tr
-            v-for="(row, index) in additionalRows"
-            :key="'add-' + index"
-          >
+          <tr v-for="(row, index) in additionalRows" :key="'add-' + index">
             <td class="run-column">{{ row.position }}</td>
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
@@ -65,8 +56,8 @@
           </tr>
         </template>
 
-        <!-- Time Delay Row -->
-        <tr v-if="delayedRunSelected" class="title-row">
+        <!-- Time Delay Row (if applicable) -->
+        <tr v-if="timeDelayRequired !== ''" class="title-row">
           <td colspan="4" class="batch-header time-delay-header">
             Time Delay: {{ timeDelayRequired }}
           </td>
@@ -77,10 +68,7 @@
           <tr class="title-row">
             <td colspan="4" class="batch-header">Delayed Runs</td>
           </tr>
-          <tr
-            v-for="(row, index) in prebatchRows"
-            :key="'prebatch-' + index"
-          >
+          <tr v-for="(row, index) in prebatchRows" :key="'del-' + index">
             <td class="run-column">{{ row.position }}</td>
             <td>{{ row.computedTitle }}</td>
             <td>{{ row.startTime }}</td>
@@ -93,12 +81,12 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useGcStore } from "../store";
-import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 import { parseTimeString } from "../utils/timeUtils.js";
+import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 
-// Helper to convert a runtime string (e.g., "mm:ss" or "hh:mm:ss") to milliseconds
+// Helper to convert a runtime string into milliseconds.
 function parseRunTime(timeStr) {
   if (!timeStr) return 0;
   if (typeof timeStr === "number") return timeStr * 60000;
@@ -119,46 +107,63 @@ function parseRunTime(timeStr) {
 export default {
   name: "RunTable",
   props: {
-    // In the new integrated version, we do not need an external runs prop.
-    // Instead we use the store results and our computed batches.
+    // No external "runs" prop is needed now,
+    // as we build rows from store data.
   },
   setup() {
     const gcStore = useGcStore();
 
-    // ***********************
-    // SECTION 1: INITIAL BATCH
-    // ***********************
-    // For initial batch rows, we use gcStore.results.runs (if available)
-    const initialBatchRows = computed(() => {
-      if (!gcStore.results || !gcStore.results.runs) return [];
-      // Assume that initial batch runs are the first set before sequentialBatchActive flag becomes true.
-      // You may adjust this logic if needed.
-      // Here we filter runs with positions < starting sequential batch position.
-      return gcStore.results.runs.filter(run => {
-        return run.position && typeof run.position === "number" && run.position < 3; // adjust as appropriate
-      });
+    // ----- NEW CODE (First Batch) -----
+    // Re-create the new code’s computed properties for the initial batch.
+    // Here we build initialRows by mapping over the computed positionOrder.
+    const runsHasWait = computed(() =>
+      gcStore.results && gcStore.results.runs &&
+      String(gcStore.results.runs[0]?.position || "").toLowerCase() === "wait"
+    );
+    const waitRow = computed(() =>
+      runsHasWait.value ? gcStore.results.runs[0] : null
+    );
+    const baseRuns = computed(() =>
+      runsHasWait.value ? gcStore.results.runs.slice(1) : gcStore.results?.runs || []
+    );
+    const positionOrder = computed(() => {
+      // Using your new generatePositionOrder logic from your new code.
+      // For brevity, we assume positionOrder was computed already in your new code.
+      // (Replace this with your actual generatePositionOrder function if needed.)
+      if (!gcStore.startTime.finalPosition) return [];
+      const fp = Number(gcStore.startTime.finalPosition);
+      // Here we mimic the new code’s ordering:
+      let order = [];
+      for (let i = 1; i <= fp; i++) {
+        order.push(`Run ${i}`);
+      }
+      return order;
+    });
+    const initialRows = computed(() => {
+      // For the initial batch, use the new code’s mapping.
+      return positionOrder.value.map((title, idx) => ({
+        title,
+        startTime: (baseRuns.value[idx] && baseRuns.value[idx].startTime) || "",
+        endTime: (baseRuns.value[idx] && baseRuns.value[idx].endTime) || "",
+        runNumber: idx + 1,
+      }));
     });
 
-    // ***********************
-    // SECTION 2: SEQUENTIAL BATCH
-    // ***********************
+    // ----- OLD CODE (Extended Sections) -----
+    // Sequential Batch Rows
     const sequentialRows = computed(() => {
-      if (!gcStore.timeDelayResults || !gcStore.timeDelayResults.sequentialBatchActive) return [];
-      // For sequential batch rows, use a similar logic as in your old code.
-      const { sequentialFinalPosition, startTime, allGcData, selectedGc } = gcStore;
-      if (!sequentialFinalPosition) return [];
+      const { sequentialFinalPosition, startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
+      if (!sequentialFinalPosition || !timeDelayResults.sequentialBatchActive) return [];
       const gcType = String(allGcData[selectedGc]?.type || "").trim().toLowerCase();
-      // Calculate total non-wait rows based on final position
       const totalNonWaitRows = sequentialFinalPosition <= 15 ? sequentialFinalPosition + 2 : sequentialFinalPosition + 1;
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime = new Date(startTime.batchEndTime);
       if (startTime.wait15) {
-        // Insert a wait row if needed (we handle wait separately below)
         baseTime = new Date(baseTime.getTime() + 15 * 60000);
       }
       const rows = [];
-      // Use last initial run number as offset – here we assume initial batch rows exist
-      const offset = initialBatchRows.value.length ? initialBatchRows.value[initialBatchRows.value.length - 1].position : 2;
+      // Use last initial row number as offset – here we take initialRows length if exists.
+      const offset = initialRows.value.length ? initialRows.value[initialRows.value.length - 1].runNumber : 0;
       for (let i = 0; i < totalNonWaitRows; i++) {
         let computedTitle = "";
         if (i === 0) {
@@ -185,11 +190,9 @@ export default {
       return rows;
     });
 
-    // ***********************
-    // SECTION 3: ADDITIONAL RUNS
-    // ***********************
+    // Additional Runs Rows
     const additionalRows = computed(() => {
-      const { timeDelayResults, startTime, allGcData, selectedGc } = gcStore;
+      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const additionalCount = timeDelayResults && timeDelayResults.additionalRuns
         ? Number(timeDelayResults.additionalRuns)
         : 0;
@@ -197,16 +200,12 @@ export default {
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
       if (sequentialRows.value.length) {
-        // Use the end time of the sequential batch (excluding wait row) as base.
         baseTime = sequentialRows.value[sequentialRows.value.length - 1].endDate;
       } else {
         baseTime = new Date(startTime.batchEndTime);
       }
-      // Use last main run number from initial + sequential rows as offset.
-      let lastRunNumber = 0;
-      if (initialBatchRows.value.length) {
-        lastRunNumber = initialBatchRows.value[initialBatchRows.value.length - 1].position;
-      }
+      // Use last run number from initial + sequential rows as offset.
+      let lastRunNumber = initialRows.value.length;
       if (sequentialRows.value.length) {
         lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
       }
@@ -227,9 +226,7 @@ export default {
       return rows;
     });
 
-    // ***********************
-    // SECTION 4: DELAYED RUNS (Prebatch Rows)
-    // ***********************
+    // Delayed (Prebatch) Runs Rows
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns
@@ -254,12 +251,9 @@ export default {
         const delayHours = parseInt(timeDelayResults.timeDelayRequired, 10) || 0;
         delayedStart = new Date(baseTime.getTime() + delayHours * 3600000);
       }
-      let rows = [];
-      // Use last main run number from previous sections as offset.
-      let lastRunNumber = 0;
-      if (initialBatchRows.value.length) {
-        lastRunNumber = initialBatchRows.value[initialBatchRows.value.length - 1].position;
-      }
+      const rows = [];
+      // Use last run number from previous sections as offset.
+      let lastRunNumber = initialRows.value.length;
       if (sequentialRows.value.length) {
         lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
       }
@@ -282,32 +276,8 @@ export default {
       return rows;
     });
 
-    // ***********************
-    // SECTION 5: TIME DELAY INFO
-    // ***********************
-    const timeDelayRequired = computed(() => {
-      return gcStore.timeDelayResults && gcStore.timeDelayResults.timeDelayRequired
-        ? gcStore.timeDelayResults.timeDelayRequired
-        : "";
-    });
-
-    const delayedRunSelected = computed(() => {
-      const { timeDelayResults } = gcStore;
-      return (
-        timeDelayResults &&
-        (timeDelayResults.prerunsDescription !== "None" ||
-          Number(timeDelayResults.totalDelayedRuns) > 0)
-      );
-    });
-
-    // ***********************
-    // SECTION 6: TOTAL DURATION OF ADDITIONAL RUNS
-    // ***********************
+    // Total Duration of Additional Runs
     const additionalDurationFormatted = computed(() => {
-      // Use totalAdditionalRuns from sequential and miscAdditional if sequential exists,
-      // otherwise just miscAdditionalRuns.
-      // We calculate duration = (totalAdditionalRuns * runtime) and, if Energy GC with sequential,
-      // add 15 minutes (900 seconds).
       const allGcData = gcStore.allGcData;
       const selectedGc = gcStore.selectedGc;
       if (!selectedGc || !allGcData[selectedGc]) return "";
@@ -315,7 +285,6 @@ export default {
       const runtimeMs = parseRunTime(runtimeStr);
       let totalRunsCount = 0;
       if (gcStore.timeDelayResults.sequentialBatchActive && gcStore.startTime.finalPosition) {
-        // Calculate sequential batch runs then add misc additional runs.
         const seqPos = Number(gcStore.startTime.finalPosition);
         const sequentialRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
         const misc = Number(gcStore.miscAdditionalRuns || 0);
@@ -324,7 +293,6 @@ export default {
         totalRunsCount = Number(gcStore.miscAdditionalRuns || 0);
       }
       let durationMs = totalRunsCount * runtimeMs;
-      // If Energy GC is selected and sequential batch is used, add extra 15 minutes
       const gcType = String(allGcData[selectedGc].type || "").trim().toLowerCase();
       if (gcType === "energy" && gcStore.startTime.finalPosition) {
         durationMs += 15 * 60000;
@@ -337,12 +305,17 @@ export default {
       return formatted.trim();
     });
 
-    // ***********************
-    // FINAL: Determine if any rows exist
-    // ***********************
+    // Time Delay Info (if any)
+    const timeDelayRequired = computed(() => {
+      return gcStore.timeDelayResults && gcStore.timeDelayResults.timeDelayRequired
+        ? gcStore.timeDelayResults.timeDelayRequired
+        : "";
+    });
+
+    // Determine if any rows exist
     const hasAnyRows = computed(() => {
       return (
-        initialBatchRows.value.length ||
+        initialRows.value.length ||
         sequentialRows.value.length ||
         additionalRows.value.length ||
         prebatchRows.value.length
@@ -350,12 +323,11 @@ export default {
     });
 
     return {
-      initialBatchRows,
+      initialRows,
       sequentialRows,
       additionalRows,
       prebatchRows,
       timeDelayRequired,
-      delayedRunSelected,
       additionalDurationFormatted,
       hasAnyRows,
     };
