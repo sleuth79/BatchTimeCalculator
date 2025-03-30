@@ -1,218 +1,365 @@
 <template>
   <div class="run-table">
-    <table v-if="positionOrder.length">
+    <table v-if="hasAnyRows">
       <thead>
-        <tr class="header-row">
-          <th>Run Name</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-          <th>Run #</th>
-        </tr>
+        <!-- Initial Batch Header -->
+        <template v-if="initialBatchRows.length">
+          <tr class="title-row">
+            <th colspan="4" class="batch-header">Initial Batch</th>
+          </tr>
+          <tr class="header-row">
+            <th class="run-column">Run</th>
+            <th>Run Title</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+          </tr>
+        </template>
       </thead>
       <tbody>
-        <!-- Render wait row if present -->
-        <tr v-if="runsHasWait">
-          <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
-          <td>{{ waitRow.startTime }}</td>
-          <td>{{ waitRow.endTime }}</td>
-          <td>Wait</td>
-        </tr>
-        <!-- Render the computed rows and highlight the closest candidate -->
+        <!-- Initial Batch Rows -->
         <tr
-          v-for="(title, idx) in positionOrder"
-          :key="idx"
-          :class="{ highlight: idx === runtableClosestCandidateIndex }"
+          v-for="(row, index) in initialBatchRows"
+          :key="'initial-' + index"
         >
-          <td>{{ title }}</td>
-          <td>{{ (baseRuns[idx] && baseRuns[idx].startTime) || "" }}</td>
-          <td>{{ (baseRuns[idx] && baseRuns[idx].endTime) || "" }}</td>
-          <td>{{ idx + 1 }}</td>
+          <td class="run-column">{{ row.position }}</td>
+          <td>{{ row.computedTitle }}</td>
+          <td>{{ row.startTime }}</td>
+          <td>{{ row.endTime }}</td>
         </tr>
+
+        <!-- Sequential Batch Rows -->
+        <template v-if="sequentialRows.length">
+          <tr class="title-row">
+            <td colspan="4" class="batch-header">Sequential Batch</td>
+          </tr>
+          <tr
+            v-for="(row, index) in sequentialRows"
+            :key="'seq-' + index"
+          >
+            <td class="run-column">{{ row.position }}</td>
+            <td>{{ row.computedTitle }}</td>
+            <td>{{ row.startTime }}</td>
+            <td>{{ row.endTime }}</td>
+          </tr>
+        </template>
+
+        <!-- Additional Runs Rows -->
+        <template v-if="additionalRows.length">
+          <tr class="title-row">
+            <td colspan="4" class="batch-header">Additional Runs</td>
+          </tr>
+          <tr
+            v-for="(row, index) in additionalRows"
+            :key="'add-' + index"
+          >
+            <td class="run-column">{{ row.position }}</td>
+            <td>{{ row.computedTitle }}</td>
+            <td>{{ row.startTime }}</td>
+            <td>{{ row.endTime }}</td>
+          </tr>
+          <!-- Total Duration of Additional Runs Row -->
+          <tr class="title-row">
+            <td colspan="4" class="batch-header">
+              Total Duration of Additional Runs: {{ additionalDurationFormatted }}
+            </td>
+          </tr>
+        </template>
+
+        <!-- Time Delay Row -->
+        <tr v-if="delayedRunSelected" class="title-row">
+          <td colspan="4" class="batch-header time-delay-header">
+            Time Delay: {{ timeDelayRequired }}
+          </td>
+        </tr>
+
+        <!-- Delayed Runs Rows -->
+        <template v-if="prebatchRows.length">
+          <tr class="title-row">
+            <td colspan="4" class="batch-header">Delayed Runs</td>
+          </tr>
+          <tr
+            v-for="(row, index) in prebatchRows"
+            :key="'prebatch-' + index"
+          >
+            <td class="run-column">{{ row.position }}</td>
+            <td>{{ row.computedTitle }}</td>
+            <td>{{ row.startTime }}</td>
+            <td>{{ row.endTime }}</td>
+          </tr>
+        </template>
       </tbody>
     </table>
   </div>
 </template>
 
 <script>
-import { computed, watch } from "vue";
+import { computed } from "vue";
 import { useGcStore } from "../store";
+import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
 import { parseTimeString } from "../utils/timeUtils.js";
+
+// Helper to convert a runtime string (e.g., "mm:ss" or "hh:mm:ss") to milliseconds
+function parseRunTime(timeStr) {
+  if (!timeStr) return 0;
+  if (typeof timeStr === "number") return timeStr * 60000;
+  const parts = timeStr.split(":");
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return (minutes * 60 + seconds) * 1000;
+  } else if (parts.length === 3) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    return (hours * 3600 + minutes * 60 + seconds) * 1000;
+  }
+  return 0;
+}
 
 export default {
   name: "RunTable",
   props: {
-    runs: {
-      type: Array,
-      required: true,
-      default: () => []
-    }
+    // In the new integrated version, we do not need an external runs prop.
+    // Instead we use the store results and our computed batches.
   },
-  setup(props, { emit }) {
+  setup() {
     const gcStore = useGcStore();
 
-    // 1. Check if there's a "Wait" row at the top.
-    const runsHasWait = computed(() =>
-      props.runs.length > 0 &&
-      String(props.runs[0].position).toLowerCase() === "wait"
-    );
-    const waitRow = computed(() => (runsHasWait.value ? props.runs[0] : null));
-
-    // 2. Base runs = everything except the wait row (if present).
-    const baseRuns = computed(() =>
-      runsHasWait.value ? props.runs.slice(1) : props.runs
-    );
-
-    // 3. finalPosition from store.
-    const finalPosition = computed(() => Number(gcStore.startTime.finalPosition));
-
-    // 4. Control values from store.
-    const c1 = computed(() => Number(gcStore.startTime.controls?.control1));
-    const c2 = computed(() => Number(gcStore.startTime.controls?.control2));
-    const biggerControl = computed(() => Math.max(c1.value || 0, c2.value || 0));
-    const smallerControl = computed(() => Math.min(c1.value || 0, c2.value || 0));
-
-    // 5. Build a “master” list of allowed sample positions (3..32), excluding
-    //    the control numbers themselves and 16.
-    const sampleAllowed = computed(() => {
-      const arr = [];
-      for (let num = 3; num <= 32; num++) {
-        if (num === biggerControl.value || num === smallerControl.value || num === 16)
-          continue;
-        arr.push(num);
-      }
-      return arr;
-    });
-
-    // 6. Helper to build the final run order with three scenarios.
-    function generatePositionOrder(finalPos, gcType) {
-      const order = [];
-      order.push("Blank");
-      order.push(gcType.includes("energy") ? "Argon Blank" : "Methane Blank");
-      order.push(`1st Control : ${biggerControl.value}`);
-
-      const samples = sampleAllowed.value.filter(n => n <= finalPos);
-
-      if (finalPos < 13) {
-        for (const s of samples) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`2nd Control : ${smallerControl.value}`);
-        return order;
-      }
-      if (finalPos < 23) {
-        const group1 = samples.filter(n => n <= 12);
-        const group2 = samples.filter(n => n > 12);
-        for (const s of group1) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`2nd Control : ${smallerControl.value}`);
-        for (const s of group2) {
-          order.push(`Position ${s}`);
-        }
-        order.push(`3rd Control : ${biggerControl.value}`);
-        return order;
-      }
-      const group1 = samples.filter(n => n <= 12);
-      const group2 = samples.filter(n => n >= 13 && n <= 22);
-      const group3 = samples.filter(n => n > 22);
-      for (const s of group1) {
-        order.push(`Position ${s}`);
-      }
-      order.push(`2nd Control : ${smallerControl.value}`);
-      for (const s of group2) {
-        order.push(`Position ${s}`);
-      }
-      const thirdLabel = `3rd Control : ${biggerControl.value}`;
-      const indexOf22 = order.indexOf("Position 22");
-      if (indexOf22 !== -1) {
-        order.splice(indexOf22 + 1, 0, thirdLabel);
-      } else if (biggerControl.value === 22) {
-        const indexOf21 = order.indexOf("Position 21");
-        if (indexOf21 !== -1) {
-          order.splice(indexOf21 + 1, 0, thirdLabel);
-        } else {
-          order.push(thirdLabel);
-        }
-      } else {
-        order.push(thirdLabel);
-      }
-      for (const s of group3) {
-        order.push(`Position ${s}`);
-      }
-      order.push(`4th Control : ${smallerControl.value}`);
-      return order;
-    }
-
-    // 7. The main computed property for our table.
-    const positionOrder = computed(() => {
-      const fp = finalPosition.value;
-      const gcType = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase();
-      return generatePositionOrder(fp, gcType);
-    });
-
-    // 8. Compute the index of the base run that is the closest candidate to 4:00 PM.
-    const runtableClosestCandidateIndex = computed(() => {
-      const base = baseRuns.value;
-      if (!base || base.length === 0) return -1;
-      const cutoff = new Date();
-      cutoff.setHours(16, 0, 0, 0);
-      let candidateIndex = -1;
-      let candidateTime = null;
-      base.forEach((run, idx) => {
-        if (!run.endTime) return;
-        const parsed = parseTimeString(run.endTime);
-        if (!parsed) return;
-        const runDate = new Date();
-        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-        if (runDate < cutoff) {
-          if (!candidateTime || runDate > candidateTime) {
-            candidateTime = runDate;
-            candidateIndex = idx;
-          }
-        }
+    // ***********************
+    // SECTION 1: INITIAL BATCH
+    // ***********************
+    // For initial batch rows, we use gcStore.results.runs (if available)
+    const initialBatchRows = computed(() => {
+      if (!gcStore.results || !gcStore.results.runs) return [];
+      // Assume that initial batch runs are the first set before sequentialBatchActive flag becomes true.
+      // You may adjust this logic if needed.
+      // Here we filter runs with positions < starting sequential batch position.
+      return gcStore.results.runs.filter(run => {
+        return run.position && typeof run.position === "number" && run.position < 3; // adjust as appropriate
       });
-      return candidateIndex;
     });
 
-    // 9. Compute the selected candidate run (if any) from base runs.
-    const selectedCandidate = computed(() => {
-      const idx = runtableClosestCandidateIndex.value;
-      if (idx < 0) return null;
-      return baseRuns.value[idx];
-    });
-
-    // 10. Compute a label for the selected candidate using the table's displayed order.
-    const selectedPositionLabel = computed(() => {
-      const idx = runtableClosestCandidateIndex.value;
-      if (idx < 0 || !positionOrder.value || idx >= positionOrder.value.length) {
-        return "No candidate found";
+    // ***********************
+    // SECTION 2: SEQUENTIAL BATCH
+    // ***********************
+    const sequentialRows = computed(() => {
+      if (!gcStore.timeDelayResults || !gcStore.timeDelayResults.sequentialBatchActive) return [];
+      // For sequential batch rows, use a similar logic as in your old code.
+      const { sequentialFinalPosition, startTime, allGcData, selectedGc } = gcStore;
+      if (!sequentialFinalPosition) return [];
+      const gcType = String(allGcData[selectedGc]?.type || "").trim().toLowerCase();
+      // Calculate total non-wait rows based on final position
+      const totalNonWaitRows = sequentialFinalPosition <= 15 ? sequentialFinalPosition + 2 : sequentialFinalPosition + 1;
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
+      let baseTime = new Date(startTime.batchEndTime);
+      if (startTime.wait15) {
+        // Insert a wait row if needed (we handle wait separately below)
+        baseTime = new Date(baseTime.getTime() + 15 * 60000);
       }
-      return positionOrder.value[idx];
+      const rows = [];
+      // Use last initial run number as offset – here we assume initial batch rows exist
+      const offset = initialBatchRows.value.length ? initialBatchRows.value[initialBatchRows.value.length - 1].position : 2;
+      for (let i = 0; i < totalNonWaitRows; i++) {
+        let computedTitle = "";
+        if (i === 0) {
+          computedTitle = "Blank";
+        } else if (i === 1) {
+          computedTitle = gcType.includes("energy") ? "Argon Blank" : "Methane Blank";
+        } else if (i === 2) {
+          computedTitle = "Initial Control";
+        } else if (i === totalNonWaitRows - 1) {
+          computedTitle = "Final Control";
+        } else {
+          computedTitle = "Position " + i;
+        }
+        const rowStart = new Date(baseTime.getTime() + i * runtime);
+        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
+        rows.push({
+          position: offset + i + 1,
+          computedTitle,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          endDate: rowEnd,
+        });
+      }
+      return rows;
     });
 
-    // NEW: Compute a display string (from run table data only) that includes the position label, start time, and end time.
-    const runtableClosestPositionFull = computed(() => {
-      if (!selectedCandidate.value) return "No candidate found";
-      return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
+    // ***********************
+    // SECTION 3: ADDITIONAL RUNS
+    // ***********************
+    const additionalRows = computed(() => {
+      const { timeDelayResults, startTime, allGcData, selectedGc } = gcStore;
+      const additionalCount = timeDelayResults && timeDelayResults.additionalRuns
+        ? Number(timeDelayResults.additionalRuns)
+        : 0;
+      if (!additionalCount) return [];
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
+      let baseTime;
+      if (sequentialRows.value.length) {
+        // Use the end time of the sequential batch (excluding wait row) as base.
+        baseTime = sequentialRows.value[sequentialRows.value.length - 1].endDate;
+      } else {
+        baseTime = new Date(startTime.batchEndTime);
+      }
+      // Use last main run number from initial + sequential rows as offset.
+      let lastRunNumber = 0;
+      if (initialBatchRows.value.length) {
+        lastRunNumber = initialBatchRows.value[initialBatchRows.value.length - 1].position;
+      }
+      if (sequentialRows.value.length) {
+        lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
+      }
+      const rows = [];
+      for (let i = 0; i < additionalCount; i++) {
+        const runNumber = lastRunNumber + i + 1;
+        const computedTitle = `Add Run ${i + 1}`;
+        const rowStart = new Date(baseTime.getTime() + i * runtime);
+        const rowEnd = new Date(baseTime.getTime() + (i + 1) * runtime);
+        rows.push({
+          position: runNumber,
+          computedTitle,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          endDate: rowEnd,
+        });
+      }
+      return rows;
     });
 
-    // Emit the new computed value so that parent components can use it
-    watch(runtableClosestPositionFull, (newVal) => {
-      emit("update:runtableClosestPositionFull", newVal);
-    }, { immediate: true });
+    // ***********************
+    // SECTION 4: DELAYED RUNS (Prebatch Rows)
+    // ***********************
+    const prebatchRows = computed(() => {
+      const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
+      const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns
+        ? Number(timeDelayResults.totalDelayedRuns)
+        : 0;
+      if (!prebatchCount) return [];
+      const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
+      let baseTime;
+      if (additionalRows.value.length) {
+        baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
+      } else if (sequentialRows.value.length) {
+        baseTime = sequentialRows.value[sequentialRows.value.length - 1].endDate;
+      } else if (startTime.batchEndTime) {
+        baseTime = new Date(startTime.batchEndTime);
+      } else {
+        baseTime = new Date();
+      }
+      let delayedStart;
+      if (timeDelayResults.delayedRunsStartTimeDate) {
+        delayedStart = new Date(timeDelayResults.delayedRunsStartTimeDate);
+      } else {
+        const delayHours = parseInt(timeDelayResults.timeDelayRequired, 10) || 0;
+        delayedStart = new Date(baseTime.getTime() + delayHours * 3600000);
+      }
+      let rows = [];
+      // Use last main run number from previous sections as offset.
+      let lastRunNumber = 0;
+      if (initialBatchRows.value.length) {
+        lastRunNumber = initialBatchRows.value[initialBatchRows.value.length - 1].position;
+      }
+      if (sequentialRows.value.length) {
+        lastRunNumber = sequentialRows.value[sequentialRows.value.length - 1].position;
+      }
+      if (additionalRows.value.length) {
+        lastRunNumber = additionalRows.value[additionalRows.value.length - 1].position;
+      }
+      for (let i = 0; i < prebatchCount; i++) {
+        const runNumber = lastRunNumber + i + 1;
+        const computedTitle = `Delayed Run ${i + 1}`;
+        const rowStart = new Date(delayedStart.getTime() + i * runtime);
+        const rowEnd = new Date(delayedStart.getTime() + (i + 1) * runtime);
+        rows.push({
+          position: runNumber,
+          computedTitle,
+          startTime: formatTimeWithAmPmAndSeconds(rowStart),
+          endTime: formatTimeWithAmPmAndSeconds(rowEnd),
+          endDate: rowEnd,
+        });
+      }
+      return rows;
+    });
+
+    // ***********************
+    // SECTION 5: TIME DELAY INFO
+    // ***********************
+    const timeDelayRequired = computed(() => {
+      return gcStore.timeDelayResults && gcStore.timeDelayResults.timeDelayRequired
+        ? gcStore.timeDelayResults.timeDelayRequired
+        : "";
+    });
+
+    const delayedRunSelected = computed(() => {
+      const { timeDelayResults } = gcStore;
+      return (
+        timeDelayResults &&
+        (timeDelayResults.prerunsDescription !== "None" ||
+          Number(timeDelayResults.totalDelayedRuns) > 0)
+      );
+    });
+
+    // ***********************
+    // SECTION 6: TOTAL DURATION OF ADDITIONAL RUNS
+    // ***********************
+    const additionalDurationFormatted = computed(() => {
+      // Use totalAdditionalRuns from sequential and miscAdditional if sequential exists,
+      // otherwise just miscAdditionalRuns.
+      // We calculate duration = (totalAdditionalRuns * runtime) and, if Energy GC with sequential,
+      // add 15 minutes (900 seconds).
+      const allGcData = gcStore.allGcData;
+      const selectedGc = gcStore.selectedGc;
+      if (!selectedGc || !allGcData[selectedGc]) return "";
+      const runtimeStr = allGcData[selectedGc].runTime;
+      const runtimeMs = parseRunTime(runtimeStr);
+      let totalRunsCount = 0;
+      if (gcStore.timeDelayResults.sequentialBatchActive && gcStore.startTime.finalPosition) {
+        // Calculate sequential batch runs then add misc additional runs.
+        const seqPos = Number(gcStore.startTime.finalPosition);
+        const sequentialRuns = seqPos <= 15 ? seqPos + 2 : seqPos + 1;
+        const misc = Number(gcStore.miscAdditionalRuns || 0);
+        totalRunsCount = sequentialRuns + misc;
+      } else {
+        totalRunsCount = Number(gcStore.miscAdditionalRuns || 0);
+      }
+      let durationMs = totalRunsCount * runtimeMs;
+      // If Energy GC is selected and sequential batch is used, add extra 15 minutes
+      const gcType = String(allGcData[selectedGc].type || "").trim().toLowerCase();
+      if (gcType === "energy" && gcStore.startTime.finalPosition) {
+        durationMs += 15 * 60000;
+      }
+      const hours = Math.floor(durationMs / 3600000);
+      const minutes = Math.floor((durationMs % 3600000) / 60000);
+      let formatted = "";
+      if (hours > 0) formatted += `${hours}h `;
+      formatted += `${minutes}m`;
+      return formatted.trim();
+    });
+
+    // ***********************
+    // FINAL: Determine if any rows exist
+    // ***********************
+    const hasAnyRows = computed(() => {
+      return (
+        initialBatchRows.value.length ||
+        sequentialRows.value.length ||
+        additionalRows.value.length ||
+        prebatchRows.value.length
+      );
+    });
 
     return {
-      gcStore,
-      positionOrder,
-      runsHasWait,
-      waitRow,
-      baseRuns,
-      runtableClosestCandidateIndex,
-      selectedCandidate,
-      selectedPositionLabel,
-      runtableClosestPositionFull
+      initialBatchRows,
+      sequentialRows,
+      additionalRows,
+      prebatchRows,
+      timeDelayRequired,
+      delayedRunSelected,
+      additionalDurationFormatted,
+      hasAnyRows,
     };
-  }
+  },
 };
 </script>
 
@@ -235,28 +382,34 @@ export default {
   border: none;
   text-align: center;
 }
+.run-column {
+  width: 80px;
+}
+.title-row .batch-header,
 .header-row {
   background-color: #f5f5f5;
   color: #333;
   font-weight: 600;
   letter-spacing: 0.05em;
 }
+.batch-header {
+  text-align: left;
+  font-size: 1.2rem;
+  background-color: #f5f5f5;
+  color: #333;
+  border: none;
+  padding: 10px 10px 5px;
+}
+.time-delay-header {
+  background-color: #f5f5f5;
+  color: #333;
+  font-style: italic;
+  font-size: 0.85rem;
+}
 .run-table tbody tr {
   border-bottom: 1px solid #eee;
 }
 .run-table tbody tr:last-child {
   border-bottom: none;
-}
-.highlight {
-  background-color: yellow;
-}
-.results {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #eef;
-  border: 1px solid #ccc;
-}
-.results h3 {
-  margin: 0 0 10px;
 }
 </style>
