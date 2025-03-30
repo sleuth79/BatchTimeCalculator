@@ -334,9 +334,10 @@ export default {
       // Use sequentialBaseRuns endTime if available; otherwise use initialBatchEndTime if available;
       // otherwise build a Date using the batchEndTime string and the current date.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
+        const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
+        baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
       } else if (initialBatchEndTime.value) {
-        baseTime = new Date(initialBatchEndTime.value);
+        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       }
@@ -370,7 +371,8 @@ export default {
       if (additionalRows.value.length) {
         baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
       } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        baseTime = new Date(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime);
+        const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
+        baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
       } else if (startTime.batchEndTime) {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {
