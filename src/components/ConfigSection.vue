@@ -116,16 +116,15 @@ export default {
       if (ctrl2 !== null && ctrl2 !== undefined && ctrl2 !== '') {
         arr.push(Number(ctrl2));
       }
-      console.log("ConfigSection disabledPositions computed:", arr);
       return arr;
     });
 
+    // Watch for changes in the sequentialFinalPosition and log the final sequential position.
     watch(
-      disabledPositions,
+      () => gcStore.sequentialFinalPosition,
       (newVal) => {
-        console.log("ConfigSection disabledPositions changed:", newVal);
-      },
-      { deep: true }
+        console.log("Final sequential position changed:", newVal);
+      }
     );
 
     // Reset function that calls the store's resetStartTime and also clears finalPosition and selectedGc.
