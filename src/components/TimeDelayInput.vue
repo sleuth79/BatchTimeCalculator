@@ -4,20 +4,23 @@
     <div class="time-delay-content">
       <h3 class="main-heading">Additional Runs</h3>
       <div>
-        <!-- Sequential Batch Optional Field - only shown if the initial batch is calculated -->
-        <div class="sequential-batch-section" v-if="initialBatchCalculated">
-          <label>
-            Final Position For Sequential Batch:
-          </label>
-          <!-- Pass disabledPositions from prop -->
-          <position-selector
-            :allowed-positions="allowedPositionsForSequential"
-            :disabledPositions="[...disabledPositions]"
-            mode="sequential"
-            field="sequential"
-            v-model="sequentialFinalPosition"
-          />
-          <!-- Additional Runs input -->
+        <!-- Sequential Batch Section -->
+        <div class="sequential-batch-section">
+          <!-- Only display the Final Position For Sequential Batch selector if the initial batch has been calculated -->
+          <template v-if="initialBatchCalculated">
+            <label>
+              Final Position For Sequential Batch:
+            </label>
+            <!-- Pass disabledPositions from prop -->
+            <position-selector
+              :allowed-positions="allowedPositionsForSequential"
+              :disabledPositions="[...disabledPositions]"
+              mode="sequential"
+              field="sequential"
+              v-model="sequentialFinalPosition"
+            />
+          </template>
+          <!-- Always display the Additional Runs input -->
           <div class="additional-runs-input">
             <label>Misc Additional Runs:</label>
             <input
@@ -90,7 +93,7 @@ export default {
     batch1EndTime: { type: [Date, String], required: true },
     primaryFinalPosition: { type: Number, required: true },
     gcRuntime: { type: Number, required: true },
-    gcType: { type: String, required: true }, // e.g., "Energy" or "Sulphur"
+    gcType: { type: String, required: true },
     disabledPositions: {
       type: Array,
       default: () => []
@@ -110,37 +113,32 @@ export default {
       },
     });
 
-    // Renamed local variable for Additional Runs input:
+    // Local state for additional runs input and delayed runs.
     const miscAdditionalRuns = ref(null);
     const prebatchSelected = ref(false);
     const calibrationSelected = ref(false);
     const miscDelayedRuns = ref(0);
 
-    // Watch miscAdditionalRuns to update the store and recalc.
     watch(miscAdditionalRuns, (newVal) => {
       gcStore.miscAdditionalRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
-    // Watch miscDelayedRuns to update the store and recalc.
     watch(miscDelayedRuns, (newVal) => {
       gcStore.miscDelayedRuns = newVal;
       gcStore.calculateStartTimeBatch();
     });
 
-    // Check if selected GC is Energy.
     const isEnergy = computed(() => {
       return props.gcType && props.gcType.toLowerCase() === 'energy';
     });
 
-    // Update current time every second.
     const currentTime = ref(new Date());
     setInterval(() => {
       currentTime.value = new Date();
     }, 1000);
     const currentTimeString = computed(() => currentTime.value.toLocaleTimeString());
 
-    // Reset local inputs when store signals a reset.
     watch(() => gcStore.startTimeResetCounter, () => {
       sequentialFinalPosition.value = null;
       miscAdditionalRuns.value = null;
@@ -149,7 +147,6 @@ export default {
       miscDelayedRuns.value = 0;
     });
 
-    // Computed setters for capping inputs.
     const miscAdditionalRunsInput = computed({
       get() {
         return miscAdditionalRuns.value === null ? '' : miscAdditionalRuns.value;
@@ -170,7 +167,6 @@ export default {
       },
     });
 
-    // Input limiting handlers.
     const limitAdditionalRuns = (e) => {
       const value = e.target.value.toString();
       if (value.length > 2) {
@@ -189,7 +185,6 @@ export default {
       }
     };
 
-    // Toggle functions.
     const togglePrebatch = () => {
       prebatchSelected.value = !prebatchSelected.value;
       if (prebatchSelected.value) calibrationSelected.value = false;
@@ -205,6 +200,11 @@ export default {
       13, 14, 15, 17, 18, 19, 20, 21, 22, 23,
       24, 25, 26, 27, 28, 29, 30, 31, 32,
     ]);
+
+    // initialBatchCalculated is true if the batch end time is set.
+    const initialBatchCalculated = computed(() => {
+      return !!gcStore.startTime.batchEndTime;
+    });
 
     // --- Helper Computations for Time Calculations ---
     const batch1End = computed(() => {
@@ -230,7 +230,6 @@ export default {
       return 0;
     });
 
-    // Compute baseEndTime for sequential batch.
     const baseEndTime = computed(() => {
       if (sequentialFinalPosition.value && Number(sequentialFinalPosition.value) > 0) {
         const secs =
@@ -268,7 +267,6 @@ export default {
       return '';
     });
 
-    // Computed property for calibration runs.
     const calibrationRuns = computed(() => {
       if (!props.gcType || props.gcType === "") {
         return "";
@@ -276,7 +274,6 @@ export default {
       return props.gcType === 'Energy' ? 8 : 9;
     });
 
-    // Total preruns using calibration runs.
     const totalPreruns = computed(() => {
       let total = 0;
       if (prebatchSelected.value) total += 4;
@@ -381,7 +378,6 @@ export default {
       return formatTimeWithAmPmAndSeconds(finalEndTime.value);
     });
 
-    // Updated prerunsDescription.
     const prerunsDescription = computed(() => {
       const arr = [];
       if (prebatchSelected.value) arr.push("Prebatch");
@@ -417,7 +413,7 @@ export default {
     const hideInputs = computed(() => false);
 
     // Computed property to determine if the initial batch is calculated.
-    const initialBatchCalculated = computed(() => !!gcStore.startTime.finalPosition);
+    const initialBatchCalculated = computed(() => !!gcStore.startTime.batchEndTime);
 
     // Watcher to emit payload when any input changes.
     watch(
@@ -547,7 +543,6 @@ export default {
       isEnergy,
       currentTimeString,
       disabledPositions: computed(() => props.disabledPositions),
-      // Expose our computed property to control the sequential batch display.
       initialBatchCalculated
     };
   },
