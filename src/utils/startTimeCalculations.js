@@ -79,6 +79,8 @@ function samplePositionForRun(i) {
 
 /**
  * Main function to calculate start time batch results.
+ * 
+ * Note: This version has been adjusted to remove the overall total run time calculation.
  */
 export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15) {
   if (!gc || !finalPosition) {
@@ -93,7 +95,6 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
       startTimeFinalPosition: null,
       wait15: null,
       totalRuns: null,
-      totalRunTime: null,
       runs: []
     };
   }
@@ -115,16 +116,13 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
     runtimeSeconds = Math.round(parseFloat(runtime) * 60);
   }
   
+  // Calculate total run time in seconds (used solely to compute batch end time)
   const totalRunTimeSeconds = totalRuns * runtimeSeconds;
   const totalRunTimeMS = totalRunTimeSeconds * 1000;
   
   // Batch end time is computed from the effective start time.
   const batchEndTimeDate = new Date(effectiveStartTime.getTime() + totalRunTimeMS);
   const formattedBatchEndTime = formatTimeWithAmPmAndSeconds(batchEndTimeDate);
-  
-  // Calculate overall run time from original batch start to batch end time.
-  const overallRunTimeMS = batchEndTimeDate.getTime() - batchStartTimeDate.getTime();
-  const totalRunTimeFormatted = formatDuration(overallRunTimeMS);
   
   // Set workDayEnd based on the ORIGINAL batch start time.
   const workDayEnd = new Date(batchStartTimeDate);
@@ -166,7 +164,6 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
     startTimeFinalPosition: finalPosition,
     wait15,
     totalRuns,
-    totalRunTime: totalRunTimeFormatted,
     runs
   };
 }
