@@ -119,6 +119,7 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
+// Note: Ensure that formatTimeWithAmPmAndSeconds is updated to remove leading zeros for hours 1–9.
 import { formatTimeWithAmPmAndSeconds, formatDuration } from "../utils/utils.js";
 
 // Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into milliseconds.
@@ -146,6 +147,11 @@ export default {
       type: Array,
       required: true,
       default: () => []
+    },
+    // NEW: New prop for the initial batch duration, two-way bound.
+    runTableInitialBatchDuration: {
+      type: String,
+      default: ""
     }
   },
   setup(props, { emit }) {
@@ -510,6 +516,11 @@ export default {
       const durationMs = endMs - startMs;
       return formatDuration(durationMs);
     });
+
+    // NEW: Watch runTableTotalDuration and emit it as runTableInitialBatchDuration.
+    watch(runTableTotalDuration, (newVal) => {
+      emit("update:runTableInitialBatchDuration", newVal);
+    }, { immediate: true });
 
     return {
       gcStore,

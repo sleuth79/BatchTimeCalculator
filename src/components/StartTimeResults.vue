@@ -16,9 +16,9 @@
       <span class="result-value">{{ displayFinalPosition }}</span>
     </p>
     <!-- New: Display the computed batch duration (Batch Run Time) -->
-    <p v-if="showDetailedResults && results.batchDuration">
+    <p v-if="showDetailedResults && displayBatchDuration">
       Batch Run Time:
-      <span class="result-value">{{ results.batchDuration }}</span>
+      <span class="result-value">{{ displayBatchDuration }}</span>
     </p>
     <!-- Batch End Time now uses the new prop if available -->
     <p v-if="showDetailedResults && displayBatchEndTime">
@@ -234,6 +234,11 @@ export default {
       return "Closest Position Before 4:00 PM:";
     });
 
+    // NEW: Computed property to display the batch duration.
+    const displayBatchDuration = computed(() => {
+      return props.results.batchDuration || "";
+    });
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -245,7 +250,9 @@ export default {
       initialBatchEndTimeAfter730,
       showDetailedResults,
       candidateDisplayLabel,
-      batchPasses4PM
+      batchPasses4PM,
+      // NEW: Expose the batch duration display property.
+      displayBatchDuration
     };
   }
 };
