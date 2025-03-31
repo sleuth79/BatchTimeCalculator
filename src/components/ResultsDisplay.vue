@@ -19,7 +19,7 @@
          Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
          both the displayed batch end time, duration, and time gap calculation use the run table values. -->
     <StartTimeResults
-      :results="{ ...results, batchEndTime: initialBatchEndTime, batchDuration: runTableTotalDuration, selectedPositionLabel: selectedPositionLabel }"
+      :results="{ ...results, batchEndTime: initialBatchEndTime, batchDuration: batchDuration, selectedPositionLabel: selectedPositionLabel }"
       :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
@@ -45,7 +45,7 @@
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model:initialBatchEndTime and v-model:batchDuration (renamed to runTableTotalDuration) so that any changes in RunTable are passed upward. -->
+         Bind the new v-model:initialBatchEndTime and v-model:batchDuration so that any changes in RunTable are passed upward. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -54,7 +54,7 @@
         v-model:selectedPositionLabel="selectedPositionLabel"
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
         v-model:initialBatchEndTime="initialBatchEndTime"
-        v-model:batchDuration="runTableTotalDuration"
+        v-model:batchDuration="batchDuration"
         v-show="showRunTable"
       />
     </div>
@@ -139,8 +139,8 @@ export default {
     const runtableClosestPositionFull = ref("");
     // Reactive property to hold the batch end time computed from RunTable.
     const initialBatchEndTime = ref("");
-    // NEW: Reactive property to hold the computed overall batch duration from RunTable.
-    const runTableTotalDuration = ref("");
+    // NEW: Reactive property to hold the computed overall batch duration.
+    const batchDuration = ref("");
 
     return {
       gcStore,
@@ -162,7 +162,7 @@ export default {
       selectedPositionLabel,
       runtableClosestPositionFull,
       initialBatchEndTime,
-      runTableTotalDuration,
+      batchDuration,
     };
   },
 };

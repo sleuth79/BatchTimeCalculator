@@ -1,203 +1,286 @@
 <template>
-  <div class="results-display">
-    <!-- Header with Results title on the left and current time/date on the right -->
-    <div class="results-header">
-      <h2 class="results-heading">Results</h2>
-      <div class="current-date-time">
-        {{ currentTimeString }} ({{ currentDate }})
-      </div>
-    </div>
-    <!-- Always show Selected GC -->
+  <div class="start-time-results">
+    <!-- Always display Batch Start Time -->
     <p>
-      Selected GC:
-      <span class="result-value">
-        {{ formattedSelectedGc }}
+      Batch Start Time:
+      <span class="result-value">{{ displayBatchStartTime }}</span>
+    </p>
+    <!-- Controls heading; shows the controls once both are set -->
+    <p>
+      Controls:
+      <span class="result-value">{{ displayControls }}</span>
+    </p>
+    <!-- Always display Final Position -->
+    <p>
+      Final Position:
+      <span class="result-value">{{ displayFinalPosition }}</span>
+    </p>
+    <!-- New: Display the computed batch duration (Batch Run Time) -->
+    <p v-if="showDetailedResults && results.batchDuration">
+      Batch Run Time:
+      <span class="result-value">{{ results.batchDuration }}</span>
+    </p>
+    <!-- Batch End Time now uses the new prop if available -->
+    <p v-if="showDetailedResults && displayBatchEndTime">
+      Batch End Time:
+      <span
+        class="result-value"
+        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
+      >
+        {{ displayBatchEndTime }}
       </span>
     </p>
-
-    <!-- Pass the store's startTime as well as results.
-         Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
-         both the displayed batch end time, duration, and time gap calculation use the run table values. -->
-    <StartTimeResults
-      :results="{ ...results, batchEndTime: initialBatchEndTime, batchDuration: runTableTotalDuration, selectedPositionLabel: selectedPositionLabel }"
-      :startTime="gcStore.startTime"
-      :runtableClosestPositionFull="runtableClosestPositionFull"
-      :selectedGcData="selectedGcData"
-      :delayedRunsExist="delayedRunsExist"
-      :additionalRunsExist="additionalRunsExist"
-    />
-
-    <!-- Display additional time delay section if applicable -->
-    <div v-if="results && Object.keys(results).length && timeDelaySectionExists">
-      <hr class="section-separator" />
-      <div class="time-delay-section">
-        <TimeDelayResult :timeDelayData="timeDelayResults" />
-      </div>
-    </div>
-
-    <!-- Toggle Button for Run Table -->
-    <template
-      v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
-    >
-      <button class="toggle-run-table-button" @click="toggleRunTable">
-        {{ showRunTable ? "Hide Run Table" : "View Run Table" }}
-      </button>
-    </template>
-    
-    <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model:initialBatchEndTime and v-model:batchDuration (now runTableTotalDuration)
-         so that any changes in RunTable are passed upward. -->
+    <!-- Display candidate heading only if batch passes 4:00 PM -->
+    <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
+      {{ candidateDisplayLabel }}
+      <span class="result-value">
+        <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
+          {{ displayBatchEndTime }}
+        </template>
+        <template v-else>
+          {{ runtableClosestPositionFull }}
+        </template>
+      </span>
+    </p>
     <div
-      v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
+      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
     >
-      <RunTable
-        :runs="runData"
-        v-model:selectedPositionLabel="selectedPositionLabel"
-        v-model:runtableClosestPositionFull="runtableClosestPositionFull"
-        v-model:initialBatchEndTime="initialBatchEndTime"
-        v-model:batchDuration="runTableTotalDuration"
-        v-show="showRunTable"
-      />
+      <hr class="time-gap-hr" />
+      <p>
+        Time Gap to 7:30 AM:
+        <span class="result-value">{{ results.timeGapTo730AM }}</span>
+      </p>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useGcStore } from "../store";
-import StartTimeResults from "./StartTimeResults.vue";
-import TimeDelayResult from "./TimeDelayResult.vue";
-import RunTable from "./RunTable.vue";
 
 export default {
-  name: "ResultsDisplay",
-  components: {
-    StartTimeResults,
-    TimeDelayResult,
-    RunTable,
-  },
+  name: "StartTimeResults",
   props: {
-    showPlaceholders: {
-      type: Boolean,
-      required: true,
+    results: {
+      type: Object,
+      default: () => ({})
     },
+    startTime: {
+      type: Object,
+      default: () => ({})
+    },
+    selectedGcData: {
+      type: Object,
+      default: null
+    },
+    delayedRunsExist: {
+      type: Boolean,
+      default: false
+    },
+    additionalRunsExist: {
+      type: [Boolean, Number],
+      default: false
+    },
+    runtableClosestPositionFull: {
+      type: String,
+      default: ""
+    },
+    // NEW: Accept the run table's computed batch end time.
+    initialBatchEndTime: {
+      type: String,
+      default: ""
+    }
   },
-  setup() {
+  setup(props) {
     const gcStore = useGcStore();
+    const currentDate = computed(() => new Date().toLocaleDateString());
 
-    const selectedGcData = computed(() => gcStore.selectedGcData);
-    const results = computed(() => gcStore.results);
-    const timeDelayResults = computed(() => gcStore.timeDelayResults);
-
-    const batchStartTime = computed(() => gcStore.startTime.batchStartTime);
-    const batchStartTimeAMPM = computed(() => gcStore.startTime.batchStartTimeAMPM);
-    const wait15 = computed(() => gcStore.startTime.wait15);
-
-    const additionalRunsExist = computed(() => {
-      const tdr = timeDelayResults.value || {};
+    const displayBatchStartTime = computed(() => {
       return (
-        Number(tdr.additionalRuns) > 0 ||
-        (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0)
+        props.results.batchStartTime ||
+        props.results.startTime ||
+        props.startTime.batchStartTime ||
+        props.startTime.startTime ||
+        ""
       );
     });
 
-    const delayedRunsExist = computed(() => {
-      const tdr = timeDelayResults.value || {};
-      return Number(tdr.totalDelayedRuns) > 0;
+    // Relaxed regex to allow optional seconds and AM/PM.
+    const showDetailedResults = computed(() => {
+      return /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value);
     });
 
-    const timeDelaySectionExists = computed(() => {
-      return additionalRunsExist.value || delayedRunsExist.value;
+    const displayFinalPosition = computed(() => {
+      return (
+        props.results.startTimeFinalPosition ||
+        props.startTime.finalPosition ||
+        ""
+      );
     });
 
-    const showRunTable = ref(false);
-    const toggleRunTable = () => {
-      showRunTable.value = !showRunTable.value;
-    };
+    const displayTotalRuns = computed(() => !!props.results.totalRuns);
+    const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
-    const formattedSelectedGc = computed(() => {
-      if (!gcStore.selectedGcData) return "";
-      return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
+    // Updated displayControls: format as "X  | Y" with left control padded to 2 characters.
+    const displayControls = computed(() => {
+      const ctrl1 = gcStore.startTime.controls.control1;
+      const ctrl2 = gcStore.startTime.controls.control2;
+      if (ctrl1 == null || ctrl2 == null || ctrl1 === "" || ctrl2 === "") {
+        return "";
+      }
+      const ctrl1Str = ctrl1.toString().padEnd(2, " ");
+      return `${ctrl1Str} | ${ctrl2}`;
     });
 
-    const currentTime = ref(new Date());
-    setInterval(() => {
-      currentTime.value = new Date();
-    }, 1000);
+    // Use the new prop if available; otherwise fallback to original logic.
+    const displayBatchEndTime = computed(() => {
+      if (props.initialBatchEndTime) return props.initialBatchEndTime;
+      if (!props.results.batchEndTime) return "";
+      const batchEndStr = props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      const startParts = startStr.split(":");
+      if (startParts.length < 3)
+        return `${batchEndStr} (${currentDate.value})`;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${batchEndStr}`
+      );
+      if (isNaN(endDateCandidate.getTime())) {
+        return `${batchEndStr} (${currentDate.value})`;
+      }
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      const endDateString = endDateCandidate.toLocaleDateString();
+      return `${batchEndStr} (${endDateString})`;
+    });
 
-    const currentTimeString = computed(() =>
-      currentTime.value.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      })
-    );
-    const currentDate = computed(() => new Date().toLocaleDateString());
+    const initialBatchEndTimeAfter730 = computed(() => {
+      if (!props.results.batchEndTime) return false;
+      // Use the new prop if available.
+      const batchEndStr = props.initialBatchEndTime || props.results.batchEndTime;
+      const startStr = displayBatchStartTime.value;
+      if (!startStr) return false;
+      const startParts = startStr.split(":");
+      if (startParts.length < 3) return false;
+      const startHour = parseInt(startParts[0], 10);
+      const startMinute = parseInt(startParts[1], 10);
+      const startSecond = parseInt(startParts[2], 10);
+      const today = new Date();
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        startHour,
+        startMinute,
+        startSecond
+      );
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${batchEndStr}`
+      );
+      if (isNaN(endDateCandidate.getTime())) return false;
+      if (endDateCandidate <= startDate) {
+        endDateCandidate.setDate(endDateCandidate.getDate() + 1);
+      }
+      if (endDateCandidate.getDate() === startDate.getDate()) return false;
+      const endHour = endDateCandidate.getHours();
+      const endMinute = endDateCandidate.getMinutes();
+      return endHour > 7 || (endHour === 7 && endMinute >= 30);
+    });
 
-    const selectedPositionLabel = ref("");
-    const runtableClosestPositionFull = ref("");
-    // Reactive property to hold the batch end time computed from RunTable.
-    const initialBatchEndTime = ref("");
-    // NEW: Reactive property to hold the computed overall batch duration from RunTable.
-    const runTableTotalDuration = ref("");
+    // New computed property to determine if the batch passes 4:00 PM.
+    const batchPasses4PM = computed(() => {
+      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
+      if (!batchTime) return false;
+      const parts = batchTime.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0]; // e.g., "02:22:26"
+      const ampm = parts[1]; // e.g., "PM"
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return false;
+      let hour = parseInt(timeParts[0], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      // 4:00 PM in 24-hour time is 16:00.
+      return hour >= 16;
+    });
+
+    // Computed property to decide which candidate label to show.
+    const candidateDisplayLabel = computed(() => {
+      if (
+        props.runtableClosestPositionFull &&
+        props.runtableClosestPositionFull.startsWith("No candidate found")
+      ) {
+        return "This Batch Ends At:";
+      }
+      return "Closest Position Before 4:00 PM:";
+    });
 
     return {
-      gcStore,
-      selectedGcData,
-      formattedSelectedGc,
-      results,
-      timeDelayResults,
-      batchStartTime,
-      batchStartTimeAMPM,
-      wait15,
-      showRunTable,
-      toggleRunTable,
-      runData,
-      additionalRunsExist,
-      delayedRunsExist,
-      timeDelaySectionExists,
-      currentTimeString,
       currentDate,
-      selectedPositionLabel,
-      runtableClosestPositionFull,
-      initialBatchEndTime,
-      runTableTotalDuration,
+      displayBatchStartTime,
+      displayFinalPosition,
+      displayTotalRuns,
+      additionalRunsExistBool,
+      displayControls,
+      displayBatchEndTime,
+      initialBatchEndTimeAfter730,
+      showDetailedResults,
+      candidateDisplayLabel,
+      batchPasses4PM
     };
-  },
+  }
 };
 </script>
 
 <style scoped>
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.start-time-results {
+  padding: 0;
 }
-
-.results-header h2 {
-  margin: 0 0 5px 0;
-  font-size: 2.1rem;
-  color: #131313;
-  text-align: left;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+.start-time-results p {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #333;
 }
-
-.current-date-time {
-  text-align: right;
+.result-value {
   font-weight: bold;
+  font-size: 1rem;
 }
-
-.toggle-run-table-button {
-  width: 150px;
-  text-align: center;
-  display: block;
-  margin-top: 15px;
+.result-date {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-left: 5px;
 }
-
-/* Remove default margins for paragraph tags inside the results-display */
-.results-display p {
-  margin: 0;
+hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+  padding: 0;
+}
+.time-gap-hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.highlight-orange {
+  color: orange;
 }
 </style>
