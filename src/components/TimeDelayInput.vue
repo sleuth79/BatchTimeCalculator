@@ -417,7 +417,8 @@ export default {
     const hideInputs = computed(() => false);
 
     // Computed property to determine if the initial batch is calculated.
-    const initialBatchCalculated = computed(() => !!gcStore.startTime.finalPosition);
+    // Using results.batchEndTime as the marker.
+    const initialBatchCalculated = computed(() => !!gcStore.results.batchEndTime);
 
     // Watcher to emit payload when any input changes.
     watch(
