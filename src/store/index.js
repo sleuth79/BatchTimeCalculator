@@ -221,7 +221,7 @@ export const useGcStore = defineStore('gc', {
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc,
         totalRuns: calcResults.totalRuns,
-        totalRunTime: calcResults.totalRunTime,
+        // Removed totalRunTime calculation so the run table's computed duration will be used instead.
         batchEndTime: calcResults.batchEndTime,
         timeGapTo730AM: calcResults.timeGapTo730AM,
         timeDelayRequired: calcResults.timeDelayRequired,
