@@ -106,7 +106,7 @@
       </table>
     </div>
 
-    <!-- Note: The run table no longer displays the overall batch duration -->
+    <!-- (Note: Overall batch duration is no longer displayed in the table) -->
   </div>
 </template>
 
@@ -114,7 +114,7 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
-// Ensure that formatTimeWithAmPmAndSeconds in your utils returns times without leading zeros for hours.
+// Ensure that formatTimeWithAmPmAndSeconds in your utils returns hours without leading zeros.
 import { formatTimeWithAmPmAndSeconds, formatDuration } from "../utils/utils.js";
 
 // Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into milliseconds.
@@ -143,7 +143,6 @@ export default {
       required: true,
       default: () => []
     }
-    // Note: We no longer emit a duration prop since it’s displayed only in the results.
   },
   setup(props, { emit }) {
     const gcStore = useGcStore();
@@ -264,11 +263,11 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // Updated candidate selection: use batch start as reference.
+    // Updated: use the batch start date as reference and ignore runs that fall on the next day.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
-      // Use the first run's start time as the reference date.
+      // Use the first run's start time to build the reference date.
       const firstRunParsed = parseTimeString(props.runs[0].startTime);
       if (!firstRunParsed) return -1;
       const refDate = new Date();
@@ -281,15 +280,21 @@ export default {
         if (!run.endTime) return;
         const parsed = parseTimeString(run.endTime);
         if (!parsed) return;
-        let runDate = new Date(refDate);
-        runDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-        // If the computed time is before the batch start, assume it's on the next day.
-        if (runDate < refDate) {
-          runDate.setTime(runDate.getTime() + 24 * 3600000);
-        }
-        if (runDate < cutoff) {
-          if (!candidateTime || runDate > candidateTime) {
-            candidateTime = runDate;
+        // Build candidateDate using the same date as refDate.
+        const candidateDate = new Date(
+          refDate.getFullYear(),
+          refDate.getMonth(),
+          refDate.getDate(),
+          parsed.hour,
+          parsed.minute,
+          parsed.second,
+          0
+        );
+        // If candidateDate is before the batch start (refDate), then it is on the next day: skip it.
+        if (candidateDate < refDate) return;
+        if (candidateDate < cutoff) {
+          if (!candidateTime || candidateDate > candidateTime) {
+            candidateTime = candidateDate;
             candidateIndex = idx;
           }
         }
@@ -492,7 +497,25 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // We no longer display the overall batch duration here as it’s shown in results.
+    // NEW: Compute overall batch duration (even if not displayed) so that the results can show it.
+    const runTableTotalDuration = computed(() => {
+      if (!props.runs.length) return "";
+      const firstRun = props.runs[0];
+      const lastRun = props.runs[props.runs.length - 1];
+      const startTimeObj = parseTimeString(firstRun.startTime);
+      const endTimeObj = parseTimeString(lastRun.endTime);
+      if (!startTimeObj || !endTimeObj) return "";
+      const startMs = startTimeObj.hour * 3600000 + startTimeObj.minute * 60000 + startTimeObj.second * 1000;
+      let endMs = endTimeObj.hour * 3600000 + endTimeObj.minute * 60000 + endTimeObj.second * 1000;
+      if (endMs <= startMs) {
+        endMs += 24 * 3600000;
+      }
+      const durationMs = endMs - startMs;
+      return formatDuration(durationMs);
+    });
+    watch(runTableTotalDuration, (newVal) => {
+      emit("update:runTableInitialBatchDuration", newVal);
+    }, { immediate: true });
 
     return {
       gcStore,
@@ -514,7 +537,8 @@ export default {
       delayedRunSelected,
       lastMainRunNumber,
       initialBatchEndTime,
-      shouldHighlightCandidate
+      shouldHighlightCandidate,
+      runTableTotalDuration
     };
   }
 };
