@@ -20,9 +20,8 @@ export function formatTimeWithAmPmAndSeconds(date) {
   const seconds = date.getSeconds();
   const period = hours >= 12 ? 'PM' : 'AM';
   const adjustedHours = hours % 12 || 12; // Convert to 12-hour format
-  return `${adjustedHours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${period}`;
+  // Remove padStart on the hour so that a single digit is not padded with a zero.
+  return `${adjustedHours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${period}`;
 }
 
 // Function to format a duration (in milliseconds) into a human-readable string.
