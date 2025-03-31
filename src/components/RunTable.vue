@@ -106,10 +106,10 @@
       </table>
     </div>
 
-    <!-- NEW: Display the computed batch duration -->
-    <div v-if="computedBatchDuration">
+    <!-- NEW: Display the computed total duration from the run table -->
+    <div v-if="runTableTotalDuration">
       <h4 class="batch-duration-header">
-        Total Batch Duration: {{ computedBatchDuration }}
+        Total Batch Duration: {{ runTableTotalDuration }}
       </h4>
     </div>
   </div>
@@ -146,11 +146,6 @@ export default {
       type: Array,
       required: true,
       default: () => []
-    },
-    // NEW: Add a prop for batchDuration (using v-model:batchDuration)
-    batchDuration: {
-      type: String,
-      default: ""
     }
   },
   setup(props, { emit }) {
@@ -492,7 +487,7 @@ export default {
     }, { immediate: true });
 
     // NEW: Compute the overall batch duration using the first run's start time and the last run's end time.
-    const computedBatchDuration = computed(() => {
+    const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
       const lastRun = props.runs[props.runs.length - 1];
@@ -508,11 +503,6 @@ export default {
       const durationMs = endTime - startTime;
       return formatDuration(durationMs);
     });
-
-    // NEW: Emit computedBatchDuration to parent via v-model:batchDuration.
-    watch(computedBatchDuration, (newVal) => {
-      emit("update:batchDuration", newVal);
-    }, { immediate: true });
 
     return {
       gcStore,
@@ -535,7 +525,8 @@ export default {
       lastMainRunNumber,
       initialBatchEndTime,
       shouldHighlightCandidate,
-      computedBatchDuration
+      // NEW: Expose the computed total duration with a new name.
+      runTableTotalDuration
     };
   }
 };
