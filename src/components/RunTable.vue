@@ -107,9 +107,9 @@
     </div>
 
     <!-- NEW: Display the computed batch duration -->
-    <div v-if="batchDuration">
+    <div v-if="computedBatchDuration">
       <h4 class="batch-duration-header">
-        Total Batch Duration: {{ batchDuration }}
+        Total Batch Duration: {{ computedBatchDuration }}
       </h4>
     </div>
   </div>
@@ -146,6 +146,11 @@ export default {
       type: Array,
       required: true,
       default: () => []
+    },
+    // NEW: Add a prop for batchDuration (using v-model:batchDuration)
+    batchDuration: {
+      type: String,
+      default: ""
     }
   },
   setup(props, { emit }) {
@@ -487,7 +492,7 @@ export default {
     }, { immediate: true });
 
     // NEW: Compute the overall batch duration using the first run's start time and the last run's end time.
-    const batchDuration = computed(() => {
+    const computedBatchDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
       const lastRun = props.runs[props.runs.length - 1];
@@ -503,6 +508,11 @@ export default {
       const durationMs = endTime - startTime;
       return formatDuration(durationMs);
     });
+
+    // NEW: Emit computedBatchDuration to parent via v-model:batchDuration.
+    watch(computedBatchDuration, (newVal) => {
+      emit("update:batchDuration", newVal);
+    }, { immediate: true });
 
     return {
       gcStore,
@@ -525,7 +535,7 @@ export default {
       lastMainRunNumber,
       initialBatchEndTime,
       shouldHighlightCandidate,
-      batchDuration
+      computedBatchDuration
     };
   }
 };

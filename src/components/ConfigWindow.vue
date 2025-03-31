@@ -36,8 +36,8 @@
         </button>
       </div>
 
-      <!-- Dark Mode Toggle Button Underneath Revert Button -->
-      <div class="dark-mode-section">
+      <!-- Dark Mode Toggle Button Hidden for now -->
+      <div class="dark-mode-section" v-if="false">
         <button class="dark-mode-button" @click="toggleDarkMode">
           Toggle Dark Mode
         </button>
