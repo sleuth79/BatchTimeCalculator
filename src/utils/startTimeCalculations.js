@@ -79,8 +79,6 @@ function samplePositionForRun(i) {
 
 /**
  * Main function to calculate start time batch results.
- * This version does NOT compute the candidate (closest sample) position,
- * so that value can be computed solely in the store.
  */
 export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, batchStartTime, ampm, wait15) {
   if (!gc || !finalPosition) {

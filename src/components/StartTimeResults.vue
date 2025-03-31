@@ -15,10 +15,10 @@
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
     </p>
-    <!-- Additional details -->
-    <p v-if="showDetailedResults && results.totalRunTime">
+    <!-- New: Display the computed batch duration (Batch Run Time) -->
+    <p v-if="showDetailedResults && results.batchDuration">
       Batch Run Time:
-      <span class="result-value">{{ results.totalRunTime }}</span>
+      <span class="result-value">{{ results.batchDuration }}</span>
     </p>
     <!-- Batch End Time now uses the new prop if available -->
     <p v-if="showDetailedResults && displayBatchEndTime">

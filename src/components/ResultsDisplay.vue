@@ -16,10 +16,10 @@
     </p>
 
     <!-- Pass the store's startTime as well as results.
-         Override the batchEndTime in results with initialBatchEndTime so that
-         both the displayed batch end time and the time gap calculation use the run table value. -->
+         Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
+         both the displayed batch end time, duration, and time gap calculation use the run table values. -->
     <StartTimeResults
-      :results="{ ...results, batchEndTime: initialBatchEndTime, selectedPositionLabel: selectedPositionLabel }"
+      :results="{ ...results, batchEndTime: initialBatchEndTime, batchDuration: batchDuration, selectedPositionLabel: selectedPositionLabel }"
       :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
@@ -45,7 +45,7 @@
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model:initialBatchEndTime so that any changes in RunTable are passed upward. -->
+         Bind the new v-model:initialBatchEndTime and v-model:batchDuration so that any changes in RunTable are passed upward. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -54,6 +54,7 @@
         v-model:selectedPositionLabel="selectedPositionLabel"
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
         v-model:initialBatchEndTime="initialBatchEndTime"
+        v-model:batchDuration="batchDuration"
         v-show="showRunTable"
       />
     </div>
@@ -136,8 +137,10 @@ export default {
 
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
-    // NEW: Reactive property to hold the batch end time computed from RunTable.
+    // Reactive property to hold the batch end time computed from RunTable.
     const initialBatchEndTime = ref("");
+    // NEW: Reactive property to hold the computed overall batch duration.
+    const batchDuration = ref("");
 
     return {
       gcStore,
@@ -159,6 +162,7 @@ export default {
       selectedPositionLabel,
       runtableClosestPositionFull,
       initialBatchEndTime,
+      batchDuration,
     };
   },
 };

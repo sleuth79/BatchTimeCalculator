@@ -105,6 +105,13 @@
         </tbody>
       </table>
     </div>
+
+    <!-- NEW: Display the computed batch duration -->
+    <div v-if="batchDuration">
+      <h4 class="batch-duration-header">
+        Total Batch Duration: {{ batchDuration }}
+      </h4>
+    </div>
   </div>
 </template>
 
@@ -112,7 +119,7 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
-import { formatTimeWithAmPmAndSeconds } from "../utils/utils.js";
+import { formatTimeWithAmPmAndSeconds, formatDuration } from "../utils/utils.js";
 
 // Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into milliseconds.
 function parseRunTime(timeStr) {
@@ -315,7 +322,6 @@ export default {
     });
 
     // 13. Compute the last main run number (initial + sequential).
-    // Note: Now sequentialRows includes the 15-Min Wait row (if Energy) so we use sequentialRows.value here.
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialRows.value.length;
     });
@@ -480,6 +486,24 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
+    // NEW: Compute the overall batch duration using the first run's start time and the last run's end time.
+    const batchDuration = computed(() => {
+      if (!props.runs.length) return "";
+      const firstRun = props.runs[0];
+      const lastRun = props.runs[props.runs.length - 1];
+      const firstStartTimeStr = firstRun.startTime;
+      const lastEndTimeStr = lastRun.endTime;
+      if (!firstStartTimeStr || !lastEndTimeStr) return "";
+      let startTime = new Date(`1970-01-01 ${firstStartTimeStr}`);
+      let endTime = new Date(`1970-01-01 ${lastEndTimeStr}`);
+      // If end time appears earlier than start time, assume it passed midnight.
+      if (endTime <= startTime) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
+      const durationMs = endTime - startTime;
+      return formatDuration(durationMs);
+    });
+
     return {
       gcStore,
       initialPositionOrder,
@@ -500,7 +524,8 @@ export default {
       delayedRunSelected,
       lastMainRunNumber,
       initialBatchEndTime,
-      shouldHighlightCandidate
+      shouldHighlightCandidate,
+      batchDuration
     };
   }
 };
@@ -544,5 +569,10 @@ export default {
 .run-table h4 {
   text-align: center;
   margin-bottom: 4px; /* Reduced bottom margin */
+}
+.batch-duration-header {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
 }
 </style>
