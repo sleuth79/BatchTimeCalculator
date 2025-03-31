@@ -106,7 +106,7 @@
       </table>
     </div>
 
-    <!-- (Note: Overall batch duration is no longer displayed in the table) -->
+    <!-- Note: Overall batch duration is computed and emitted but not shown in the table -->
   </div>
 </template>
 
@@ -114,7 +114,7 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
-// Ensure that formatTimeWithAmPmAndSeconds in your utils returns hours without leading zeros.
+// Ensure that formatTimeWithAmPmAndSeconds returns hours without leading zeros.
 import { formatTimeWithAmPmAndSeconds, formatDuration } from "../utils/utils.js";
 
 // Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into milliseconds.
@@ -263,15 +263,21 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // Updated: use the batch start date as reference and ignore runs that fall on the next day.
+    // Updated logic:
+    // Use the first run’s start time to build a reference date.
+    // If the current date is earlier than that reference, subtract one day so that the candidate
+    // is computed on the correct batch start date.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
-      // Use the first run's start time to build the reference date.
       const firstRunParsed = parseTimeString(props.runs[0].startTime);
       if (!firstRunParsed) return -1;
-      const refDate = new Date();
+      let refDate = new Date();
       refDate.setHours(firstRunParsed.hour, firstRunParsed.minute, firstRunParsed.second, 0);
+      // If current time is earlier than refDate, assume the batch started yesterday.
+      if (new Date() < refDate) {
+        refDate.setDate(refDate.getDate() - 1);
+      }
       const cutoff = new Date(refDate);
       cutoff.setHours(16, 0, 0, 0);
       let candidateIndex = -1;
@@ -290,9 +296,9 @@ export default {
           parsed.second,
           0
         );
-        // If candidateDate is before the batch start (refDate), then it is on the next day: skip it.
+        // Skip if candidateDate is before the batch start.
         if (candidateDate < refDate) return;
-        if (candidateDate < cutoff) {
+        if (candidateDate <= cutoff) {
           if (!candidateTime || candidateDate > candidateTime) {
             candidateTime = candidateDate;
             candidateIndex = idx;
@@ -497,7 +503,7 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // NEW: Compute overall batch duration (even if not displayed) so that the results can show it.
+    // NEW: Compute overall batch duration (to be emitted to results).
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
