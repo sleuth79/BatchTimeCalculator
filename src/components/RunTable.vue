@@ -486,21 +486,28 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the overall batch duration using the first run's start time and the last run's end time.
+    // NEW: Compute the overall batch duration including the wait row (if present)
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
+      
+      // Use the very first run (which may be a wait row) as the starting time.
       const firstRun = props.runs[0];
       const lastRun = props.runs[props.runs.length - 1];
-      const firstStartTimeStr = firstRun.startTime;
-      const lastEndTimeStr = lastRun.endTime;
-      if (!firstStartTimeStr || !lastEndTimeStr) return "";
-      let startTime = new Date(`1970-01-01 ${firstStartTimeStr}`);
-      let endTime = new Date(`1970-01-01 ${lastEndTimeStr}`);
-      // If end time appears earlier than start time, assume it passed midnight.
-      if (endTime <= startTime) {
-        endTime.setDate(endTime.getDate() + 1);
+      
+      const startTimeObj = parseTimeString(firstRun.startTime); // expected to return {hour, minute, second}
+      const endTimeObj = parseTimeString(lastRun.endTime);
+      if (!startTimeObj || !endTimeObj) return "";
+      
+      // Convert the parsed times into milliseconds since midnight.
+      const startMs = startTimeObj.hour * 3600000 + startTimeObj.minute * 60000 + startTimeObj.second * 1000;
+      let endMs = endTimeObj.hour * 3600000 + endTimeObj.minute * 60000 + endTimeObj.second * 1000;
+      
+      // If the end time appears earlier than (or equal to) the start time, assume the batch passed midnight.
+      if (endMs <= startMs) {
+        endMs += 24 * 3600000;
       }
-      const durationMs = endTime - startTime;
+      
+      const durationMs = endMs - startMs;
       return formatDuration(durationMs);
     });
 
@@ -525,7 +532,7 @@ export default {
       lastMainRunNumber,
       initialBatchEndTime,
       shouldHighlightCandidate,
-      // NEW: Expose the computed total duration with a new name.
+      // Expose the computed total duration.
       runTableTotalDuration
     };
   }
