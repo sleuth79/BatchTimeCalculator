@@ -76,7 +76,7 @@
       </table>
     </div>
 
-    <!-- Time Delay Row (moved before Delayed Runs Section) -->
+    <!-- Time Delay Row -->
     <div v-if="delayedRunSelected">
       <h4 class="time-delay-header">
         Time Delay: {{ timeDelayRequired }}
@@ -114,7 +114,6 @@
 import { computed, watch } from "vue";
 import { useGcStore } from "../store";
 import { parseTimeString } from "../utils/timeUtils.js";
-// Ensure that formatTimeWithAmPmAndSeconds returns hours without leading zeros.
 import { formatTimeWithAmPmAndSeconds, formatDuration } from "../utils/utils.js";
 
 // Helper: Convert a runtime string ("mm:ss" or "hh:mm:ss") into milliseconds.
@@ -133,6 +132,25 @@ function parseRunTime(timeStr) {
     return (hours * 3600 + minutes * 60 + seconds) * 1000;
   }
   return 0;
+}
+
+/**
+ * Given a time string (e.g., "1:06:32 AM") and a reference Date,
+ * returns a Date object set to that time.
+ * If the resulting time is earlier than the reference (e.g. crossing midnight),
+ * one day is added.
+ */
+function getDateFromTimeString(timeStr, referenceDate) {
+  const parsed = parseTimeString(timeStr);
+  if (!parsed) return new Date();
+  // Create a new Date based on the reference date with the parsed time.
+  let date = new Date(referenceDate);
+  date.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+  // If the computed time is before the reference, assume it’s on the next day.
+  if (date < referenceDate) {
+    date.setDate(date.getDate() + 1);
+  }
+  return date;
 }
 
 export default {
@@ -292,7 +310,6 @@ export default {
           parsed.second,
           0
         );
-        // Skip if candidateDate is before the batch start.
         if (candidateDate < refDate) return;
         if (candidateDate <= cutoff) {
           if (!candidateTime || candidateDate > candidateTime) {
@@ -348,10 +365,13 @@ export default {
       const isEnergy = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase() === "energy";
       let rows = [];
       let baseTime;
+      // Use sequentialBaseRuns if available. Adjust for day rollover using getDateFromTimeString.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        baseTime = new Date(`${new Date().toDateString()} ${sequentialBaseRuns.value[0].startTime}`);
+        // Use the first sequential run’s start time.
+        const ref = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+        baseTime = getDateFromTimeString(sequentialBaseRuns.value[0].startTime, ref);
       } else if (initialBatchEndTime.value) {
-        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+        baseTime = getDateFromTimeString(initialBatchEndTime.value, new Date());
       } else {
         baseTime = new Date();
       }
@@ -365,7 +385,6 @@ export default {
           endTime: formatTimeWithAmPmAndSeconds(waitRowEnd),
           positionDisplay: initialCount + 1
         });
-        // Use waitRowEnd as the new base for sequential rows.
         const newBase = waitRowEnd;
         sequentialPositionOrder.value.forEach((title, idx) => {
           const rowStart = new Date(newBase.getTime() + idx * runtime);
@@ -399,12 +418,14 @@ export default {
       if (!additionalCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
+      // If sequential batch exists, use the end of the sequentialRows as reference.
       if (sequentialRows.value.length > 0) {
-        baseTime = new Date(`${new Date().toDateString()} ${sequentialRows.value[sequentialRows.value.length - 1].endTime}`);
+        const ref = getDateFromTimeString(initialBatchEndTime.value, new Date());
+        baseTime = getDateFromTimeString(sequentialRows.value[sequentialRows.value.length - 1].endTime, ref);
       } else if (initialBatchEndTime.value) {
-        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+        baseTime = getDateFromTimeString(initialBatchEndTime.value, new Date());
       } else if (startTime.batchEndTime) {
-        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+        baseTime = getDateFromTimeString(startTime.batchEndTime, new Date());
       } else {
         baseTime = new Date();
       }
@@ -434,22 +455,17 @@ export default {
       if (!prebatchCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
+      // When sequential batch is present, use additionalRows' endDate;
+      // otherwise, fall back to initial batch end time.
       if (additionalRows.value.length) {
         baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
       } else if (hasSequentialBatch.value && sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        // Use parseTimeString to create a valid Date from the time string in sequential batch
-        const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
-        const parsedTime = parseTimeString(timeStr);
-        if (parsedTime) {
-          baseTime = new Date();
-          baseTime.setHours(parsedTime.hour, parsedTime.minute, parsedTime.second, 0);
-        } else {
-          baseTime = new Date();
-        }
+        const ref = getDateFromTimeString(initialBatchEndTime.value, new Date());
+        baseTime = getDateFromTimeString(sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime, ref);
       } else if (initialBatchEndTime.value) {
-        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
+        baseTime = getDateFromTimeString(initialBatchEndTime.value, new Date());
       } else if (startTime.batchEndTime) {
-        baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
+        baseTime = getDateFromTimeString(startTime.batchEndTime, new Date());
       } else {
         baseTime = timeDelayResults.delayedRunsStartTimeDate ? new Date(timeDelayResults.delayedRunsStartTimeDate) : new Date();
       }
@@ -508,7 +524,7 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // NEW: Compute overall batch duration (to be emitted to results).
+    // NEW: Compute overall batch duration.
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
@@ -589,9 +605,8 @@ export default {
 .highlight {
   background-color: yellow;
 }
-/* New rules for headings */
 .run-table h4 {
   text-align: center;
-  margin-bottom: 4px; /* Reduced bottom margin */
+  margin-bottom: 4px;
 }
 </style>
