@@ -446,12 +446,11 @@ export default {
       if (!prebatchCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // If a sequential batch exists, use the end time of the sequential batch.
-      if (hasSequentialBatch.value && sequentialRows.value.length > 0) {
-        baseTime = getDateFromTimeString(
-          sequentialRows.value[sequentialRows.value.length - 1].endTime,
-          new Date()
-        );
+      // NEW: If additional runs exist, use the end time of the additional runs.
+      if (additionalRows.value && additionalRows.value.length > 0) {
+        baseTime = getDateFromTimeString(additionalRows.value[additionalRows.value.length - 1].endTime, new Date());
+      } else if (hasSequentialBatch.value && sequentialRows.value.length > 0) {
+        baseTime = getDateFromTimeString(sequentialRows.value[sequentialRows.value.length - 1].endTime, new Date());
       } else if (initialBatchEndTime.value) {
         baseTime = getDateFromTimeString(initialBatchEndTime.value, new Date());
       } else if (startTime.batchEndTime) {

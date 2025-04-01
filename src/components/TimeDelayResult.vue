@@ -25,7 +25,9 @@
         </p>
         <p>
           Additional Runs End Time:
-          <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+          <!-- Orange highlighting commented out for now -->
+          <!-- <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }"> -->
+          <strong>
             {{ finalBatchEndTimeToDisplay }}
           </strong>
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
@@ -281,9 +283,10 @@ hr {
 .highlight-green {
   color: #000;
 }
-.highlight-orange {
+/* Orange highlighting class exists but is currently not applied */
+/* .highlight-orange {
   color: orange;
-}
+} */
 .time-gap-hr {
   border-top: 1px solid #ccc;
 }
