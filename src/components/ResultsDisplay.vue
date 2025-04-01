@@ -37,7 +37,11 @@
     <div v-if="results && Object.keys(results).length && timeDelaySectionExists">
       <hr class="section-separator" />
       <div class="time-delay-section">
-        <TimeDelayResult :timeDelayData="timeDelayResults" />
+        <!-- Pass finalBatchEndTime to TimeDelayResult -->
+        <TimeDelayResult
+          :timeDelayData="timeDelayResults"
+          :finalBatchEndTime="finalBatchEndTime"
+        />
       </div>
     </div>
 
@@ -148,7 +152,7 @@ export default {
     const initialBatchEndTime = ref("");
     // Reactive property to hold the overall batch duration computed from RunTable.
     const runTableInitialBatchDuration = ref("");
-    // NEW: Reactive property to hold the final (overall) batch end time from RunTable.
+    // Reactive property to hold the final (overall) batch end time from RunTable.
     const finalBatchEndTime = ref("");
 
     return {
