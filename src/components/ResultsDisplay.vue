@@ -37,10 +37,12 @@
     <div v-if="results && Object.keys(results).length && timeDelaySectionExists">
       <hr class="section-separator" />
       <div class="time-delay-section">
-        <!-- Pass finalBatchEndTime to TimeDelayResult -->
+        <!-- Pass finalBatchEndTime, delayedRunsStartTime and delayedRunsEndTime to TimeDelayResult -->
         <TimeDelayResult
           :timeDelayData="timeDelayResults"
           :finalBatchEndTime="finalBatchEndTime"
+          :delayedRunsStartTime="delayedRunsStartTime"
+          :delayedRunsEndTime="delayedRunsEndTime"
         />
       </div>
     </div>
@@ -55,7 +57,7 @@
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model:finalBatchEndTime along with the other v-model bindings so that any changes in RunTable are passed upward. -->
+         Bind the new v-model properties so that any changes in RunTable are passed upward. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -66,6 +68,8 @@
         v-model:initialBatchEndTime="initialBatchEndTime"
         v-model:runTableInitialBatchDuration="runTableInitialBatchDuration"
         v-model:finalBatchEndTime="finalBatchEndTime"
+        v-model:delayedRunsStartTime="delayedRunsStartTime"
+        v-model:delayedRunsEndTime="delayedRunsEndTime"
         v-show="showRunTable"
       />
     </div>
@@ -154,6 +158,10 @@ export default {
     const runTableInitialBatchDuration = ref("");
     // Reactive property to hold the final (overall) batch end time from RunTable.
     const finalBatchEndTime = ref("");
+    // NEW: Reactive property to hold the delayed runs start time.
+    const delayedRunsStartTime = ref("");
+    // NEW: Reactive property to hold the delayed runs end time.
+    const delayedRunsEndTime = ref("");
 
     return {
       gcStore,
@@ -177,6 +185,8 @@ export default {
       initialBatchEndTime,
       runTableInitialBatchDuration,
       finalBatchEndTime,
+      delayedRunsStartTime,
+      delayedRunsEndTime,
     };
   },
 };

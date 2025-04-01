@@ -63,7 +63,7 @@
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
           <strong>
-            {{ timeDelayData.delayedRunsStartTime }} to {{ timeDelayData.delayedRunsEndTime }}
+            {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
           </strong>
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
@@ -84,8 +84,17 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
-    // New prop passed from the parent (ResultsDisplay) containing the overall batch end time.
+    // New prop passed from the parent containing the overall batch end time.
     finalBatchEndTime: {
+      type: String,
+      default: ''
+    },
+    // NEW: Props for delayed runs start and end times (computed in RunTable)
+    delayedRunsStartTime: {
+      type: String,
+      default: ''
+    },
+    delayedRunsEndTime: {
       type: String,
       default: ''
     }
@@ -135,10 +144,10 @@ export default {
       let durationSeconds = totalAdditionalRuns.value * runtimeSeconds.value;
       // If Energy GC is selected and sequential batch is in use, add 15 minutes (900 seconds)
       if (
-       gcStore.selectedGcData &&
-       gcStore.selectedGcData.type &&
-       gcStore.selectedGcData.type.toLowerCase() === 'energy' &&
-       timeDelayData.value.sequentialFinalPosition !== null
+        gcStore.selectedGcData &&
+        gcStore.selectedGcData.type &&
+        gcStore.selectedGcData.type.toLowerCase() === 'energy' &&
+        timeDelayData.value.sequentialFinalPosition !== null
       ) {
         durationSeconds += 900;
       }
@@ -252,6 +261,9 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
+      // New props come from parent; they are now used directly in the template:
+      delayedRunsStartTime: props.delayedRunsStartTime,
+      delayedRunsEndTime: props.delayedRunsEndTime,
     };
   },
 };

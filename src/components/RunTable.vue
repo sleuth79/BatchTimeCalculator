@@ -526,6 +526,28 @@ export default {
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
+    // NEW: Compute the delayed runs start time (from the first delayed run row).
+    const delayedRunsStartTime = computed(() => {
+      if (prebatchRows.value && prebatchRows.value.length > 0) {
+        return prebatchRows.value[0].startTime;
+      }
+      return "";
+    });
+    watch(delayedRunsStartTime, (newVal) => {
+      emit("update:delayedRunsStartTime", newVal);
+    }, { immediate: true });
+
+    // NEW: Compute the delayed runs end time (from the last delayed run row).
+    const delayedRunsEndTime = computed(() => {
+      if (prebatchRows.value && prebatchRows.value.length > 0) {
+        return prebatchRows.value[prebatchRows.value.length - 1].endTime;
+      }
+      return "";
+    });
+    watch(delayedRunsEndTime, (newVal) => {
+      emit("update:delayedRunsEndTime", newVal);
+    }, { immediate: true });
+
     // 20. Compute overall batch duration.
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
@@ -567,6 +589,8 @@ export default {
       lastMainRunNumber,
       initialBatchEndTime,
       finalBatchEndTime, // exposed for parent use if needed
+      delayedRunsStartTime, // NEW: Delayed runs start time
+      delayedRunsEndTime,   // NEW: Delayed runs end time
       shouldHighlightCandidate,
       runTableTotalDuration
     };
