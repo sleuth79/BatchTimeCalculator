@@ -89,7 +89,7 @@ export default {
       type: String,
       default: ''
     },
-    // NEW props for delayed runs start and end times.
+    // New props for delayed runs start and end times.
     delayedRunsStartTime: {
       type: String,
       default: ''
@@ -261,7 +261,7 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // Expose new props for delayed runs time; these come from parent via props.
+      // Expose new props for delayed runs time from parent.
       delayedRunsStartTime: props.delayedRunsStartTime,
       delayedRunsEndTime: props.delayedRunsEndTime,
     };
