@@ -84,12 +84,12 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
-    // New prop passed from the parent containing the overall batch end time.
+    // New prop passed from the parent (ResultsDisplay) containing the overall batch end time.
     finalBatchEndTime: {
       type: String,
       default: ''
     },
-    // NEW: Props for delayed runs start and end times (computed in RunTable)
+    // NEW props for delayed runs start and end times.
     delayedRunsStartTime: {
       type: String,
       default: ''
@@ -261,7 +261,7 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // New props come from parent; they are now used directly in the template:
+      // Expose new props for delayed runs time; these come from parent via props.
       delayedRunsStartTime: props.delayedRunsStartTime,
       delayedRunsEndTime: props.delayedRunsEndTime,
     };
