@@ -19,7 +19,13 @@
          Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
          both the displayed batch end time, duration, and time gap calculation use the run table values. -->
     <StartTimeResults
-      :results="{ ...results, batchEndTime: initialBatchEndTime, batchDuration: runTableInitialBatchDuration, selectedPositionLabel: selectedPositionLabel }"
+      :results="{
+        ...results,
+        batchEndTime: initialBatchEndTime,
+        finalBatchEndTime: finalBatchEndTime,
+        batchDuration: runTableInitialBatchDuration,
+        selectedPositionLabel: selectedPositionLabel
+      }"
       :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
@@ -45,7 +51,7 @@
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model:initialBatchEndTime and v-model:runTableInitialBatchDuration so that any changes in RunTable are passed upward. -->
+         Bind the new v-model:finalBatchEndTime along with the other v-model bindings so that any changes in RunTable are passed upward. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -55,6 +61,7 @@
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
         v-model:initialBatchEndTime="initialBatchEndTime"
         v-model:runTableInitialBatchDuration="runTableInitialBatchDuration"
+        v-model:finalBatchEndTime="finalBatchEndTime"
         v-show="showRunTable"
       />
     </div>
@@ -137,10 +144,12 @@ export default {
 
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
-    // Reactive property to hold the batch end time computed from RunTable.
+    // Reactive property to hold the initial batch end time computed from RunTable.
     const initialBatchEndTime = ref("");
-    // NEW: Reactive property to hold the computed overall batch duration.
+    // Reactive property to hold the overall batch duration computed from RunTable.
     const runTableInitialBatchDuration = ref("");
+    // NEW: Reactive property to hold the final (overall) batch end time from RunTable.
+    const finalBatchEndTime = ref("");
 
     return {
       gcStore,
@@ -163,6 +172,7 @@ export default {
       runtableClosestPositionFull,
       initialBatchEndTime,
       runTableInitialBatchDuration,
+      finalBatchEndTime,
     };
   },
 };

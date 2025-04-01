@@ -24,20 +24,11 @@
           <strong>{{ additionalRunsDurationFormatted !== '' ? additionalRunsDurationFormatted : 'N/A' }}</strong>
         </p>
         <p>
-          <template v-if="timeDelayData.sequentialBatchActive">
-            Additional Runs End Time:
-            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
-              {{ timeDelayData.sequentialBatchEndTime }}
-            </strong>
-            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
-          </template>
-          <template v-else>
-            Additional Runs End Time:
-            <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
-              {{ timeDelayData.additionalRunsEndTime }}
-            </strong>
-            <span class="result-date"> ({{ additionalRunsEndDate }})</span>
-          </template>
+          Additional Runs End Time:
+          <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
+            {{ finalBatchEndTime }}
+          </strong>
+          <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
       </div>
       <!-- Display time gap if additional runs exist and no delayed runs -->
@@ -90,7 +81,13 @@ import { useGcStore } from '../store';
 
 export default {
   name: 'TimeDelayResult',
-  setup() {
+  props: {
+    finalBatchEndTime: {
+      type: String,
+      default: ''
+    }
+  },
+  setup(props) {
     const gcStore = useGcStore();
     // Reference the store's reactive timeDelayResults object.
     const timeDelayData = computed(() => gcStore.timeDelayResults);
@@ -122,7 +119,7 @@ export default {
       return miscAdditional || null;
     });
 
-    // We'll derive the GC runtime (in minutes) from selectedGcData.
+    // Derive the GC runtime (in minutes) from selectedGcData.
     const runtimeMinutes = computed(() => {
       const data = gcStore.selectedGcData;
       return data ? parseFloat(data.runTime) : 0;
@@ -245,6 +242,8 @@ export default {
       batchEndTimeAfter730,
       additionalRunsEndDate,
       formattedTimeDelayRequired,
+      // Expose the new prop for use in the template
+      finalBatchEndTime: props.finalBatchEndTime,
     };
   },
 };

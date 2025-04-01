@@ -513,6 +513,20 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
+    // NEW: Compute the final batch end time which includes sequential and additional runs.
+    const finalBatchEndTime = computed(() => {
+      if (additionalRows.value && additionalRows.value.length) {
+        return additionalRows.value[additionalRows.value.length - 1].endTime;
+      } else if (sequentialRows.value && sequentialRows.value.length) {
+        return sequentialRows.value[sequentialRows.value.length - 1].endTime;
+      } else {
+        return initialBatchEndTime.value;
+      }
+    });
+    watch(finalBatchEndTime, (newVal) => {
+      emit("update:finalBatchEndTime", newVal);
+    }, { immediate: true });
+
     // 20. Compute overall batch duration.
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
@@ -553,6 +567,7 @@ export default {
       delayedRunSelected,
       lastMainRunNumber,
       initialBatchEndTime,
+      finalBatchEndTime, // exposed for parent use if needed
       shouldHighlightCandidate,
       runTableTotalDuration
     };
