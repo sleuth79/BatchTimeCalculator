@@ -30,11 +30,14 @@
         @update-config="handleUpdateConfig"
       />
 
+      <!-- Revert section commented out -->
+      <!--
       <div class="revert-section">
         <button class="revert-button" @click="revertToDefaults">
           Revert to Defaults
         </button>
       </div>
+      -->
 
       <!-- Dark Mode Toggle Button Hidden for now -->
       <div class="dark-mode-section" v-if="false">
@@ -45,6 +48,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { ref, onMounted, computed } from "vue";

@@ -436,8 +436,8 @@ export default {
       let baseTime;
       if (additionalRows.value.length) {
         baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
-      } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
-        // Use parseTimeString to create a valid Date from the time string
+      } else if (hasSequentialBatch.value && sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
+        // Use parseTimeString to create a valid Date from the time string in sequential batch
         const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
         const parsedTime = parseTimeString(timeStr);
         if (parsedTime) {
@@ -446,6 +446,8 @@ export default {
         } else {
           baseTime = new Date();
         }
+      } else if (initialBatchEndTime.value) {
+        baseTime = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
       } else if (startTime.batchEndTime) {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {

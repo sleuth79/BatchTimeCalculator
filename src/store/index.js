@@ -120,6 +120,7 @@ export const useGcStore = defineStore('gc', {
       this.lastStartTimeInputs = null;
       this.results = {};
       this.miscAdditionalRuns = null;
+      this.sequentialFinalPosition = null; // <<-- Reset sequential batch final position here
       this.startTimeResetCounter++;
     },
     setSequentialFinalPosition(position) {
