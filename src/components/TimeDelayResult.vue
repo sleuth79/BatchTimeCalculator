@@ -26,7 +26,7 @@
         <p>
           Additional Runs End Time:
           <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }">
-            {{ finalBatchEndTime }}
+            {{ finalBatchEndTimeToDisplay }}
           </strong>
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
@@ -82,6 +82,7 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
+    // New prop passed from the parent (ResultsDisplay) containing the overall batch end time.
     finalBatchEndTime: {
       type: String,
       default: ''
@@ -89,7 +90,7 @@ export default {
   },
   setup(props) {
     const gcStore = useGcStore();
-    // Reference the store's reactive timeDelayResults object.
+    // Reactive timeDelayResults from the store.
     const timeDelayData = computed(() => gcStore.timeDelayResults);
 
     const resultsComplete = computed(() => {
@@ -147,23 +148,20 @@ export default {
       return formatted.trim();
     });
 
-    // For consistency, re-use your existing computed properties.
-    const hasDelayedRuns = computed(() => {
-      const description = timeDelayData.value.prerunsDescription;
-      const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
-      return (
-        (description &&
-          description.trim() !== '' &&
-          description !== 'None' &&
-          description !== 'Delayed Runs') ||
-        (totalDelayed > 0)
-      );
+    // Use the new finalBatchEndTime prop if provided; otherwise, fallback to timeDelayData.
+    const finalTimeString = computed(() => {
+      return props.finalBatchEndTime ||
+        (timeDelayData.value.sequentialBatchActive
+          ? timeDelayData.value.sequentialBatchEndTime
+          : timeDelayData.value.additionalRunsEndTime) || '';
     });
 
+    // For display purposes, expose the final batch end time (the time portion) as-is.
+    const finalBatchEndTimeToDisplay = computed(() => finalTimeString.value);
+
+    // Compute the additional runs end date from the final time string.
     const additionalRunsEndDate = computed(() => {
-      let timeString = timeDelayData.value.sequentialBatchActive
-        ? timeDelayData.value.sequentialBatchEndTime
-        : timeDelayData.value.additionalRunsEndTime;
+      const timeString = finalTimeString.value;
       if (!timeString) return '';
       const parts = timeString.split(" ");
       if (parts.length < 2) return '';
@@ -189,20 +187,16 @@ export default {
         minute,
         second
       );
+      // If the computed end time is earlier than now, assume it rolls over to the next day.
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
       return runEndDate.toLocaleDateString();
     });
 
+    // Check if the end time is after 7:30 AM. Use finalTimeString.
     const batchEndTimeAfter730 = computed(() => {
-      const todayStr = new Date().toLocaleDateString();
-      if (additionalRunsEndDate.value === todayStr) {
-        return false;
-      }
-      let timeString = timeDelayData.value.sequentialBatchActive
-        ? timeDelayData.value.sequentialBatchEndTime
-        : timeDelayData.value.additionalRunsEndTime;
+      const timeString = finalTimeString.value;
       if (!timeString) return false;
       const parts = timeString.split(" ");
       if (parts.length < 2) return false;
@@ -232,6 +226,19 @@ export default {
       return val;
     });
 
+    // For delayed runs section.
+    const hasDelayedRuns = computed(() => {
+      const description = timeDelayData.value.prerunsDescription;
+      const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
+      return (
+        (description &&
+          description.trim() !== '' &&
+          description !== 'None' &&
+          description !== 'Delayed Runs') ||
+        (totalDelayed > 0)
+      );
+    });
+
     return {
       timeDelayData,
       resultsComplete,
@@ -242,8 +249,7 @@ export default {
       batchEndTimeAfter730,
       additionalRunsEndDate,
       formattedTimeDelayRequired,
-      // Expose the new prop for use in the template
-      finalBatchEndTime: props.finalBatchEndTime,
+      finalBatchEndTimeToDisplay,
     };
   },
 };
