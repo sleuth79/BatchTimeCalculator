@@ -263,10 +263,6 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // Updated logic:
-    // Use the first run’s start time to build a reference date.
-    // If the current date is earlier than that reference, subtract one day so that the candidate
-    // is computed on the correct batch start date.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
@@ -441,8 +437,15 @@ export default {
       if (additionalRows.value.length) {
         baseTime = additionalRows.value[additionalRows.value.length - 1].endDate;
       } else if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
+        // Use parseTimeString to create a valid Date from the time string
         const timeStr = sequentialBaseRuns.value[sequentialBaseRuns.value.length - 1].endTime;
-        baseTime = new Date(`${new Date().toDateString()} ${timeStr}`);
+        const parsedTime = parseTimeString(timeStr);
+        if (parsedTime) {
+          baseTime = new Date();
+          baseTime.setHours(parsedTime.hour, parsedTime.minute, parsedTime.second, 0);
+        } else {
+          baseTime = new Date();
+        }
       } else if (startTime.batchEndTime) {
         baseTime = new Date(`${new Date().toDateString()} ${startTime.batchEndTime}`);
       } else {
