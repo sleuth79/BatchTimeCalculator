@@ -56,19 +56,22 @@
           Total Duration of Delayed Runs:
           <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
         </p>
-        <!-- Use the delayedRuns props to display times -->
-        <p v-if="delayedRunsStartTime !== '' && delayedRunsEndTime !== ''">
+        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Delayed Runs Time:
-          <strong>{{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}</strong>
+          <strong>
+            {{ computedDelayedRunsStartTime }} to {{ computedDelayedRunsEndTime }}
+          </strong>
         </p>
-        <p v-if="delayedRunsStartTime !== '' && delayedRunsEndTime !== ''">
+        <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
-          <strong style="color: black;">{{ formattedTimeDelayRequired }}</strong>
+          <strong style="color: black;">
+            {{ formattedTimeDelayRequired }}
+          </strong>
         </p>
       </div>
-      <!-- Debug output to verify the props are coming through -->
-      <p class="debug-delayed">
-        [DEBUG] Delayed Runs Props: {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
+      <!-- Debug output to verify the props -->
+      <p class="debug-props">
+        [DEBUG] Props - Start: {{ computedDelayedRunsStartTime }}, End: {{ computedDelayedRunsEndTime }}
       </p>
     </div>
   </div>
@@ -81,7 +84,7 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
-    // Prop passed from ResultsDisplay containing the overall batch end time.
+    // Prop passed from the parent containing the overall batch end time.
     finalBatchEndTime: {
       type: String,
       default: ''
@@ -248,6 +251,10 @@ export default {
       );
     });
 
+    // Wrap the delayed runs props in computed properties for reactivity.
+    const computedDelayedRunsStartTime = computed(() => props.delayedRunsStartTime);
+    const computedDelayedRunsEndTime = computed(() => props.delayedRunsEndTime);
+
     return {
       timeDelayData,
       resultsComplete,
@@ -259,9 +266,9 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // Expose the delayed runs times from parent props.
-      delayedRunsStartTime: props.delayedRunsStartTime,
-      delayedRunsEndTime: props.delayedRunsEndTime,
+      // Expose the delayed runs times as computed properties.
+      computedDelayedRunsStartTime,
+      computedDelayedRunsEndTime,
     };
   },
 };
@@ -293,10 +300,6 @@ hr {
 .highlight-green {
   color: #000;
 }
-/* Orange highlighting class exists but is currently not applied */
-/* .highlight-orange {
-  color: orange;
-} */
 .time-gap-hr {
   border-top: 1px solid #ccc;
 }
@@ -305,7 +308,7 @@ hr {
   font-size: 1rem;
   margin-left: 5px;
 }
-.debug-delayed {
+.debug-props {
   font-size: 0.9rem;
   color: red;
   margin-top: 10px;
