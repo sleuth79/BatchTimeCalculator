@@ -443,10 +443,14 @@ export default {
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
-      if (!prebatchCount) return [];
+      console.log("DEBUG: prebatchRows computed - totalDelayedRuns (prebatchCount):", prebatchCount, "timeDelayResults:", timeDelayResults);
+      if (!prebatchCount) {
+        console.log("DEBUG: No delayed runs because prebatchCount is falsy.");
+        return [];
+      }
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // NEW: If additional runs exist, use the end time of the additional runs.
+      // If additional runs exist, use the end time of the additional runs.
       if (additionalRows.value && additionalRows.value.length > 0) {
         baseTime = getDateFromTimeString(additionalRows.value[additionalRows.value.length - 1].endTime, new Date());
       } else if (hasSequentialBatch.value && sequentialRows.value.length > 0) {
@@ -485,7 +489,9 @@ export default {
     // 17. Computed for the delay time string.
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
-      return timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
+      const val = timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
+      console.log("DEBUG: timeDelayRequired:", val);
+      return val;
     });
 
     // 18. Flag to indicate if delayed runs should be shown.
@@ -506,6 +512,7 @@ export default {
       return "";
     });
     watch(initialBatchEndTime, (newVal) => {
+      console.log("DEBUG: Emitting initialBatchEndTime:", newVal);
       emit("update:initialBatchEndTime", newVal);
     }, { immediate: true });
     watch(runtableClosestPositionFull, (newVal) => {
@@ -523,6 +530,7 @@ export default {
       }
     });
     watch(finalBatchEndTime, (newVal) => {
+      console.log("DEBUG: Emitting finalBatchEndTime:", newVal);
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
@@ -534,6 +542,7 @@ export default {
       return "";
     });
     watch(delayedRunsStartTime, (newVal) => {
+      console.log("DEBUG: Emitting delayedRunsStartTime:", newVal);
       emit("update:delayedRunsStartTime", newVal);
     }, { immediate: true });
 
@@ -545,6 +554,7 @@ export default {
       return "";
     });
     watch(delayedRunsEndTime, (newVal) => {
+      console.log("DEBUG: Emitting delayedRunsEndTime:", newVal);
       emit("update:delayedRunsEndTime", newVal);
     }, { immediate: true });
 
@@ -565,6 +575,7 @@ export default {
       return formatDuration(durationMs);
     });
     watch(runTableTotalDuration, (newVal) => {
+      console.log("DEBUG: Emitting runTableInitialBatchDuration:", newVal);
       emit("update:runTableInitialBatchDuration", newVal);
     }, { immediate: true });
 
