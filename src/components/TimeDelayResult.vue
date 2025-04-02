@@ -1,6 +1,6 @@
 <template>
   <div class="time-delay-result" v-if="resultsComplete">
-    <!-- Additional Runs Section (unchanged) -->
+    <!-- Additional Runs Section -->
     <div
       v-if="timeDelayData.sequentialBatchActive ||
            timeDelayData.additionalRunsEndTime ||
@@ -14,6 +14,7 @@
         </p>
       </div>
       <div>
+        <!-- Always display headings for additional runs -->
         <p>
           Total Number of Additional Runs:
           <strong>{{ totalAdditionalRuns !== null ? totalAdditionalRuns : 'N/A' }}</strong>
@@ -24,10 +25,13 @@
         </p>
         <p>
           Additional Runs End Time:
-          <strong>{{ finalBatchEndTimeToDisplay }}</strong>
+          <strong>
+            {{ finalBatchEndTimeToDisplay }}
+          </strong>
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
       </div>
+      <!-- Display time gap if additional runs exist and no delayed runs -->
       <div v-if="timeDelayData.timeGapTo730AM && !hasDelayedRuns">
         <hr class="time-gap-hr" />
         <p>
@@ -37,18 +41,19 @@
       </div>
     </div>
     
-    <!-- Delayed Runs Section (using props for display) -->
+    <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
       <p class="section-heading"><strong>Delayed Runs</strong></p>
       <div>
-        <p>
+        <!-- Use the passed-in props for displaying the delayed runs times -->
+        <p v-if="propsDelayedTimesAvailable">
           Delayed Runs Time:
           <strong>
             {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
           </strong>
         </p>
-        <p>
+        <p v-if="propsDelayedTimesAvailable">
           Time Delay Required:
           <strong style="color: black;">
             {{ formattedTimeDelayRequired }}
@@ -66,17 +71,16 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
-    // Overall final batch end time (passed from ResultsDisplay)
+    // Overall batch end time (passed from ResultsDisplay)
     finalBatchEndTime: {
       type: String,
       default: ''
     },
-    // Delayed runs start time (from RunTable)
+    // Delayed runs start and end times (passed from ResultsDisplay, which gets them from RunTable)
     delayedRunsStartTime: {
       type: String,
       default: ''
     },
-    // Delayed runs end time (from RunTable)
     delayedRunsEndTime: {
       type: String,
       default: ''
@@ -84,16 +88,17 @@ export default {
   },
   setup(props) {
     const gcStore = useGcStore();
-    // Get the reactive timeDelayResults from the store for additional run info
+    // Reactive timeDelayResults from the store for additional run info
     const timeDelayData = computed(() => gcStore.timeDelayResults);
-    
-    // Determine if results are complete based on either a final delayed run time from props or store data for additional runs.
+
     const resultsComplete = computed(() => {
-      return (props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '') ||
-             (timeDelayData.value.sequentialBatchEndTime && timeDelayData.value.sequentialBatchEndTime !== '');
+      return (
+        (timeDelayData.value.sequentialBatchEndTime && timeDelayData.value.sequentialBatchEndTime !== '') ||
+        (timeDelayData.value.delayedRunsEndTime && timeDelayData.value.delayedRunsEndTime !== '')
+      );
     });
-    
-    // Additional Runs Computations (unchanged)
+
+    // Compute sequential batch runs based on the final position.
     const sequentialBatchRuns = computed(() => {
       if (timeDelayData.value.sequentialFinalPosition !== null) {
         const seqPos = Number(timeDelayData.value.sequentialFinalPosition);
@@ -101,7 +106,8 @@ export default {
       }
       return null;
     });
-    
+
+    // Computed property for the total additional runs.
     const totalAdditionalRuns = computed(() => {
       const miscAdditional = Number(gcStore.miscAdditionalRuns || 0);
       if (timeDelayData.value.sequentialFinalPosition !== null) {
@@ -111,17 +117,19 @@ export default {
       }
       return miscAdditional || null;
     });
-    
+
+    // Derive the GC runtime (in minutes) from selectedGcData.
     const runtimeMinutes = computed(() => {
       const data = gcStore.selectedGcData;
       return data ? parseFloat(data.runTime) : 0;
     });
     const runtimeSeconds = computed(() => Math.round(runtimeMinutes.value * 60));
-    
+
+    // Computed property for the formatted additional runs duration.
     const additionalRunsDurationFormatted = computed(() => {
       if (totalAdditionalRuns.value === null) return '';
       let durationSeconds = totalAdditionalRuns.value * runtimeSeconds.value;
-      // For Energy GC with a sequential batch, add an extra 15 minutes (900 seconds)
+      // If Energy GC is selected and sequential batch is in use, add 15 minutes (900 seconds)
       if (
         gcStore.selectedGcData &&
         gcStore.selectedGcData.type &&
@@ -137,17 +145,19 @@ export default {
       formatted += `${minutes}m`;
       return formatted.trim();
     });
-    
-    // Use the passed-in finalBatchEndTime prop if available; otherwise, fallback to store data.
+
+    // Use the passed-in finalBatchEndTime prop if provided; otherwise, fallback to store data.
     const finalTimeString = computed(() => {
       return props.finalBatchEndTime ||
         (timeDelayData.value.sequentialBatchActive
           ? timeDelayData.value.sequentialBatchEndTime
           : timeDelayData.value.additionalRunsEndTime) || '';
     });
-    
+
+    // For display, expose the final batch end time as-is.
     const finalBatchEndTimeToDisplay = computed(() => finalTimeString.value);
-    
+
+    // Compute the additional runs end date from the final time string.
     const additionalRunsEndDate = computed(() => {
       const timeString = finalTimeString.value;
       if (!timeString) return '';
@@ -180,7 +190,8 @@ export default {
       }
       return runEndDate.toLocaleDateString();
     });
-    
+
+    // Check if the end time is after 7:30 AM using finalTimeString.
     const batchEndTimeAfter730 = computed(() => {
       const timeString = finalTimeString.value;
       if (!timeString) return false;
@@ -200,7 +211,7 @@ export default {
       }
       return hour > 7 || (hour === 7 && minute >= 30);
     });
-    
+
     const formattedTimeDelayRequired = computed(() => {
       const val = timeDelayData.value.timeDelayRequired;
       if (val === '0 hours') {
@@ -211,12 +222,17 @@ export default {
       }
       return val;
     });
-    
-    // New computed property for delayed runs: rely solely on the passed-in props.
+
+    // Override the delayed runs condition to focus on the passed-in props.
     const hasDelayedRuns = computed(() => {
       return props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '';
     });
-    
+
+    // Computed to check if props delayed times are available.
+    const propsDelayedTimesAvailable = computed(() => {
+      return props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '';
+    });
+
     return {
       timeDelayData,
       resultsComplete,
@@ -231,6 +247,7 @@ export default {
       // Expose the delayed runs times from props
       delayedRunsStartTime: props.delayedRunsStartTime,
       delayedRunsEndTime: props.delayedRunsEndTime,
+      propsDelayedTimesAvailable
     };
   },
 };
