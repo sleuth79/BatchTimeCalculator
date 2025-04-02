@@ -25,6 +25,8 @@
         </p>
         <p>
           Additional Runs End Time:
+          <!-- Orange highlighting commented out for now -->
+          <!-- <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }"> -->
           <strong>
             {{ finalBatchEndTimeToDisplay }}
           </strong>
@@ -46,14 +48,14 @@
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
       <p class="section-heading"><strong>Delayed Runs</strong></p>
       <div>
-        <!-- Use the passed-in props for displaying the delayed runs times -->
-        <p v-if="propsDelayedTimesAvailable">
+        <!-- Here we now check that the props are provided -->
+        <p v-if="delayedRunsStartTime && delayedRunsEndTime">
           Delayed Runs Time:
           <strong>
             {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
           </strong>
         </p>
-        <p v-if="propsDelayedTimesAvailable">
+        <p v-if="delayedRunsStartTime && delayedRunsEndTime">
           Time Delay Required:
           <strong style="color: black;">
             {{ formattedTimeDelayRequired }}
@@ -71,12 +73,12 @@ import { useGcStore } from '../store';
 export default {
   name: 'TimeDelayResult',
   props: {
-    // Overall batch end time (passed from ResultsDisplay)
+    // Prop passed from ResultsDisplay containing the overall batch end time.
     finalBatchEndTime: {
       type: String,
       default: ''
     },
-    // Delayed runs start and end times (passed from ResultsDisplay, which gets them from RunTable)
+    // Props for delayed runs start and end times.
     delayedRunsStartTime: {
       type: String,
       default: ''
@@ -88,7 +90,7 @@ export default {
   },
   setup(props) {
     const gcStore = useGcStore();
-    // Reactive timeDelayResults from the store for additional run info
+    // Reactive timeDelayResults from the store.
     const timeDelayData = computed(() => gcStore.timeDelayResults);
 
     const resultsComplete = computed(() => {
@@ -146,7 +148,7 @@ export default {
       return formatted.trim();
     });
 
-    // Use the passed-in finalBatchEndTime prop if provided; otherwise, fallback to store data.
+    // Use the finalBatchEndTime prop if provided; otherwise, fallback to store data.
     const finalTimeString = computed(() => {
       return props.finalBatchEndTime ||
         (timeDelayData.value.sequentialBatchActive
@@ -185,13 +187,14 @@ export default {
         minute,
         second
       );
+      // If the computed end time is earlier than now, assume it rolls over to the next day.
       if (runEndDate < today) {
         runEndDate.setDate(runEndDate.getDate() + 1);
       }
       return runEndDate.toLocaleDateString();
     });
 
-    // Check if the end time is after 7:30 AM using finalTimeString.
+    // Check if the end time is after 7:30 AM. Use finalTimeString.
     const batchEndTimeAfter730 = computed(() => {
       const timeString = finalTimeString.value;
       if (!timeString) return false;
@@ -223,14 +226,16 @@ export default {
       return val;
     });
 
-    // Override the delayed runs condition to focus on the passed-in props.
+    // For delayed runs section, update the condition so that if the props are provided the section renders.
     const hasDelayedRuns = computed(() => {
-      return props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '';
-    });
-
-    // Computed to check if props delayed times are available.
-    const propsDelayedTimesAvailable = computed(() => {
-      return props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '';
+      return (props.delayedRunsStartTime && props.delayedRunsEndTime) ||
+        (
+          (timeDelayData.value.prerunsDescription &&
+            timeDelayData.value.prerunsDescription.trim() !== '' &&
+            timeDelayData.value.prerunsDescription !== 'None' &&
+            timeDelayData.value.prerunsDescription !== 'Delayed Runs') ||
+          (Number(timeDelayData.value.totalDelayedRuns) > 0)
+        );
     });
 
     return {
@@ -244,10 +249,9 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // Expose the delayed runs times from props
+      // Expose the delayed runs times from the parent props.
       delayedRunsStartTime: props.delayedRunsStartTime,
       delayedRunsEndTime: props.delayedRunsEndTime,
-      propsDelayedTimesAvailable
     };
   },
 };
@@ -279,6 +283,10 @@ hr {
 .highlight-green {
   color: #000;
 }
+/* Orange highlighting class exists but is currently not applied */
+/* .highlight-orange {
+  color: orange;
+} */
 .time-gap-hr {
   border-top: 1px solid #ccc;
 }
