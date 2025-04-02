@@ -15,12 +15,6 @@
       </span>
     </p>
 
-    <!-- Debug: Show delayed runs props received -->
-    <div class="debug-results">
-      <p>DEBUG: Delayed Runs Start Time: {{ delayedRunsStartTime }}</p>
-      <p>DEBUG: Delayed Runs End Time: {{ delayedRunsEndTime }}</p>
-    </div>
-
     <!-- Pass the store's startTime as well as results.
          Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
          both the displayed batch end time, duration, and time gap calculation use the run table values. -->
@@ -228,11 +222,5 @@ export default {
 /* Remove default margins for paragraph tags inside the results-display */
 .results-display p {
   margin: 0;
-}
-
-.debug-results {
-  font-size: 0.9rem;
-  color: blue;
-  margin-bottom: 10px;
 }
 </style>

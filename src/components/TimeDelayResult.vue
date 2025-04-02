@@ -69,10 +69,6 @@
           </strong>
         </p>
       </div>
-      <!-- Debug output to verify the props -->
-      <p class="debug-props">
-        [DEBUG] Props - Start: {{ computedDelayedRunsStartTime }}, End: {{ computedDelayedRunsEndTime }}
-      </p>
     </div>
   </div>
 </template>
@@ -307,10 +303,5 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
-}
-.debug-props {
-  font-size: 0.9rem;
-  color: red;
-  margin-top: 10px;
 }
 </style>
