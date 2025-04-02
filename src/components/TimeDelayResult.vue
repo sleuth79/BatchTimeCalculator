@@ -25,11 +25,7 @@
         </p>
         <p>
           Additional Runs End Time:
-          <!-- Orange highlighting commented out for now -->
-          <!-- <strong :class="{ 'highlight-orange': batchEndTimeAfter730 }"> -->
-          <strong>
-            {{ finalBatchEndTimeToDisplay }}
-          </strong>
+          <strong>{{ finalBatchEndTimeToDisplay }}</strong>
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
       </div>
@@ -48,20 +44,32 @@
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
       <p class="section-heading"><strong>Delayed Runs</strong></p>
       <div>
-        <!-- Here we now check that the props are provided -->
-        <p v-if="delayedRunsStartTime && delayedRunsEndTime">
-          Delayed Runs Time:
-          <strong>
-            {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
-          </strong>
+        <p v-if="timeDelayData.timeGapTo730AM">
+          Time Gap to 7:30 AM:
+          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
         </p>
-        <p v-if="delayedRunsStartTime && delayedRunsEndTime">
+        <p>
+          Total Number of Delayed Runs:
+          <strong>{{ timeDelayData.totalDelayedRuns }}</strong>
+        </p>
+        <p>
+          Total Duration of Delayed Runs:
+          <strong>{{ timeDelayData.totalDelayedDurationFormatted }}</strong>
+        </p>
+        <!-- Use the delayedRuns props to display times -->
+        <p v-if="delayedRunsStartTime !== '' && delayedRunsEndTime !== ''">
+          Delayed Runs Time:
+          <strong>{{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}</strong>
+        </p>
+        <p v-if="delayedRunsStartTime !== '' && delayedRunsEndTime !== ''">
           Time Delay Required:
-          <strong style="color: black;">
-            {{ formattedTimeDelayRequired }}
-          </strong>
+          <strong style="color: black;">{{ formattedTimeDelayRequired }}</strong>
         </p>
       </div>
+      <!-- Debug output to verify the props are coming through -->
+      <p class="debug-delayed">
+        [DEBUG] Delayed Runs Props: {{ delayedRunsStartTime }} to {{ delayedRunsEndTime }}
+      </p>
     </div>
   </div>
 </template>
@@ -156,7 +164,7 @@ export default {
           : timeDelayData.value.additionalRunsEndTime) || '';
     });
 
-    // For display, expose the final batch end time as-is.
+    // For display purposes, expose the final batch end time as-is.
     const finalBatchEndTimeToDisplay = computed(() => finalTimeString.value);
 
     // Compute the additional runs end date from the final time string.
@@ -226,16 +234,18 @@ export default {
       return val;
     });
 
-    // For delayed runs section, update the condition so that if the props are provided the section renders.
+    // For delayed runs section.
     const hasDelayedRuns = computed(() => {
-      return (props.delayedRunsStartTime && props.delayedRunsEndTime) ||
-        (
-          (timeDelayData.value.prerunsDescription &&
-            timeDelayData.value.prerunsDescription.trim() !== '' &&
-            timeDelayData.value.prerunsDescription !== 'None' &&
-            timeDelayData.value.prerunsDescription !== 'Delayed Runs') ||
-          (Number(timeDelayData.value.totalDelayedRuns) > 0)
-        );
+      const description = timeDelayData.value.prerunsDescription;
+      const totalDelayed = Number(timeDelayData.value.totalDelayedRuns);
+      return (
+        (description &&
+          description.trim() !== '' &&
+          description !== 'None' &&
+          description !== 'Delayed Runs') ||
+        (totalDelayed > 0) ||
+        (props.delayedRunsStartTime !== '' && props.delayedRunsEndTime !== '')
+      );
     });
 
     return {
@@ -249,7 +259,7 @@ export default {
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // Expose the delayed runs times from the parent props.
+      // Expose the delayed runs times from parent props.
       delayedRunsStartTime: props.delayedRunsStartTime,
       delayedRunsEndTime: props.delayedRunsEndTime,
     };
@@ -294,5 +304,10 @@ hr {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
+}
+.debug-delayed {
+  font-size: 0.9rem;
+  color: red;
+  margin-top: 10px;
 }
 </style>
