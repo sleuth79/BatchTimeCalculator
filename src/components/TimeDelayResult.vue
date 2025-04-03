@@ -21,7 +21,13 @@
         </p>
         <p>
           Total Duration of Additional Runs:
-          <strong>{{ additionalRunsDurationFormatted !== '' ? additionalRunsDurationFormatted : 'N/A' }}</strong>
+          <strong>
+            {{
+              sequentialBatchDuration !== ''
+                ? sequentialBatchDuration
+                : (additionalRunsDurationFormatted !== '' ? additionalRunsDurationFormatted : 'N/A')
+            }}
+          </strong>
         </p>
         <p>
           Additional Runs End Time:
@@ -91,6 +97,11 @@ export default {
       default: ''
     },
     delayedRunsEndTime: {
+      type: String,
+      default: ''
+    },
+    // NEW: Accept the sequential batch duration computed in RunTable.
+    sequentialBatchDuration: {
       type: String,
       default: ''
     }
@@ -265,6 +276,8 @@ export default {
       // Expose the delayed runs times as computed properties.
       computedDelayedRunsStartTime,
       computedDelayedRunsEndTime,
+      // Expose the new sequentialBatchDuration prop (passed from parent)
+      sequentialBatchDuration: computed(() => props.sequentialBatchDuration)
     };
   },
 };

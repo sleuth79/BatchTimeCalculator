@@ -24,6 +24,7 @@
         batchEndTime: initialBatchEndTime,
         finalBatchEndTime: finalBatchEndTime,
         batchDuration: runTableInitialBatchDuration,
+        sequentialBatchDuration: sequentialBatchDuration,
         selectedPositionLabel: selectedPositionLabel
       }"
       :startTime="gcStore.startTime"
@@ -70,6 +71,7 @@
         v-model:finalBatchEndTime="finalBatchEndTime"
         v-model:delayedRunsStartTime="delayedRunsStartTime"
         v-model:delayedRunsEndTime="delayedRunsEndTime"
+        v-model:sequentialBatchDuration="sequentialBatchDuration"
         v-show="showRunTable"
       />
     </div>
@@ -162,6 +164,8 @@ export default {
     const delayedRunsStartTime = ref("");
     // Reactive property to hold the delayed runs end time.
     const delayedRunsEndTime = ref("");
+    // NEW: Reactive property to hold the sequential batch duration (including additional runs).
+    const sequentialBatchDuration = ref("");
 
     return {
       gcStore,
@@ -187,6 +191,7 @@ export default {
       finalBatchEndTime,
       delayedRunsStartTime,
       delayedRunsEndTime,
+      sequentialBatchDuration,
     };
   },
 };

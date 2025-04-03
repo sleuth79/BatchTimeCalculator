@@ -516,29 +516,34 @@ export default {
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the delayed runs start time (from the first delayed run row).
-    const delayedRunsStartTime = computed(() => {
-      if (prebatchRows.value && prebatchRows.value.length > 0) {
-        return prebatchRows.value[0].startTime;
+    // NEW: Compute sequential batch duration including additional runs.
+    // Uses the start of the sequential rows (or initial batch end if sequentialRows is empty)
+    // and the final end time (which already factors in additional runs).
+    const sequentialBatchDuration = computed(() => {
+      if (!hasSequentialBatch.value) return "";
+      let sequentialStartTime = "";
+      if (sequentialRows.value.length > 0) {
+        sequentialStartTime = sequentialRows.value[0].startTime;
+      } else {
+        sequentialStartTime = initialBatchEndTime.value;
       }
-      return "";
+      const finalEndTime = finalBatchEndTime.value;
+      const startObj = parseTimeString(sequentialStartTime);
+      const endObj = parseTimeString(finalEndTime);
+      if (!startObj || !endObj) return "";
+      const startMs = startObj.hour * 3600000 + startObj.minute * 60000 + startObj.second * 1000;
+      let endMs = endObj.hour * 3600000 + endObj.minute * 60000 + endObj.second * 1000;
+      if (endMs <= startMs) {
+        endMs += 24 * 3600000;
+      }
+      const durationMs = endMs - startMs;
+      return formatDuration(durationMs);
     });
-    watch(delayedRunsStartTime, (newVal) => {
-      emit("update:delayedRunsStartTime", newVal);
+    watch(sequentialBatchDuration, (newVal) => {
+      emit("update:runTableSequentialBatchDuration", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the delayed runs end time (from the last delayed run row).
-    const delayedRunsEndTime = computed(() => {
-      if (prebatchRows.value && prebatchRows.value.length > 0) {
-        return prebatchRows.value[prebatchRows.value.length - 1].endTime;
-      }
-      return "";
-    });
-    watch(delayedRunsEndTime, (newVal) => {
-      emit("update:delayedRunsEndTime", newVal);
-    }, { immediate: true });
-
-    // 20. Compute overall batch duration.
+    // 20. Compute overall batch duration (for the initial batch only).
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
@@ -582,7 +587,8 @@ export default {
       delayedRunsStartTime,
       delayedRunsEndTime,
       shouldHighlightCandidate,
-      runTableTotalDuration
+      runTableTotalDuration,
+      sequentialBatchDuration
     };
   }
 };
