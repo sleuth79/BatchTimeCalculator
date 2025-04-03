@@ -516,6 +516,28 @@ export default {
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
+    // NEW: Compute the delayed runs start time (from the first delayed run row).
+    const delayedRunsStartTime = computed(() => {
+      if (prebatchRows.value && prebatchRows.value.length > 0) {
+        return prebatchRows.value[prebatchRows.value.length - 1].endTime;
+      }
+      return "";
+    });
+    watch(delayedRunsStartTime, (newVal) => {
+      emit("update:delayedRunsStartTime", newVal);
+    }, { immediate: true });
+
+    // NEW: Compute the delayed runs end time (from the last delayed run row).
+    const delayedRunsEndTime = computed(() => {
+      if (prebatchRows.value && prebatchRows.value.length > 0) {
+        return prebatchRows.value[prebatchRows.value.length - 1].endTime;
+      }
+      return "";
+    });
+    watch(delayedRunsEndTime, (newVal) => {
+      emit("update:delayedRunsEndTime", newVal);
+    }, { immediate: true });
+
     // NEW: Compute sequential batch duration including additional runs.
     // Uses the start of the sequential rows (or initial batch end if sequentialRows is empty)
     // and the final end time (which already factors in additional runs).
@@ -539,8 +561,9 @@ export default {
       const durationMs = endMs - startMs;
       return formatDuration(durationMs);
     });
+    // IMPORTANT: Emit the sequential batch duration with the correct event name for v-model.
     watch(sequentialBatchDuration, (newVal) => {
-      emit("update:runTableSequentialBatchDuration", newVal);
+      emit("update:sequentialBatchDuration", newVal);
     }, { immediate: true });
 
     // 20. Compute overall batch duration (for the initial batch only).
