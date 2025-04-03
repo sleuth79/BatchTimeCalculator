@@ -1,5 +1,10 @@
 <template>
   <div class="run-table">
+    <!-- Closest Position Heading -->
+    <div class="closest-position-heading" v-if="runtableClosestCandidateIndex !== -1">
+      Closest Position Before 4:00 PM: {{ runtableClosestPositionFull }}
+    </div>
+
     <!-- Initial Batch Table -->
     <table v-if="initialPositionOrder.length">
       <thead>
@@ -276,7 +281,7 @@ export default {
     // 9. Flag for sequential batch.
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
-    // 10. Compute candidate index – only consider runs whose end time, 
+    // 10. Compute candidate index – only consider runs whose end time,
     // when placed on the batch start’s date, falls between the batch start and 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
@@ -302,7 +307,7 @@ export default {
         // Construct the run's end time anchored to the batch start's date.
         let candidateDate = new Date(batchStart);
         candidateDate.setHours(endParsed.hour, endParsed.minute, endParsed.second, 0);
-        // Skip if this time is before the batch start (i.e. on the next day) or after 4:00 PM.
+        // Skip if this time is before the batch start (i.e. belongs to the next day) or after 4:00 PM.
         if (candidateDate < batchStart || candidateDate > cutoff) return;
         // Choose the latest candidate within the allowed window.
         if (!candidateTime || candidateDate > candidateTime) {
@@ -332,7 +337,7 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // 12. Instead of basing highlighting on batch end time, we now highlight if we found a candidate.
+    // 12. Highlight candidate if one is found.
     const shouldHighlightCandidate = computed(() => {
       return runtableClosestCandidateIndex.value !== -1;
     });
@@ -567,7 +572,6 @@ export default {
       waitRow,
       initialBaseRuns,
       sequentialBaseRuns,
-      // Expose candidate index directly for template binding.
       runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel,
@@ -621,6 +625,11 @@ export default {
 }
 .highlight {
   background-color: yellow;
+}
+.closest-position-heading {
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
 }
 .run-table h4 {
   text-align: center;
