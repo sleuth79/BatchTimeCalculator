@@ -40,7 +40,7 @@
           {{ displayBatchEndTime }}
         </template>
         <template v-else>
-          {{ runtableClosestPositionFull }}
+          {{ cleanedRuntableClosestPosition }}
         </template>
       </span>
     </p>
@@ -267,6 +267,13 @@ export default {
     });
     // --- End new time gap calculation ---
 
+    // --- New: Clean the candidate string to remove the word "Position" ---
+    const cleanedRuntableClosestPosition = computed(() => {
+      const candidate = props.runtableClosestPositionFull || "";
+      return candidate.startsWith("Position ") ? candidate.substring("Position ".length) : candidate;
+    });
+    // --- End candidate string cleanup ---
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -281,7 +288,9 @@ export default {
       batchPasses4PM,
       displayBatchDuration,
       // New computed time gap for 7:30 AM
-      computedTimeGapTo730AM
+      computedTimeGapTo730AM,
+      // New cleaned candidate string
+      cleanedRuntableClosestPosition
     };
   }
 };
