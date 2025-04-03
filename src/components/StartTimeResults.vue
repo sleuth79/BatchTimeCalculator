@@ -328,9 +328,9 @@ export default {
   padding: 0;
 }
 
-/* Set consistent margins for all paragraph headings */
+/* Apply the same spacing as in the TimeDelayResult code */
 .start-time-results p {
-  margin: 10px 0;
+  margin: 0 0 5px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
@@ -354,10 +354,11 @@ hr {
   padding: 0;
 }
 
-/* Adjust spacing for the time gap heading if needed */
+/* Remove any extra adjustments for the time gap heading */
 .time-gap-heading {
-  margin-top: 10px;
+  margin: 0 0 5px 0;
 }
+
 .highlight-orange {
   color: orange;
 }
