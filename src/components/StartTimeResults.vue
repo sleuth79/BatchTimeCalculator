@@ -326,7 +326,9 @@ hr {
   margin: 10px 0;
   padding: 0;
 }
+/* Updated .time-gap-hr to match the TimeDelayResult component */
 .time-gap-hr {
+  border-top: 1px solid #ccc;
   margin-top: 10px;
   margin-bottom: 10px;
 }
