@@ -277,26 +277,37 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // Updated logic uses getDateFromTimeString so that runs past midnight get the correct day.
+    // New approach: Only consider runs that fall on the same day as the batch start and end before 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
       const firstRunParsed = parseTimeString(props.runs[0].startTime);
       if (!firstRunParsed) return -1;
-      let refDate = new Date();
-      refDate.setHours(firstRunParsed.hour, firstRunParsed.minute, firstRunParsed.second, 0);
-      if (new Date() < refDate) {
-        refDate.setDate(refDate.getDate() - 1);
-      }
-      // Set the cutoff to 4:00 PM of the batch start day.
-      const cutoff = new Date(refDate);
+      
+      // Define the batch start using the first run's time on today's date.
+      let batchStart = new Date();
+      batchStart.setHours(firstRunParsed.hour, firstRunParsed.minute, firstRunParsed.second, 0);
+      
+      // Define cutoff as 4:00 PM on the same day.
+      let cutoff = new Date(batchStart);
       cutoff.setHours(16, 0, 0, 0);
+      
       let candidateIndex = -1;
       let candidateTime = null;
+      
       base.forEach((run, idx) => {
         if (!run.endTime) return;
-        // Use getDateFromTimeString to get the actual Date for the run’s end time.
-        const candidateDate = getDateFromTimeString(run.endTime, refDate);
+        const parsed = parseTimeString(run.endTime);
+        if (!parsed) return;
+        
+        // Construct candidateDate using the batch start's date.
+        let candidateDate = new Date(batchStart);
+        candidateDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+        
+        // Skip if the candidate falls before the batch start (i.e. it's on the next day).
+        if (candidateDate < batchStart) return;
+        
+        // Only consider candidates that end before (or exactly at) 4:00 PM.
         if (candidateDate <= cutoff) {
           if (!candidateTime || candidateDate > candidateTime) {
             candidateTime = candidateDate;
@@ -351,7 +362,7 @@ export default {
       const isEnergy = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase() === "energy";
       let rows = [];
       let baseTime;
-      // Use sequentialBaseRuns if available. Use the initial batch end time as reference.
+      // Use sequentialBaseRuns if available; otherwise, use the initial batch end time.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         const ref = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
         baseTime = getDateFromTimeString(sequentialBaseRuns.value[0].startTime, ref);
@@ -403,7 +414,6 @@ export default {
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
       if (sequentialRows.value.length > 0) {
-        // In sequential case, use the end time of the sequential batch.
         baseTime = getDateFromTimeString(sequentialRows.value[sequentialRows.value.length - 1].endTime, new Date());
       } else if (initialBatchEndTime.value) {
         baseTime = getDateFromTimeString(initialBatchEndTime.value, new Date());
@@ -435,14 +445,9 @@ export default {
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
-      console.log("DEBUG: prebatchRows computed - totalDelayedRuns (prebatchCount):", prebatchCount, "timeDelayResults:", timeDelayResults);
-      if (!prebatchCount) {
-        console.log("DEBUG: No delayed runs because prebatchCount is falsy.");
-        return [];
-      }
+      if (!prebatchCount) return [];
       const runtime = Math.round(parseRunTime(allGcData[selectedGc].runTime));
       let baseTime;
-      // If additional runs exist, use the end time of the additional runs.
       if (additionalRows.value && additionalRows.value.length > 0) {
         baseTime = getDateFromTimeString(additionalRows.value[additionalRows.value.length - 1].endTime, new Date());
       } else if (hasSequentialBatch.value && sequentialRows.value.length > 0) {
@@ -482,7 +487,6 @@ export default {
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
       const val = timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
-      console.log("DEBUG: timeDelayRequired:", val);
       return val;
     });
 
@@ -504,7 +508,6 @@ export default {
       return "";
     });
     watch(initialBatchEndTime, (newVal) => {
-      console.log("DEBUG: Emitting initialBatchEndTime:", newVal);
       emit("update:initialBatchEndTime", newVal);
     }, { immediate: true });
     watch(runtableClosestPositionFull, (newVal) => {
@@ -522,7 +525,6 @@ export default {
       }
     });
     watch(finalBatchEndTime, (newVal) => {
-      console.log("DEBUG: Emitting finalBatchEndTime:", newVal);
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
@@ -534,7 +536,6 @@ export default {
       return "";
     });
     watch(delayedRunsStartTime, (newVal) => {
-      console.log("DEBUG: Emitting delayedRunsStartTime:", newVal);
       emit("update:delayedRunsStartTime", newVal);
     }, { immediate: true });
 
@@ -546,7 +547,6 @@ export default {
       return "";
     });
     watch(delayedRunsEndTime, (newVal) => {
-      console.log("DEBUG: Emitting delayedRunsEndTime:", newVal);
       emit("update:delayedRunsEndTime", newVal);
     }, { immediate: true });
 
@@ -567,7 +567,6 @@ export default {
       return formatDuration(durationMs);
     });
     watch(runTableTotalDuration, (newVal) => {
-      console.log("DEBUG: Emitting runTableInitialBatchDuration:", newVal);
       emit("update:runTableInitialBatchDuration", newVal);
     }, { immediate: true });
 
@@ -591,9 +590,9 @@ export default {
       delayedRunSelected,
       lastMainRunNumber,
       initialBatchEndTime,
-      finalBatchEndTime, // exposed for parent use if needed
-      delayedRunsStartTime, // NEW: Delayed runs start time
-      delayedRunsEndTime,   // NEW: Delayed runs end time
+      finalBatchEndTime, // for parent use if needed
+      delayedRunsStartTime,
+      delayedRunsEndTime,
       shouldHighlightCandidate,
       runTableTotalDuration
     };
