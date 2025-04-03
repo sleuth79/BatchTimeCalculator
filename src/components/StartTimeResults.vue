@@ -44,13 +44,12 @@
         </template>
       </span>
     </p>
-    <div
-      v-if="showDetailedResults && results.timeGapTo730AM && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
+    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
       <hr class="time-gap-hr" />
       <p>
         Time Gap to 7:30 AM:
-        <span class="result-value">{{ results.timeGapTo730AM }}</span>
+        <span class="result-value">{{ computedTimeGapTo730AM }}</span>
       </p>
     </div>
   </div>
@@ -205,14 +204,13 @@ export default {
     });
 
     // New computed property to determine if the batch passes 4:00 PM.
-    // (This is based on the displayed batch end time, which for batches crossing midnight may not reflect a true 4:00 PM cutoff.)
     const batchPasses4PM = computed(() => {
       const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
       if (!batchTime) return false;
       const parts = batchTime.split(" ");
       if (parts.length < 2) return false;
-      const timePart = parts[0]; // e.g., "02:22:26"
-      const ampm = parts[1]; // e.g., "PM"
+      const timePart = parts[0];
+      const ampm = parts[1];
       const timeParts = timePart.split(":");
       if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
@@ -227,8 +225,6 @@ export default {
     });
 
     // Computed property to decide which candidate label to show.
-    // If a valid candidate (i.e. runtableClosestPositionFull is not "No candidate found") exists,
-    // we display "Closest Position Before 4:00 PM:"; otherwise, "This Batch Ends At:".
     const candidateDisplayLabel = computed(() => {
       if (props.runtableClosestPositionFull && props.runtableClosestPositionFull !== "No candidate found") {
         return "Closest Position Before 4:00 PM:";
@@ -240,6 +236,36 @@ export default {
     const displayBatchDuration = computed(() => {
       return props.results.batchDuration || "";
     });
+
+    // --- New: Compute time gap from batch end time to 7:30 AM ---
+    // Parse the displayBatchEndTime string which is expected to be in the format "TIME (DATE)"
+    const parsedBatchEndDateTime = computed(() => {
+      const batchEnd = displayBatchEndTime.value;
+      if (!batchEnd) return null;
+      // Expecting format like "8:43:06 PM (4/2/2025)"
+      const match = batchEnd.match(/^([\d:]+\s*(?:AM|PM))\s*\((.+)\)$/);
+      if (!match) return null;
+      const timePart = match[1].trim();
+      const datePart = match[2].trim();
+      // Construct a Date object (this assumes the datePart is in a format parseable by Date)
+      return new Date(`${datePart} ${timePart}`);
+    });
+
+    const computedTimeGapTo730AM = computed(() => {
+      const endDT = parsedBatchEndDateTime.value;
+      if (!endDT) return '';
+      let target = new Date(endDT);
+      target.setHours(7, 30, 0, 0);
+      // If batch end time is after 7:30 AM, the target becomes 7:30 AM on the next day.
+      if (endDT > target) {
+        target.setDate(target.getDate() + 1);
+      }
+      const diffMS = target - endDT;
+      const diffHours = Math.floor(diffMS / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMS % (1000 * 60 * 60)) / (1000 * 60));
+      return `${diffHours} hours, ${diffMinutes} minutes`;
+    });
+    // --- End new time gap calculation ---
 
     return {
       currentDate,
@@ -253,8 +279,9 @@ export default {
       showDetailedResults,
       candidateDisplayLabel,
       batchPasses4PM,
-      // NEW: Expose the batch duration display property.
-      displayBatchDuration
+      displayBatchDuration,
+      // New computed time gap for 7:30 AM
+      computedTimeGapTo730AM
     };
   }
 };
