@@ -20,7 +20,7 @@
         <tr
           v-for="(title, idx) in initialPositionOrder"
           :key="'initial-' + idx"
-          :class="{ highlight: shouldHighlightCandidate && idx === runtableClosestCandidateIndex }"
+          :class="{ highlight: runtableClosestCandidateIndex === idx }"
         >
           <td>{{ title }}</td>
           <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
@@ -276,20 +276,19 @@ export default {
     // 9. Flag for sequential batch.
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
-    // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // New approach: Only consider runs that, when mapped to the batch start’s date,
-    // end between the batch start and 4:00 PM.
+    // 10. Compute candidate index – only consider runs whose end time, 
+    // when placed on the batch start’s date, falls between the batch start and 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
       
-      // Compute batch start from the first run’s start time.
+      // Use the first run's start time (from props) to set the batch start.
       const batchStartParsed = parseTimeString(props.runs[0].startTime);
       if (!batchStartParsed) return -1;
       let batchStart = new Date();
       batchStart.setHours(batchStartParsed.hour, batchStartParsed.minute, batchStartParsed.second, 0);
       
-      // Define cutoff as 4:00 PM on the same day.
+      // Define the cutoff as 4:00 PM on the same day.
       let cutoff = new Date(batchStart);
       cutoff.setHours(16, 0, 0, 0);
       
@@ -300,17 +299,12 @@ export default {
         if (!run.endTime) return;
         const endParsed = parseTimeString(run.endTime);
         if (!endParsed) return;
-        
-        // Construct candidateDate using the batch start's date.
+        // Construct the run's end time anchored to the batch start's date.
         let candidateDate = new Date(batchStart);
         candidateDate.setHours(endParsed.hour, endParsed.minute, endParsed.second, 0);
-        
-        // If the candidateDate is before the batch start (i.e. would be next day), skip it.
-        if (candidateDate < batchStart) return;
-        // Also skip if it falls after the cutoff.
-        if (candidateDate > cutoff) return;
-        
-        // Update candidate if this candidateDate is later than our current candidateTime.
+        // Skip if this time is before the batch start (i.e. on the next day) or after 4:00 PM.
+        if (candidateDate < batchStart || candidateDate > cutoff) return;
+        // Choose the latest candidate within the allowed window.
         if (!candidateTime || candidateDate > candidateTime) {
           candidateTime = candidateDate;
           candidateIndex = idx;
@@ -338,17 +332,9 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // 12. Determine if the batch end time is at or after 4:00 PM.
+    // 12. Instead of basing highlighting on batch end time, we now highlight if we found a candidate.
     const shouldHighlightCandidate = computed(() => {
-      if (!initialBaseRuns.value || initialBaseRuns.value.length === 0) return false;
-      const lastRunStr = initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
-      const parsed = parseTimeString(lastRunStr);
-      if (!parsed) return false;
-      let lastRunDate = new Date();
-      lastRunDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
-      const cutoff = new Date();
-      cutoff.setHours(16, 0, 0, 0);
-      return lastRunDate >= cutoff;
+      return runtableClosestCandidateIndex.value !== -1;
     });
 
     // 13. Compute the last main run number (initial + sequential).
@@ -581,6 +567,7 @@ export default {
       waitRow,
       initialBaseRuns,
       sequentialBaseRuns,
+      // Expose candidate index directly for template binding.
       runtableClosestCandidateIndex,
       selectedCandidate,
       selectedPositionLabel,
