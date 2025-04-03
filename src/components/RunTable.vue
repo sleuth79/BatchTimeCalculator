@@ -295,7 +295,8 @@ export default {
         if (!run.endTime) return;
         const parsed = parseTimeString(run.endTime);
         if (!parsed) return;
-        const candidateDate = new Date(
+        // Construct candidateDate from the run's end time using refDate's date.
+        let candidateDate = new Date(
           refDate.getFullYear(),
           refDate.getMonth(),
           refDate.getDate(),
@@ -304,7 +305,11 @@ export default {
           parsed.second,
           0
         );
-        if (candidateDate < refDate) return;
+        // If candidateDate's hour is less than the first run's hour, it likely indicates a rollover past midnight.
+        if (candidateDate.getHours() < firstRunParsed.hour) {
+          return; // Ignore runs that pass midnight.
+        }
+        // Check if the candidate is on or before 4:00 PM.
         if (candidateDate <= cutoff) {
           if (!candidateTime || candidateDate > candidateTime) {
             candidateTime = candidateDate;
