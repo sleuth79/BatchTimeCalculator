@@ -314,9 +314,7 @@ export default {
       candidateDisplayLabel,
       batchPasses4PM,
       displayBatchDuration,
-      // New computed time gap for 7:30 AM
       computedTimeGapTo730AM,
-      // New cleaned candidate string
       cleanedRuntableClosestPosition
     };
   }
@@ -328,9 +326,9 @@ export default {
   padding: 0;
 }
 
-/* Apply the same spacing as in the TimeDelayResult code */
+/* Set 12px vertical spacing for all paragraphs */
 .start-time-results p {
-  margin: 0 0 5px 0;
+  margin: 12px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
@@ -350,13 +348,13 @@ export default {
 hr {
   border: none;
   border-top: 1px solid #ccc;
-  margin: 10px 0;
+  margin: 12px 0;
   padding: 0;
 }
 
-/* Remove any extra adjustments for the time gap heading */
+/* Ensure the time gap heading uses the same spacing */
 .time-gap-heading {
-  margin: 0 0 5px 0;
+  margin: 12px 0;
 }
 
 .highlight-orange {
