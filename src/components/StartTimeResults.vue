@@ -267,10 +267,15 @@ export default {
     });
     // --- End new time gap calculation ---
 
-    // --- New: Clean the candidate string to remove the word "Position" ---
+    // --- New: Clean the candidate string to remove the word "Position" and change the separator ---
     const cleanedRuntableClosestPosition = computed(() => {
-      const candidate = props.runtableClosestPositionFull || "";
-      return candidate.startsWith("Position ") ? candidate.substring("Position ".length) : candidate;
+      let candidate = props.runtableClosestPositionFull || "";
+      if (candidate.startsWith("Position ")) {
+        candidate = candidate.substring("Position ".length);
+      }
+      // Replace the first occurrence of " : " with " | "
+      candidate = candidate.replace(/^(\d+)\s*:\s*/, "$1 | ");
+      return candidate;
     });
     // --- End candidate string cleanup ---
 
