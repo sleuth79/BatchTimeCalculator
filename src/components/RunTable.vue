@@ -1,9 +1,5 @@
 <template>
   <div class="run-table">
-    <!-- Closest Position Heading -->
-    <div class="closest-position-heading" v-if="runtableClosestCandidateIndex !== -1">
-      Closest Position Before 4:00 PM: {{ runtableClosestPositionFull }}
-    </div>
 
     <!-- Initial Batch Table -->
     <table v-if="initialPositionOrder.length">
