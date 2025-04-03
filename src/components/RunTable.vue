@@ -277,16 +277,17 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
-    // New approach: Only consider runs that fall on the same day as the batch start and end before 4:00 PM.
+    // New approach: Only consider runs that, when mapped to the batch start’s date,
+    // end between the batch start and 4:00 PM.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
-      const firstRunParsed = parseTimeString(props.runs[0].startTime);
-      if (!firstRunParsed) return -1;
       
-      // Define the batch start using the first run's time on today's date.
+      // Compute batch start from the first run’s start time.
+      const batchStartParsed = parseTimeString(props.runs[0].startTime);
+      if (!batchStartParsed) return -1;
       let batchStart = new Date();
-      batchStart.setHours(firstRunParsed.hour, firstRunParsed.minute, firstRunParsed.second, 0);
+      batchStart.setHours(batchStartParsed.hour, batchStartParsed.minute, batchStartParsed.second, 0);
       
       // Define cutoff as 4:00 PM on the same day.
       let cutoff = new Date(batchStart);
@@ -297,24 +298,25 @@ export default {
       
       base.forEach((run, idx) => {
         if (!run.endTime) return;
-        const parsed = parseTimeString(run.endTime);
-        if (!parsed) return;
+        const endParsed = parseTimeString(run.endTime);
+        if (!endParsed) return;
         
         // Construct candidateDate using the batch start's date.
         let candidateDate = new Date(batchStart);
-        candidateDate.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+        candidateDate.setHours(endParsed.hour, endParsed.minute, endParsed.second, 0);
         
-        // Skip if the candidate falls before the batch start (i.e. it's on the next day).
+        // If the candidateDate is before the batch start (i.e. would be next day), skip it.
         if (candidateDate < batchStart) return;
+        // Also skip if it falls after the cutoff.
+        if (candidateDate > cutoff) return;
         
-        // Only consider candidates that end before (or exactly at) 4:00 PM.
-        if (candidateDate <= cutoff) {
-          if (!candidateTime || candidateDate > candidateTime) {
-            candidateTime = candidateDate;
-            candidateIndex = idx;
-          }
+        // Update candidate if this candidateDate is later than our current candidateTime.
+        if (!candidateTime || candidateDate > candidateTime) {
+          candidateTime = candidateDate;
+          candidateIndex = idx;
         }
       });
+      
       return candidateIndex;
     });
 
@@ -362,7 +364,6 @@ export default {
       const isEnergy = (gcStore.allGcData[gcStore.selectedGc]?.type || "").trim().toLowerCase() === "energy";
       let rows = [];
       let baseTime;
-      // Use sequentialBaseRuns if available; otherwise, use the initial batch end time.
       if (sequentialBaseRuns.value && sequentialBaseRuns.value.length > 0) {
         const ref = new Date(`${new Date().toDateString()} ${initialBatchEndTime.value}`);
         baseTime = getDateFromTimeString(sequentialBaseRuns.value[0].startTime, ref);
@@ -590,7 +591,7 @@ export default {
       delayedRunSelected,
       lastMainRunNumber,
       initialBatchEndTime,
-      finalBatchEndTime, // for parent use if needed
+      finalBatchEndTime,
       delayedRunsStartTime,
       delayedRunsEndTime,
       shouldHighlightCandidate,
