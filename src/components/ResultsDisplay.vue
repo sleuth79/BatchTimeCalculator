@@ -7,8 +7,8 @@
         {{ currentTimeString }} ({{ currentDate }})
       </div>
     </div>
-    <!-- Always show Selected GC -->
-    <p>
+    <!-- Always show Selected GC with updated heading styling -->
+    <p class="selected-gc-heading">
       Selected GC:
       <span class="result-value">
         {{ formattedSelectedGc }}
@@ -154,17 +154,11 @@ export default {
 
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
-    // Reactive property to hold the initial batch end time computed from RunTable.
     const initialBatchEndTime = ref("");
-    // Reactive property to hold the overall batch duration computed from RunTable.
     const runTableInitialBatchDuration = ref("");
-    // Reactive property to hold the final (overall) batch end time from RunTable.
     const finalBatchEndTime = ref("");
-    // Reactive property to hold the delayed runs start time.
     const delayedRunsStartTime = ref("");
-    // Reactive property to hold the delayed runs end time.
     const delayedRunsEndTime = ref("");
-    // NEW: Reactive property to hold the sequential batch duration (including additional runs).
     const sequentialBatchDuration = ref("");
 
     return {
@@ -227,5 +221,18 @@ export default {
 /* Remove default margins for paragraph tags inside the results-display */
 .results-display p {
   margin: 0;
+}
+
+/* Update the Selected GC heading to match StartTimeResults headings (1rem) */
+.selected-gc-heading {
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #333;
+  margin: 7px 0;
+}
+
+.result-value {
+  font-weight: bold;
+  font-size: 1rem;
 }
 </style>
