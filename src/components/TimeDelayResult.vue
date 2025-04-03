@@ -35,12 +35,12 @@
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
       </div>
-      <!-- Display time gap if additional runs exist and no delayed runs -->
-      <div v-if="timeDelayData.timeGapTo730AM && !hasDelayedRuns">
+      <!-- Calculate and display the time gap from the additional runs end time to 7:30 AM -->
+      <div v-if="!hasDelayedRuns">
         <hr class="time-gap-hr" />
         <p>
           Time Gap to 7:30 AM:
-          <strong>{{ timeDelayData.timeGapTo730AM }}</strong>
+          <strong>{{ additionalRunsGapTo730AM }}</strong>
         </p>
       </div>
     </div>
@@ -100,7 +100,7 @@ export default {
       type: String,
       default: ''
     },
-    // NEW: Accept the sequential batch duration computed in RunTable.
+    // Accept the sequential batch duration computed in RunTable.
     sequentialBatchDuration: {
       type: String,
       default: ''
@@ -212,25 +212,28 @@ export default {
       return runEndDate.toLocaleDateString();
     });
 
-    // Check if the end time is after 7:30 AM. Use finalTimeString.
-    const batchEndTimeAfter730 = computed(() => {
-      const timeString = finalTimeString.value;
-      if (!timeString) return false;
-      const parts = timeString.split(" ");
-      if (parts.length < 2) return false;
-      const timePart = parts[0];
-      const ampm = parts[1];
-      const timeParts = timePart.split(":");
-      if (timeParts.length < 2) return false;
-      let hour = parseInt(timeParts[0], 10);
-      const minute = parseInt(timeParts[1], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
+    // Combine the final time string with its computed date to create a Date object.
+    const additionalRunsEndDateTime = computed(() => {
+      if (!finalTimeString.value || !additionalRunsEndDate.value) return null;
+      // Construct a date string (assumes the additionalRunsEndDate is in a format parseable by Date)
+      return new Date(`${additionalRunsEndDate.value} ${finalTimeString.value}`);
+    });
+
+    // Compute the time gap from additional runs end time to 7:30 AM.
+    const additionalRunsGapTo730AM = computed(() => {
+      const endDT = additionalRunsEndDateTime.value;
+      if (!endDT) return '';
+      // Set target to 7:30 AM on the same day as the additional runs end time.
+      let target = new Date(endDT);
+      target.setHours(7, 30, 0, 0);
+      // If the additional runs end time is after 7:30 AM, then target is the next day.
+      if (endDT > target) {
+        target.setDate(target.getDate() + 1);
       }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      return hour > 7 || (hour === 7 && minute >= 30);
+      const diffMS = target - endDT;
+      const diffHours = Math.floor(diffMS / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMS % (1000 * 60 * 60)) / (1000 * 60));
+      return `${diffHours} hours, ${diffMinutes} minutes`;
     });
 
     const formattedTimeDelayRequired = computed(() => {
@@ -269,15 +272,13 @@ export default {
       totalAdditionalRuns,
       additionalRunsDurationFormatted,
       hasDelayedRuns,
-      batchEndTimeAfter730,
       additionalRunsEndDate,
       formattedTimeDelayRequired,
       finalBatchEndTimeToDisplay,
-      // Expose the delayed runs times as computed properties.
       computedDelayedRunsStartTime,
       computedDelayedRunsEndTime,
-      // Expose the new sequentialBatchDuration prop (passed from parent)
-      sequentialBatchDuration: computed(() => props.sequentialBatchDuration)
+      sequentialBatchDuration: computed(() => props.sequentialBatchDuration),
+      additionalRunsGapTo730AM
     };
   },
 };
