@@ -519,7 +519,7 @@ export default {
     // NEW: Compute the delayed runs start time (from the first delayed run row).
     const delayedRunsStartTime = computed(() => {
       if (prebatchRows.value && prebatchRows.value.length > 0) {
-        return prebatchRows.value[prebatchRows.value.length - 1].endTime;
+        return prebatchRows.value[0].startTime;
       }
       return "";
     });
