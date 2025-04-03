@@ -45,9 +45,11 @@
       </span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
-    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <hr class="time-gap-hr" />
-      <p>
+      <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
       </p>
@@ -326,11 +328,15 @@ hr {
   margin: 10px 0;
   padding: 0;
 }
-/* Updated .time-gap-hr to match the TimeDelayResult component */
+/* Updated .time-gap-hr with reduced bottom margin */
 .time-gap-hr {
   border-top: 1px solid #ccc;
   margin-top: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+}
+/* New class to move the time gap heading up */
+.time-gap-heading {
+  margin-top: -5px;
 }
 .highlight-orange {
   color: orange;
