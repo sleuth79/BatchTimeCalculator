@@ -23,10 +23,7 @@
     <!-- Batch End Time now uses the new prop if available -->
     <p v-if="showDetailedResults && displayBatchEndTime">
       Batch End Time:
-      <span
-        class="result-value"
-        :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }"
-      >
+      <span class="result-value" :class="{ 'highlight-orange': initialBatchEndTimeAfter730 }">
         {{ displayBatchEndTime }}
       </span>
     </p>
@@ -330,34 +327,34 @@ export default {
 .start-time-results {
   padding: 0;
 }
+
+/* Set consistent margins for all paragraph headings */
 .start-time-results p {
-  margin-bottom: 0;
+  margin: 10px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
+
 .result-value {
   font-weight: bold;
   font-size: 1rem;
 }
+
 .result-date {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
 }
+
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 10px 0;
   padding: 0;
 }
-/* The separator is commented out in the template */
-/* .time-gap-hr {
-  border-top: 1px solid #ccc;
-  margin-top: 10px;
-  margin-bottom: 5px;
-} */
-/* Adjust spacing between the closest position and time gap headings */
+
+/* Adjust spacing for the time gap heading if needed */
 .time-gap-heading {
   margin-top: 10px;
 }
