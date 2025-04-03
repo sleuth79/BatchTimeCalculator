@@ -30,8 +30,10 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display candidate heading only if batch passes 4:00 PM -->
-    <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
+    <!-- Display candidate heading if detailed results are shown,
+         final position is set, and either the batch passes 4:00 PM
+         OR a candidate was computed (even if batch end time is formatted as AM) -->
+    <p v-if="showDetailedResults && displayFinalPosition && (batchPasses4PM || runtableClosestPositionFull)">
       {{ candidateDisplayLabel }}
       <span class="result-value">
         <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
@@ -203,6 +205,7 @@ export default {
     });
 
     // New computed property to determine if the batch passes 4:00 PM.
+    // (This is based on the displayed batch end time, which for batches crossing midnight may not reflect a true 4:00 PM cutoff.)
     const batchPasses4PM = computed(() => {
       const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
       if (!batchTime) return false;
@@ -224,14 +227,13 @@ export default {
     });
 
     // Computed property to decide which candidate label to show.
+    // If a valid candidate (i.e. runtableClosestPositionFull is not "No candidate found") exists,
+    // we display "Closest Position Before 4:00 PM:"; otherwise, "This Batch Ends At:".
     const candidateDisplayLabel = computed(() => {
-      if (
-        props.runtableClosestPositionFull &&
-        props.runtableClosestPositionFull.startsWith("No candidate found")
-      ) {
-        return "This Batch Ends At:";
+      if (props.runtableClosestPositionFull && props.runtableClosestPositionFull !== "No candidate found") {
+        return "Closest Position Before 4:00 PM:";
       }
-      return "Closest Position Before 4:00 PM:";
+      return "This Batch Ends At:";
     });
 
     // NEW: Computed property to display the batch duration.
