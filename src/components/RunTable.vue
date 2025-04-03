@@ -277,6 +277,7 @@ export default {
     const hasSequentialBatch = computed(() => !!gcStore.sequentialFinalPosition);
 
     // 10. Compute index of candidate (for initial batch) closest to 4:00 PM.
+    // Updated logic uses getDateFromTimeString so that runs past midnight get the correct day.
     const runtableClosestCandidateIndex = computed(() => {
       const base = initialBaseRuns.value;
       if (!base || base.length === 0) return -1;
@@ -287,29 +288,15 @@ export default {
       if (new Date() < refDate) {
         refDate.setDate(refDate.getDate() - 1);
       }
+      // Set the cutoff to 4:00 PM of the batch start day.
       const cutoff = new Date(refDate);
       cutoff.setHours(16, 0, 0, 0);
       let candidateIndex = -1;
       let candidateTime = null;
       base.forEach((run, idx) => {
         if (!run.endTime) return;
-        const parsed = parseTimeString(run.endTime);
-        if (!parsed) return;
-        // Construct candidateDate from the run's end time using refDate's date.
-        let candidateDate = new Date(
-          refDate.getFullYear(),
-          refDate.getMonth(),
-          refDate.getDate(),
-          parsed.hour,
-          parsed.minute,
-          parsed.second,
-          0
-        );
-        // If candidateDate's hour is less than the first run's hour, it likely indicates a rollover past midnight.
-        if (candidateDate.getHours() < firstRunParsed.hour) {
-          return; // Ignore runs that pass midnight.
-        }
-        // Check if the candidate is on or before 4:00 PM.
+        // Use getDateFromTimeString to get the actual Date for the run’s end time.
+        const candidateDate = getDateFromTimeString(run.endTime, refDate);
         if (candidateDate <= cutoff) {
           if (!candidateTime || candidateDate > candidateTime) {
             candidateTime = candidateDate;
