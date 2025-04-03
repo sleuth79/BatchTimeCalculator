@@ -331,7 +331,7 @@ hr {
 /* Updated .time-gap-hr with reduced bottom margin */
 .time-gap-hr {
   border-top: 1px solid #ccc;
-  margin-top: 10px;
+  margin-top: 16px;
   margin-bottom: 5px;
 }
 /* New class to move the time gap heading up */
