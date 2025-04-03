@@ -9,15 +9,17 @@
       
       <!-- Input Row -->
       <div class="input-row">
-        <!-- Batch Start Time Input using vue3-timepicker -->
+        <!-- Batch Start Time Input using text input -->
         <div class="batch-time-input">
-          <Timepicker
-            v-model="localBatchStartTime"
-            format="HH:mm"
-            :minute-interval="1"
+          <input
+            type="text"
             id="batch-start-time"
-            placeholder="Enter time"
+            v-model="localBatchStartTime"
+            placeholder="hh:mm"
+            @input="formatTimeInput"
+            @blur="validateTimeInput"
           />
+          <span class="time-input-note">Enter 24 Hour Time</span>
         </div>
         <!-- Controls Inputs -->
         <div class="controls-inputs">
@@ -25,11 +27,9 @@
             <input
               type="number"
               id="control1"
-              ref="control1Input"
               v-model.number="localControl1"
               :min="control1Range.min"
               :max="control1Range.max"
-              @keydown="handleControlKeydown('control1', $event)"
               @input="debouncedValidateControl1"
               class="control-input"
             />
@@ -38,11 +38,9 @@
             <input
               type="number"
               id="control2"
-              ref="control2Input"
               v-model.number="localControl2"
               :min="control2Range.min"
               :max="control2Range.max"
-              @keydown="handleControlKeydown('control2', $event)"
               @input="debouncedValidateControl2"
               class="control-input"
             />
@@ -78,9 +76,6 @@
 import { computed, ref, watch } from "vue";
 import { useGcStore } from "../store";
 import PositionSelector from "./PositionSelector.vue";
-// Import the vue3-timepicker and its styles.
-import Timepicker from "vue3-timepicker";
-import "vue3-timepicker/dist/VueTimepicker.css";
 
 // Simple debounce utility function.
 function debounce(fn, delay = 300) {
@@ -95,7 +90,7 @@ function debounce(fn, delay = 300) {
 
 export default {
   name: "StartTimeInput",
-  components: { PositionSelector, Timepicker },
+  components: { PositionSelector },
   props: {
     disabledPositions: {
       type: Array,
@@ -109,7 +104,7 @@ export default {
 
     const isLoading = computed(() => gcStore.isLoading);
 
-    // Batch Start Time binding (stored as "HH:mm").
+    // Batch Start Time binding (24‑hour format only)
     const localBatchStartTime = computed({
       get() {
         return gcStore.startTime.batchStartTime || "";
@@ -119,7 +114,7 @@ export default {
       },
     });
 
-    // Wait toggle binding.
+    // Wait toggle binding
     const localWait15 = computed({
       get() {
         return gcStore.startTime.wait15;
@@ -141,10 +136,12 @@ export default {
 
     // Final Position binding: local ref synced with store.
     const finalPosition = ref(gcStore.startTime.finalPosition);
+    // Update store when local finalPosition changes.
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
       recalculateResults();
     });
+    // Watch store and update local finalPosition when it resets.
     watch(
       () => gcStore.startTime.finalPosition,
       (newVal) => {
@@ -171,6 +168,7 @@ export default {
       timeInputError.value = "";
     });
     
+    // When local control values change, recalculate the results.
     const localControl1 = ref(gcStore.startTime.controls?.control1 ?? "");
     const localControl2 = ref(gcStore.startTime.controls?.control2 ?? "");
     watch(
@@ -178,6 +176,61 @@ export default {
       () => {
         recalculateResults();
       }
+    );
+
+    // Format and validate the time input.
+    const formatTimeInput = () => {
+      let value = localBatchStartTime.value.replace(/\D/g, "");
+      if (value.length > 2) {
+        value = value.slice(0, 2) + ":" + value.slice(2, 4);
+      }
+      localBatchStartTime.value = value.slice(0, 5);
+      timeInputError.value = "";
+      if (localBatchStartTime.value.length >= 5) {
+        validateTimeInput();
+      }
+    };
+
+    const validateTimeInput = () => {
+      const timeString = localBatchStartTime.value;
+      const parts = timeString.split(":");
+      if (parts.length !== 2) {
+        timeInputError.value =
+          "Invalid format. Enter time as hh:mm, with a 0 in front, such as 09:30.";
+        return;
+      }
+      const [hour, minute] = parts.map(Number);
+      if (
+        isNaN(hour) ||
+        isNaN(minute) ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59
+      ) {
+        localBatchStartTime.value = "";
+        timeInputError.value =
+          "Invalid time. Enter time as hh:mm, with a 0 in front, such as 09:30.";
+      }
+    };
+
+    const recalculateResults = () => {
+      gcStore.calculateStartTimeBatch();
+    };
+
+    const setWait15 = (val) => {
+      localWait15.value = val;
+      recalculateResults();
+    };
+
+    // Local Control Inputs & Dynamic Allowed Ranges
+    watch(
+      () => gcStore.startTime.controls,
+      (newControls) => {
+        localControl1.value = newControls?.control1 ?? "";
+        localControl2.value = newControls?.control2 ?? "";
+      },
+      { deep: true }
     );
 
     const control1Range = computed(() => {
@@ -244,37 +297,19 @@ export default {
       };
     };
 
+    // Create debounced versions of the validation functions.
     const debouncedValidateControl1 = debounce(validateControl1, 300);
     const debouncedValidateControl2 = debounce(validateControl2, 300);
 
+    // Expose the parent's disabledPositions prop via computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
-
-    const handleControlKeydown = (field, event) => {
-      if (event.key === "0") {
-        if (field === "control1" && localControl1.value === "") {
-          event.preventDefault();
-        } else if (field === "control2" && localControl2.value === "") {
-          event.preventDefault();
-        }
-      }
-    };
-
-    // Create refs for the control input elements.
-    const control1InputRef = ref(null);
-    const control2InputRef = ref(null);
-
-    const recalculateResults = () => {
-      gcStore.calculateStartTimeBatch();
-    };
-
-    const setWait15 = (val) => {
-      localWait15.value = val;
-      recalculateResults();
-    };
 
     return {
       isLoading,
       localBatchStartTime,
+      formatTimeInput,
+      validateTimeInput,
+      timeInputError,
       localWait15,
       setWait15,
       finalPosition,
@@ -291,9 +326,6 @@ export default {
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
-      handleControlKeydown,
-      control1Input: control1InputRef,
-      control2Input: control2InputRef,
     };
   },
 };
@@ -306,6 +338,7 @@ export default {
   margin-bottom: -2px;
 }
 
+/* Header label styling */
 .heading-batch,
 .heading-controls {
   flex: 1;
@@ -326,15 +359,19 @@ export default {
   align-items: center;
 }
 
-.batch-time-input input,
-.batch-time-input .vue3-timepicker {
+.batch-time-input input {
   width: 75px;
   height: 36px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
-/* Removed .time-input-note styling and mark styling */
+.time-input-note {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  color: #181818;
+  font-weight: bold;
+}
 
 .controls-inputs {
   flex: 1;
@@ -392,19 +429,4 @@ export default {
 label {
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.12);
 }
-.vue3-timepicker input {
-  text-align: center !important;
-}
-/* Override the input element inside the timepicker */
-::v-deep .vue3-timepicker input {
-  background-color: var(--highlight-color) !important;
-  color: var(--text-highlight) !important;
-}
-
-/* In a global stylesheet or using ::v-deep in scoped CSS */
-::v-deep .vue3-timepicker .timepicker-option--selected {
-  background-color: var(--highlight-color) !important;
-  color: var(--text-highlight) !important;
-}
-
 </style>
