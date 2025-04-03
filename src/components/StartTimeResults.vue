@@ -15,7 +15,7 @@
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
     </p>
-    <!-- New: Display the computed batch duration (Batch Run Time) -->
+    <!-- New: Display the computed batch duration (Batch Run Time) without seconds -->
     <p v-if="showDetailedResults && displayBatchDuration">
       Batch Run Time:
       <span class="result-value">{{ displayBatchDuration }}</span>
@@ -45,10 +45,8 @@
       </span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
-    <div
-      v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
-    >
-      <hr class="time-gap-hr" />
+    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
+      <!-- <hr class="time-gap-hr" /> -->
       <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
@@ -98,7 +96,27 @@ export default {
     const gcStore = useGcStore();
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    const displayBatchStartTime = computed(() => {
+    // Helper function: Remove seconds from a time string formatted as "HH:MM:SS AM/PM"
+    function removeSeconds(timeStr) {
+      if (!timeStr) return "";
+      // Regex to capture hours and minutes and ignore seconds if present
+      const regex = /^(\d{1,2}:\d{2})(?::\d{2})?\s*(AM|PM)$/i;
+      const match = timeStr.match(regex);
+      if (match) {
+        return `${match[1]} ${match[2].toUpperCase()}`;
+      }
+      return timeStr;
+    }
+
+    // Helper function: Remove seconds from a duration string formatted like "10h 43m 6s"
+    function removeDurationSeconds(durationStr) {
+      if (!durationStr) return "";
+      // Remove the seconds part if it appears at the end
+      return durationStr.replace(/\s+\d+s$/, "");
+    }
+
+    // First, get the raw batch start time from props.
+    const rawBatchStartTime = computed(() => {
       return (
         props.results.batchStartTime ||
         props.results.startTime ||
@@ -106,6 +124,10 @@ export default {
         props.startTime.startTime ||
         ""
       );
+    });
+    // Now remove seconds from the batch start time.
+    const displayBatchStartTime = computed(() => {
+      return removeSeconds(rawBatchStartTime.value);
     });
 
     // Relaxed regex to allow optional seconds and AM/PM.
@@ -135,7 +157,7 @@ export default {
       return `${ctrl1Str} | ${ctrl2}`;
     });
 
-    // Use the new prop if available; otherwise fallback to original logic.
+    // Use the new prop if available; otherwise fallback to original logic for batch end time.
     const displayBatchEndTime = computed(() => {
       if (props.initialBatchEndTime) return props.initialBatchEndTime;
       if (!props.results.batchEndTime) return "";
@@ -145,11 +167,11 @@ export default {
         return `${batchEndStr} (${currentDate.value})`;
       }
       const startParts = startStr.split(":");
-      if (startParts.length < 3)
+      if (startParts.length < 2)
         return `${batchEndStr} (${currentDate.value})`;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
-      const startSecond = parseInt(startParts[2], 10);
+      const startSecond = startParts[2] ? parseInt(startParts[2], 10) : 0;
       const today = new Date();
       const startDate = new Date(
         today.getFullYear(),
@@ -179,10 +201,10 @@ export default {
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
       const startParts = startStr.split(":");
-      if (startParts.length < 3) return false;
+      if (startParts.length < 2) return false;
       const startHour = parseInt(startParts[0], 10);
       const startMinute = parseInt(startParts[1], 10);
-      const startSecond = parseInt(startParts[2], 10);
+      const startSecond = startParts[2] ? parseInt(startParts[2], 10) : 0;
       const today = new Date();
       const startDate = new Date(
         today.getFullYear(),
@@ -234,9 +256,10 @@ export default {
       return "This Batch Ends At:";
     });
 
-    // NEW: Computed property to display the batch duration.
+    // NEW: Computed property to display the batch duration without seconds.
     const displayBatchDuration = computed(() => {
-      return props.results.batchDuration || "";
+      const rawDuration = props.results.batchDuration || "";
+      return removeDurationSeconds(rawDuration);
     });
 
     // --- New: Compute time gap from batch end time to 7:30 AM ---
@@ -328,15 +351,15 @@ hr {
   margin: 10px 0;
   padding: 0;
 }
-/* Updated .time-gap-hr with reduced bottom margin */
-.time-gap-hr {
+/* The separator is commented out in the template */
+/* .time-gap-hr {
   border-top: 1px solid #ccc;
-  margin-top: 16px;
+  margin-top: 10px;
   margin-bottom: 5px;
-}
-/* New class to move the time gap heading up */
+} */
+/* Align the time gap heading with other headings */
 .time-gap-heading {
-  margin-top: -5px;
+  margin-top: 0;
 }
 .highlight-orange {
   color: orange;
