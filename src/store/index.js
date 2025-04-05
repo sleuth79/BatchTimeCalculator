@@ -1,4 +1,5 @@
 import { createPinia, defineStore } from 'pinia';
+import { nextTick } from 'vue';
 import { calculateStartTimeBatch as calculateStartTimeBatchUtil } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
@@ -159,15 +160,15 @@ export const useGcStore = defineStore('gc', {
     },
     setControl1(value) {
       this.startTime.controls.control1 = value;
-      setTimeout(() => {
+      nextTick(() => {
         this.calculateStartTimeBatch();
-      }, 0);
+      });
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
-      setTimeout(() => {
+      nextTick(() => {
         this.calculateStartTimeBatch();
-      }, 0);
+      });
     },
     calculateStartTimeBatch() {
       if (!this.startTime.batchStartTime) {
