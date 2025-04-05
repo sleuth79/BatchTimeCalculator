@@ -1,6 +1,5 @@
 <template>
   <div class="run-table">
-
     <!-- Initial Batch Table -->
     <table v-if="initialPositionOrder.length">
       <thead>
@@ -21,7 +20,7 @@
         <tr
           v-for="(title, idx) in initialPositionOrder"
           :key="'initial-' + idx"
-          :class="{ highlight: runtableClosestCandidateIndex === idx }"
+          :class="{ highlight: highlightCandidate && runtableClosestCandidateIndex === idx }"
         >
           <td>{{ title }}</td>
           <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
@@ -303,7 +302,7 @@ export default {
         // Construct the run's end time anchored to the batch start's date.
         let candidateDate = new Date(batchStart);
         candidateDate.setHours(endParsed.hour, endParsed.minute, endParsed.second, 0);
-        // Skip if this time is before the batch start (i.e. belongs to the next day) or after 4:00 PM.
+        // Skip if this time is before the batch start or after 4:00 PM.
         if (candidateDate < batchStart || candidateDate > cutoff) return;
         // Choose the latest candidate within the allowed window.
         if (!candidateTime || candidateDate > candidateTime) {
@@ -333,17 +332,37 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // 12. Highlight candidate if one is found.
-    const shouldHighlightCandidate = computed(() => {
-      return runtableClosestCandidateIndex.value !== -1;
+    // NEW: Compute the overall batch end time (using the last run's endTime).
+    const computedBatchEndTime = computed(() => {
+      if (!props.runs.length) return null;
+      const lastRun = props.runs[props.runs.length - 1];
+      const parsed = parseTimeString(lastRun.endTime);
+      if (!parsed) return null;
+      const batchStartParsed = parseTimeString(props.runs[0].startTime);
+      if (!batchStartParsed) return null;
+      let batchStart = new Date();
+      batchStart.setHours(batchStartParsed.hour, batchStartParsed.minute, batchStartParsed.second, 0);
+      let batchEnd = new Date(batchStart);
+      batchEnd.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+      return batchEnd;
     });
 
-    // 13. Compute the last main run number (initial + sequential).
+    // NEW: Compute a flag to decide whether to highlight the candidate.
+    // Only highlight if the overall batch end time equals exactly 4:00 PM.
+    const highlightCandidate = computed(() => {
+      const batchEnd = computedBatchEndTime.value;
+      if (!batchEnd) return false;
+      let cutoff = new Date(batchEnd);
+      cutoff.setHours(16, 0, 0, 0);
+      return batchEnd.getTime() === cutoff.getTime();
+    });
+
+    // 12. Compute the last main run number (initial + sequential).
     const lastMainRunNumber = computed(() => {
       return initialPositionOrder.value.length + sequentialRows.value.length;
     });
 
-    // 14. Generate sequential batch rows.
+    // 13. Generate sequential batch rows.
     const sequentialRows = computed(() => {
       if (!gcStore.sequentialFinalPosition) return [];
       const runtime = Math.round(parseRunTime(gcStore.allGcData[gcStore.selectedGc].runTime));
@@ -394,7 +413,7 @@ export default {
       return rows;
     });
 
-    // 15. Additional Runs computed from timeDelayResults.additionalRuns.
+    // 14. Additional Runs computed from timeDelayResults.additionalRuns.
     const additionalRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const additionalCount = timeDelayResults && timeDelayResults.additionalRuns ? timeDelayResults.additionalRuns : 0;
@@ -429,7 +448,7 @@ export default {
       return rows;
     });
 
-    // 16. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
+    // 15. Delayed Runs computed from timeDelayResults.totalDelayedRuns.
     const prebatchRows = computed(() => {
       const { startTime, allGcData, selectedGc, timeDelayResults } = gcStore;
       const prebatchCount = timeDelayResults && timeDelayResults.totalDelayedRuns ? timeDelayResults.totalDelayedRuns : 0;
@@ -471,14 +490,14 @@ export default {
       return rows;
     });
 
-    // 17. Computed for the delay time string.
+    // 16. Computed for the delay time string.
     const timeDelayRequired = computed(() => {
       const { timeDelayResults } = gcStore;
       const val = timeDelayResults && timeDelayResults.timeDelayRequired ? timeDelayResults.timeDelayRequired : "";
       return val;
     });
 
-    // 18. Flag to indicate if delayed runs should be shown.
+    // 17. Flag to indicate if delayed runs should be shown.
     const delayedRunSelected = computed(() => {
       const { timeDelayResults } = gcStore;
       return (
@@ -488,7 +507,7 @@ export default {
       );
     });
 
-    // 19. Compute the end time of the last run in the initial batch.
+    // 18. Compute the end time of the last run in the initial batch.
     const initialBatchEndTime = computed(() => {
       if (initialBaseRuns.value && initialBaseRuns.value.length) {
         return initialBaseRuns.value[initialBaseRuns.value.length - 1].endTime;
@@ -502,7 +521,7 @@ export default {
       emit("update:runtableClosestPositionFull", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the final batch end time which includes sequential and additional runs.
+    // 19. Compute the final batch end time which includes sequential and additional runs.
     const finalBatchEndTime = computed(() => {
       if (additionalRows.value && additionalRows.value.length) {
         return additionalRows.value[additionalRows.value.length - 1].endTime;
@@ -516,7 +535,7 @@ export default {
       emit("update:finalBatchEndTime", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the delayed runs start time (from the first delayed run row).
+    // 20. Compute the delayed runs start time (from the first delayed run row).
     const delayedRunsStartTime = computed(() => {
       if (prebatchRows.value && prebatchRows.value.length > 0) {
         return prebatchRows.value[0].startTime;
@@ -527,7 +546,7 @@ export default {
       emit("update:delayedRunsStartTime", newVal);
     }, { immediate: true });
 
-    // NEW: Compute the delayed runs end time (from the last delayed run row).
+    // 21. Compute the delayed runs end time (from the last delayed run row).
     const delayedRunsEndTime = computed(() => {
       if (prebatchRows.value && prebatchRows.value.length > 0) {
         return prebatchRows.value[prebatchRows.value.length - 1].endTime;
@@ -538,9 +557,7 @@ export default {
       emit("update:delayedRunsEndTime", newVal);
     }, { immediate: true });
 
-    // NEW: Compute sequential batch duration including additional runs.
-    // Uses the start of the sequential rows (or initial batch end if sequentialRows is empty)
-    // and the final end time (which already factors in additional runs).
+    // 22. Compute sequential batch duration including additional runs.
     const sequentialBatchDuration = computed(() => {
       if (!hasSequentialBatch.value) return "";
       let sequentialStartTime = "";
@@ -561,12 +578,11 @@ export default {
       const durationMs = endMs - startMs;
       return formatDuration(durationMs);
     });
-    // IMPORTANT: Emit the sequential batch duration with the correct event name for v-model.
     watch(sequentialBatchDuration, (newVal) => {
       emit("update:sequentialBatchDuration", newVal);
     }, { immediate: true });
 
-    // 20. Compute overall batch duration (for the initial batch only).
+    // 23. Compute overall batch duration (for the initial batch only).
     const runTableTotalDuration = computed(() => {
       if (!props.runs.length) return "";
       const firstRun = props.runs[0];
@@ -609,7 +625,8 @@ export default {
       finalBatchEndTime,
       delayedRunsStartTime,
       delayedRunsEndTime,
-      shouldHighlightCandidate,
+      // Use the new computed property to conditionally apply highlighting.
+      highlightCandidate,
       runTableTotalDuration,
       sequentialBatchDuration
     };
