@@ -49,11 +49,13 @@
     </template>
     
     <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model properties so that any changes in RunTable are passed upward. -->
+         Bind the new v-model properties so that any changes in RunTable are passed upward.
+         We add a key so that the run table will re-render when the runs change. -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
       <RunTable
+        :key="runDataKey"
         :runs="runData"
         v-model:selectedPositionLabel="selectedPositionLabel"
         v-model:runtableClosestPositionFull="runtableClosestPositionFull"
@@ -143,7 +145,6 @@ export default {
     );
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // Run table reactive properties
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
     const initialBatchEndTime = ref("");
@@ -174,6 +175,9 @@ export default {
       return base;
     });
 
+    // Create a key for the RunTable that updates when the runs array changes.
+    const runDataKey = computed(() => JSON.stringify(results.value.runs || []));
+
     return {
       gcStore,
       selectedGcData,
@@ -200,6 +204,7 @@ export default {
       delayedRunsEndTime,
       sequentialBatchDuration,
       mergedResults,
+      runDataKey,
     };
   },
 };
