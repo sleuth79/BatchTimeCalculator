@@ -127,15 +127,15 @@ export const useGcStore = defineStore('gc', {
       console.log("setSequentialFinalPosition called with position:", position);
       this.sequentialFinalPosition = this.sequentialFinalPosition === position ? null : position;
       console.log("Final sequential batch position updated to:", this.sequentialFinalPosition);
-      this.calculateStartTimeBatch();
+      this.performCalculation();
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
-      this.calculateStartTimeBatch();
+      this.performCalculation();
     },
     setBatchStartTimeAMPM(ampm) {
       this.startTime.batchStartTimeAMPM = ampm;
-      this.calculateStartTimeBatch();
+      this.performCalculation();
     },
     setWait15(value) {
       this.startTime.wait15 = value;
@@ -149,7 +149,7 @@ export const useGcStore = defineStore('gc', {
         this.startTime.controls.control2 !== null &&
         this.startTime.controls.control2 !== ""
       ) {
-        this.calculateStartTimeBatch();
+        this.performCalculation();
       } else {
         this.results = {
           mode: "start-time",
@@ -160,16 +160,16 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       setTimeout(() => {
-        this.calculateStartTimeBatch();
+        this.performCalculation();
       }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
       setTimeout(() => {
-        this.calculateStartTimeBatch();
+        this.performCalculation();
       }, 0);
     },
-    calculateStartTimeBatch() {
+    performCalculation() {
       if (!this.startTime.batchStartTime) {
         this.results = { mode: "start-time" };
         return;

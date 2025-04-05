@@ -1,6 +1,5 @@
 <template>
-  <!-- Add a dynamic class "no-dropshadow" when a GC is selected -->
-  <div class="start-time-input" :class="{ 'no-dropshadow': selectedGc }">
+  <div class="start-time-input">
     <div v-if="!isLoading">
       <!-- Header Row -->
       <div class="heading-row">
@@ -57,7 +56,7 @@
         </div>
       </div>
       <div class="input-group">
-        <label for="position-selector">Final Position:</label>
+        <label for="position-selector">Final Sample Position:</label>
         <position-selector
           id="position-selector"
           :allowed-positions="allowedFinalPositions"
@@ -309,9 +308,6 @@ export default {
     // Expose the parent's disabledPositions prop via computed for reactivity.
     const disabledPositionsComputed = computed(() => props.disabledPositions);
 
-    // NEW: Expose the selected GC from the store.
-    const selectedGc = computed(() => gcStore.selectedGc);
-
     return {
       isLoading,
       localBatchStartTime,
@@ -334,7 +330,6 @@ export default {
       debouncedValidateControl1,
       debouncedValidateControl2,
       disabledPositions: disabledPositionsComputed,
-      selectedGc
     };
   },
 };
@@ -372,7 +367,6 @@ export default {
   width: 75px;
   height: 36px;
   text-align: center;
-  /* Original drop shadow */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
@@ -401,7 +395,6 @@ export default {
   width: 60px;
   height: 36px;
   text-align: center;
-  /* Original drop shadow */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
@@ -429,20 +422,12 @@ export default {
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  /* Original drop shadow */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .wait-toggle.on {
   background-color: var(--highlight-color);
   color: var(--text-highlight);
-}
-
-/* Remove drop shadow when a GC is selected */
-.no-dropshadow input,
-.no-dropshadow .control-input,
-.no-dropshadow .wait-toggle {
-  box-shadow: none !important;
 }
 
 label {
