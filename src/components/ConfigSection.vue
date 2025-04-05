@@ -46,15 +46,15 @@
       <start-time-results
         :results="gcStore.results"
         :startTime="gcStore.startTime"
-        :delayedRunsExist="false"
-        :additionalRunsExist="false"
+        :delayedRunsExist="delayedRunsExist"
+        :additionalRunsExist="additionalRunsExist"
       />
     </div>
   </div>
 </template>
 
 <script>
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useGcStore } from '../store';
 import GcSelector from './GcSelector.vue';
 import StartTimeInput from './StartTimeInput.vue';
@@ -119,7 +119,18 @@ export default {
       return arr;
     });
 
-    // Removed watch block for sequentialFinalPosition console log.
+    // Compute flags for delayed and additional runs based on timeDelayResults.
+    const additionalRunsExist = computed(() => {
+      const tdr = gcStore.timeDelayResults || {};
+      return (
+        Number(tdr.additionalRuns) > 0 ||
+        (tdr.sequentialFinalPosition && Number(tdr.sequentialFinalPosition) > 0)
+      );
+    });
+    const delayedRunsExist = computed(() => {
+      const tdr = gcStore.timeDelayResults || {};
+      return Number(tdr.totalDelayedRuns) > 0;
+    });
 
     // Reset function that calls the store's resetStartTime and also clears finalPosition and selectedGc.
     const resetInputs = () => {
@@ -141,6 +152,8 @@ export default {
       resetInputs,
       disabledPositions,
       gcStore, // Passing the store so that children get the reactive object.
+      additionalRunsExist,
+      delayedRunsExist,
     };
   },
 };
