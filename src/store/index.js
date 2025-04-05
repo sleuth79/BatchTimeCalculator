@@ -1,5 +1,5 @@
 import { createPinia, defineStore } from 'pinia';
-import { calculateStartTimeBatch } from '../utils/startTimeCalculations.js';
+import { calculateStartTimeBatch as calculateStartTimeBatchUtil } from '../utils/startTimeCalculations.js';
 import { parseTimeString, formatTime } from '../utils/timeUtils.js';
 import { formatTimeWithAmPmAndSeconds, formatDuration } from '../utils/utils.js';
 
@@ -127,15 +127,15 @@ export const useGcStore = defineStore('gc', {
       console.log("setSequentialFinalPosition called with position:", position);
       this.sequentialFinalPosition = this.sequentialFinalPosition === position ? null : position;
       console.log("Final sequential batch position updated to:", this.sequentialFinalPosition);
-      this.performCalculation();
+      this.calculateStartTimeBatch();
     },
     setBatchStartTime(time) {
       this.startTime.batchStartTime = time;
-      this.performCalculation();
+      this.calculateStartTimeBatch();
     },
     setBatchStartTimeAMPM(ampm) {
       this.startTime.batchStartTimeAMPM = ampm;
-      this.performCalculation();
+      this.calculateStartTimeBatch();
     },
     setWait15(value) {
       this.startTime.wait15 = value;
@@ -149,7 +149,7 @@ export const useGcStore = defineStore('gc', {
         this.startTime.controls.control2 !== null &&
         this.startTime.controls.control2 !== ""
       ) {
-        this.performCalculation();
+        this.calculateStartTimeBatch();
       } else {
         this.results = {
           mode: "start-time",
@@ -160,16 +160,16 @@ export const useGcStore = defineStore('gc', {
     setControl1(value) {
       this.startTime.controls.control1 = value;
       setTimeout(() => {
-        this.performCalculation();
+        this.calculateStartTimeBatch();
       }, 0);
     },
     setControl2(value) {
       this.startTime.controls.control2 = value;
       setTimeout(() => {
-        this.performCalculation();
+        this.calculateStartTimeBatch();
       }, 0);
     },
-    performCalculation() {
+    calculateStartTimeBatch() {
       if (!this.startTime.batchStartTime) {
         this.results = { mode: "start-time" };
         return;
@@ -205,7 +205,7 @@ export const useGcStore = defineStore('gc', {
       this.calculationAttempted = true;
       const runtime = this.allGcData[this.selectedGc].runTime;
       const runtimeSec = convertRuntime(runtime);
-      const calcResults = calculateStartTimeBatch(
+      const calcResults = calculateStartTimeBatchUtil(
         this.selectedGc,
         runtime,
         null,
@@ -222,7 +222,6 @@ export const useGcStore = defineStore('gc', {
           ? `${this.selectedGc} (Runtime: ${this.allGcData[this.selectedGc].runTime})`
           : this.selectedGc,
         totalRuns: calcResults.totalRuns,
-        // Removed totalRunTime calculation so the run table's computed duration will be used instead.
         batchEndTime: calcResults.batchEndTime,
         timeGapTo730AM: calcResults.timeGapTo730AM,
         timeDelayRequired: calcResults.timeDelayRequired,
