@@ -27,7 +27,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display candidate heading (closest position) only if the batch ends at or after 4:00 PM -->
+    <!-- Candidate heading (closest position) is now only shown if the batch ends at or after 4:00 PM -->
     <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
       {{ candidateDisplayLabel }}
       <span class="result-value">
@@ -107,36 +107,22 @@ export default {
       return durationStr.replace(/\s+\d+s$/, "");
     }
 
-    // Use safe checks to retrieve the raw batch start time from props.
+    // Retrieve the raw batch start time.
     const rawBatchStartTime = computed(() => {
       return (
-        (props.results && (props.results.batchStartTime || props.results.startTime)) ||
-        (props.startTime && (props.startTime.batchStartTime || props.startTime.startTime)) ||
+        props.results.batchStartTime ||
+        props.results.startTime ||
+        props.startTime.batchStartTime ||
+        props.startTime.startTime ||
         ""
       );
     });
     const displayBatchStartTime = computed(() => removeSeconds(rawBatchStartTime.value));
 
-    // Compute whether the batch ends at or after 4:00 PM.
-    // (If the batch ends before 4:00 PM, then no "closest position" heading is needed.)
-    const batchPasses4PM = computed(() => {
-      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
-      if (!batchTime) return false;
-      const parts = batchTime.split(" ");
-      if (parts.length < 2) return false;
-      const timePart = parts[0];
-      const ampm = parts[1];
-      const timeParts = timePart.split(":");
-      let hour = parseInt(timeParts[0], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      // Return true if the hour is 16 (4:00 PM) or later.
-      return hour >= 16;
-    });
+    // Determine if we should show detailed results based on the batch start time format.
+    const showDetailedResults = computed(() =>
+      /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value)
+    );
 
     const displayFinalPosition = computed(() => {
       return (
@@ -148,6 +134,7 @@ export default {
 
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
+    // Format the controls as "X  | Y"
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -158,6 +145,7 @@ export default {
       return `${ctrl1Str} | ${ctrl2}`;
     });
 
+    // Display Batch End Time – using the new prop if available.
     const displayBatchEndTime = computed(() => {
       if (props.initialBatchEndTime) return props.initialBatchEndTime;
       if (!props.results.batchEndTime) return "";
@@ -181,7 +169,9 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${batchEndStr}`
+      );
       if (isNaN(endDateCandidate.getTime())) {
         return `${batchEndStr} (${currentDate.value})`;
       }
@@ -192,6 +182,7 @@ export default {
       return `${batchEndStr} (${endDateString})`;
     });
 
+    // Compute if the batch end time is after 7:30 AM (for highlighting purposes).
     const initialBatchEndTimeAfter730 = computed(() => {
       if (!props.results.batchEndTime) return false;
       const batchEndStr = props.initialBatchEndTime || props.results.batchEndTime;
@@ -211,7 +202,9 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
+      let endDateCandidate = new Date(
+        `${startDate.toDateString()} ${batchEndStr}`
+      );
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
@@ -222,6 +215,26 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
+    // Compute if the batch end time is at or after 4:00 PM.
+    const batchPasses4PM = computed(() => {
+      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
+      if (!batchTime) return false;
+      const parts = batchTime.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
+      let hour = parseInt(timeParts[0], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      return hour >= 16;
+    });
+
+    // Decide which candidate label to show.
     const candidateDisplayLabel = computed(() => {
       if (props.runtableClosestPositionFull && props.runtableClosestPositionFull !== "No candidate found") {
         return "Closest Position Before 4:00 PM:";
@@ -234,6 +247,7 @@ export default {
       return removeDurationSeconds(rawDuration);
     });
 
+    // Parse the Batch End Time into a Date object.
     const parsedBatchEndDateTime = computed(() => {
       const batchEnd = displayBatchEndTime.value;
       if (!batchEnd) return null;
@@ -275,15 +289,12 @@ export default {
       displayControls,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
-      showDetailedResults: computed(() =>
-        /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value)
-      ),
+      showDetailedResults,
       candidateDisplayLabel,
       batchPasses4PM,
       displayBatchDuration,
       computedTimeGapTo730AM,
-      cleanedRuntableClosestPosition,
-      batchStartsBefore4PM, // still available if needed elsewhere
+      cleanedRuntableClosestPosition
     };
   }
 };
