@@ -28,9 +28,9 @@
       </span>
     </p>
     <!-- Display candidate heading if detailed results are shown,
-         final position is set, and either the batch passes 4:00 PM
+         final position is set, the batch starts before 4:00 PM, and either the batch passes 4:00 PM
          OR a candidate was computed (even if batch end time is formatted as AM) -->
-    <p v-if="showDetailedResults && displayFinalPosition && (batchPasses4PM || runtableClosestPositionFull)">
+    <p v-if="showDetailedResults && displayFinalPosition && batchStartsBefore4PM && (batchPasses4PM || runtableClosestPositionFull)">
       {{ candidateDisplayLabel }}
       <span class="result-value">
         <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
@@ -127,9 +127,23 @@ export default {
       return removeSeconds(rawBatchStartTime.value);
     });
 
-    // Relaxed regex to allow optional seconds and AM/PM.
-    const showDetailedResults = computed(() => {
-      return /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value);
+    // NEW: Compute whether the batch starts before 4:00 PM.
+    const batchStartsBefore4PM = computed(() => {
+      const timeStr = displayBatchStartTime.value;
+      if (!timeStr) return false;
+      const parts = timeStr.split(" ");
+      if (parts.length < 2) return false;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
+      let hour = parseInt(timeParts[0], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (ampm.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      return hour < 16;
     });
 
     const displayFinalPosition = computed(() => {
@@ -315,7 +329,8 @@ export default {
       batchPasses4PM,
       displayBatchDuration,
       computedTimeGapTo730AM,
-      cleanedRuntableClosestPosition
+      cleanedRuntableClosestPosition,
+      batchStartsBefore4PM // Newly added computed property
     };
   }
 };
