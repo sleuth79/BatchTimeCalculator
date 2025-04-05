@@ -15,18 +15,9 @@
       </span>
     </p>
 
-    <!-- Pass the store's startTime as well as results.
-         Override the batchEndTime and batchDuration in results with the ones computed in RunTable so that
-         both the displayed batch end time, duration, and time gap calculation use the run table values. -->
+    <!-- Pass the merged results object to StartTimeResults -->
     <StartTimeResults
-      :results="{
-        ...results,
-        batchEndTime: initialBatchEndTime,
-        finalBatchEndTime: finalBatchEndTime,
-        batchDuration: runTableInitialBatchDuration,
-        sequentialBatchDuration: sequentialBatchDuration,
-        selectedPositionLabel: selectedPositionLabel
-      }"
+      :results="mergedResults"
       :startTime="gcStore.startTime"
       :runtableClosestPositionFull="runtableClosestPositionFull"
       :selectedGcData="selectedGcData"
@@ -152,6 +143,7 @@ export default {
     );
     const currentDate = computed(() => new Date().toLocaleDateString());
 
+    // Run table reactive properties
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
     const initialBatchEndTime = ref("");
@@ -160,6 +152,27 @@ export default {
     const delayedRunsStartTime = ref("");
     const delayedRunsEndTime = ref("");
     const sequentialBatchDuration = ref("");
+
+    // Create a merged results object that only overrides if the run table values are not empty.
+    const mergedResults = computed(() => {
+      const base = { ...results.value };
+      if (initialBatchEndTime.value) {
+        base.batchEndTime = initialBatchEndTime.value;
+      }
+      if (finalBatchEndTime.value) {
+        base.finalBatchEndTime = finalBatchEndTime.value;
+      }
+      if (runTableInitialBatchDuration.value) {
+        base.batchDuration = runTableInitialBatchDuration.value;
+      }
+      if (sequentialBatchDuration.value) {
+        base.sequentialBatchDuration = sequentialBatchDuration.value;
+      }
+      if (selectedPositionLabel.value) {
+        base.selectedPositionLabel = selectedPositionLabel.value;
+      }
+      return base;
+    });
 
     return {
       gcStore,
@@ -186,6 +199,7 @@ export default {
       delayedRunsStartTime,
       delayedRunsEndTime,
       sequentialBatchDuration,
+      mergedResults,
     };
   },
 };
