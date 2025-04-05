@@ -139,6 +139,10 @@ export default {
     // Update store when local finalPosition changes.
     watch(finalPosition, (newVal) => {
       gcStore.startTime.finalPosition = newVal;
+      // If the final position is cleared, also clear the sequential final position.
+      if (!newVal) {
+        gcStore.setSequentialFinalPosition(null);
+      }
       recalculateResults();
     });
     // Watch store and update local finalPosition when it resets.
