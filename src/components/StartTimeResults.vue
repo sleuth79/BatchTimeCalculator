@@ -27,9 +27,7 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Display candidate heading if detailed results are shown,
-         final position is set, the batch starts before 4:00 PM, and either the batch passes 4:00 PM
-         OR a candidate was computed (even if batch end time is formatted as AM) -->
+    <!-- Candidate heading is only shown if the batch starts before 4:00 PM -->
     <p v-if="showDetailedResults && displayFinalPosition && batchStartsBefore4PM && (batchPasses4PM || runtableClosestPositionFull)">
       {{ candidateDisplayLabel }}
       <span class="result-value">
@@ -43,7 +41,6 @@
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
     <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
-      <!-- <hr class="time-gap-hr" /> -->
       <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
@@ -93,10 +90,9 @@ export default {
     const gcStore = useGcStore();
     const currentDate = computed(() => new Date().toLocaleDateString());
 
-    // Helper function: Remove seconds from a time string formatted as "HH:MM:SS AM/PM"
+    // Helper: Remove seconds from a time string formatted as "HH:MM:SS AM/PM"
     function removeSeconds(timeStr) {
       if (!timeStr) return "";
-      // Regex to capture hours and minutes and ignore seconds if present
       const regex = /^(\d{1,2}:\d{2})(?::\d{2})?\s*(AM|PM)$/i;
       const match = timeStr.match(regex);
       if (match) {
@@ -105,24 +101,20 @@ export default {
       return timeStr;
     }
 
-    // Helper function: Remove seconds from a duration string formatted like "10h 43m 6s"
+    // Helper: Remove seconds from a duration string (e.g., "10h 43m 6s")
     function removeDurationSeconds(durationStr) {
       if (!durationStr) return "";
-      // Remove the seconds part if it appears at the end
       return durationStr.replace(/\s+\d+s$/, "");
     }
 
-    // First, get the raw batch start time from props.
+    // Use safe checks to retrieve the raw batch start time from props.
     const rawBatchStartTime = computed(() => {
       return (
-        props.results.batchStartTime ||
-        props.results.startTime ||
-        props.startTime.batchStartTime ||
-        props.startTime.startTime ||
+        (props.results && (props.results.batchStartTime || props.results.startTime)) ||
+        (props.startTime && (props.startTime.batchStartTime || props.startTime.startTime)) ||
         ""
       );
     });
-    // Now remove seconds from the batch start time.
     const displayBatchStartTime = computed(() => {
       return removeSeconds(rawBatchStartTime.value);
     });
@@ -157,7 +149,6 @@ export default {
     const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
-    // Updated displayControls: format as "X  | Y" with left control padded to 2 characters.
     const displayControls = computed(() => {
       const ctrl1 = gcStore.startTime.controls.control1;
       const ctrl2 = gcStore.startTime.controls.control2;
@@ -168,7 +159,6 @@ export default {
       return `${ctrl1Str} | ${ctrl2}`;
     });
 
-    // Use the new prop if available; otherwise fallback to original logic for batch end time.
     const displayBatchEndTime = computed(() => {
       if (props.initialBatchEndTime) return props.initialBatchEndTime;
       if (!props.results.batchEndTime) return "";
@@ -207,7 +197,6 @@ export default {
 
     const initialBatchEndTimeAfter730 = computed(() => {
       if (!props.results.batchEndTime) return false;
-      // Use the new prop if available.
       const batchEndStr = props.initialBatchEndTime || props.results.batchEndTime;
       const startStr = displayBatchStartTime.value;
       if (!startStr) return false;
@@ -238,7 +227,6 @@ export default {
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
     });
 
-    // New computed property to determine if the batch passes 4:00 PM.
     const batchPasses4PM = computed(() => {
       const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
       if (!batchTime) return false;
@@ -247,7 +235,6 @@ export default {
       const timePart = parts[0];
       const ampm = parts[1];
       const timeParts = timePart.split(":");
-      if (timeParts.length < 2) return false;
       let hour = parseInt(timeParts[0], 10);
       if (ampm.toUpperCase() === "PM" && hour < 12) {
         hour += 12;
@@ -255,11 +242,9 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      // 4:00 PM in 24-hour time is 16:00.
       return hour >= 16;
     });
 
-    // Computed property to decide which candidate label to show.
     const candidateDisplayLabel = computed(() => {
       if (props.runtableClosestPositionFull && props.runtableClosestPositionFull !== "No candidate found") {
         return "Closest Position Before 4:00 PM:";
@@ -267,23 +252,18 @@ export default {
       return "This Batch Ends At:";
     });
 
-    // NEW: Computed property to display the batch duration without seconds.
     const displayBatchDuration = computed(() => {
       const rawDuration = props.results.batchDuration || "";
       return removeDurationSeconds(rawDuration);
     });
 
-    // --- New: Compute time gap from batch end time to 7:30 AM ---
-    // Parse the displayBatchEndTime string which is expected to be in the format "TIME (DATE)"
     const parsedBatchEndDateTime = computed(() => {
       const batchEnd = displayBatchEndTime.value;
       if (!batchEnd) return null;
-      // Expecting format like "8:43:06 PM (4/2/2025)"
       const match = batchEnd.match(/^([\d:]+\s*(?:AM|PM))\s*\((.+)\)$/);
       if (!match) return null;
       const timePart = match[1].trim();
       const datePart = match[2].trim();
-      // Construct a Date object (this assumes the datePart is in a format parseable by Date)
       return new Date(`${datePart} ${timePart}`);
     });
 
@@ -292,7 +272,6 @@ export default {
       if (!endDT) return '';
       let target = new Date(endDT);
       target.setHours(7, 30, 0, 0);
-      // If batch end time is after 7:30 AM, the target becomes 7:30 AM on the next day.
       if (endDT > target) {
         target.setDate(target.getDate() + 1);
       }
@@ -301,19 +280,15 @@ export default {
       const diffMinutes = Math.floor((diffMS % (1000 * 60 * 60)) / (1000 * 60));
       return `${diffHours} hours, ${diffMinutes} minutes`;
     });
-    // --- End new time gap calculation ---
 
-    // --- New: Clean the candidate string to remove the word "Position" and change the separator ---
     const cleanedRuntableClosestPosition = computed(() => {
       let candidate = props.runtableClosestPositionFull || "";
       if (candidate.startsWith("Position ")) {
         candidate = candidate.substring("Position ".length);
       }
-      // Replace the first occurrence of " : " with " | "
       candidate = candidate.replace(/^(\d+)\s*:\s*/, "$1 | ");
       return candidate;
     });
-    // --- End candidate string cleanup ---
 
     return {
       currentDate,
@@ -324,13 +299,13 @@ export default {
       displayControls,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
-      showDetailedResults,
+      showDetailedResults: computed(() => /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value)),
       candidateDisplayLabel,
       batchPasses4PM,
       displayBatchDuration,
       computedTimeGapTo730AM,
       cleanedRuntableClosestPosition,
-      batchStartsBefore4PM // Newly added computed property
+      batchStartsBefore4PM
     };
   }
 };
@@ -340,38 +315,30 @@ export default {
 .start-time-results {
   padding: 0;
 }
-
-/* Set 12px vertical spacing for all paragraphs */
 .start-time-results p {
   margin: 12px 0;
   font-size: 1rem;
   line-height: 1.2;
   color: #333;
 }
-
 .result-value {
   font-weight: bold;
   font-size: 1rem;
 }
-
 .result-date {
   font-weight: bold;
   font-size: 1rem;
   margin-left: 5px;
 }
-
 hr {
   border: none;
   border-top: 1px solid #ccc;
   margin: 12px 0;
   padding: 0;
 }
-
-/* Ensure the time gap heading uses the same spacing */
 .time-gap-heading {
   margin: 12px 0;
 }
-
 .highlight-orange {
   color: orange;
 }
