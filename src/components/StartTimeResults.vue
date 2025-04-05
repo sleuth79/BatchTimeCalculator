@@ -27,17 +27,14 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Candidate heading (closest position) is now only shown if the batch ends at or after 4:00 PM -->
-    <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
+    <!-- Candidate heading (closest position) is now only shown if:
+         - Detailed results are shown,
+         - A final position is provided,
+         - The batch spans 4:00 PM, and
+         - The candidate label is not the fallback "This Batch Ends At:" -->
+    <p v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'">
       {{ candidateDisplayLabel }}
-      <span class="result-value">
-        <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
-          {{ displayBatchEndTime }}
-        </template>
-        <template v-else>
-          {{ cleanedRuntableClosestPosition }}
-        </template>
-      </span>
+      <span class="result-value">{{ cleanedRuntableClosestPosition }}</span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
     <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
@@ -80,7 +77,7 @@ export default {
       type: String,
       default: ""
     },
-    // NEW: Accept the run table's computed batch end time.
+    // Accept the run table's computed batch end time.
     initialBatchEndTime: {
       type: String,
       default: ""
@@ -281,6 +278,53 @@ export default {
       return candidate;
     });
 
+    // NEW: Compute parsed batch start time from displayBatchStartTime.
+    const computedBatchStartTime = computed(() => {
+      if (!displayBatchStartTime.value) return null;
+      const parts = displayBatchStartTime.value.split(" ");
+      if (parts.length < 2) return null;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
+      if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      return d;
+    });
+
+    // NEW: Compute parsed batch end time from displayBatchEndTime.
+    const computedBatchEndTime = computed(() => {
+      if (!displayBatchEndTime.value) return null;
+      const match = displayBatchEndTime.value.match(/^([\d:]+\s*(?:AM|PM))\s*\(/);
+      if (!match) return null;
+      const timeStr = match[1].trim();
+      const parts = timeStr.split(" ");
+      if (parts.length < 2) return null;
+      const timePart = parts[0];
+      const ampm = parts[1];
+      const timeParts = timePart.split(":");
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
+      if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      return d;
+    });
+
+    // NEW: Compute highlightCandidate – true only if the batch starts before 4:00 PM and ends after 4:00 PM.
+    const highlightCandidate = computed(() => {
+      const start = computedBatchStartTime.value;
+      const end = computedBatchEndTime.value;
+      if (!start || !end) return false;
+      let fourPM = new Date(start);
+      fourPM.setHours(16, 0, 0, 0);
+      return start < fourPM && end > fourPM;
+    });
+
     return {
       currentDate,
       displayBatchStartTime,
@@ -291,7 +335,8 @@ export default {
       initialBatchEndTimeAfter730,
       showDetailedResults,
       candidateDisplayLabel,
-      batchPasses4PM,
+      // Instead of using batchPasses4PM, we now use highlightCandidate in the candidate heading.
+      highlightCandidate,
       displayBatchDuration,
       computedTimeGapTo730AM,
       cleanedRuntableClosestPosition
