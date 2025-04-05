@@ -15,7 +15,7 @@
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
     </p>
-    <!-- New: Display the computed batch duration (Batch Run Time) without seconds -->
+    <!-- Display the computed batch duration (Batch Run Time) without seconds -->
     <p v-if="showDetailedResults && displayBatchDuration">
       Batch Run Time:
       <span class="result-value">{{ displayBatchDuration }}</span>
@@ -27,8 +27,8 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
-    <!-- Candidate heading is only shown if the batch starts before 4:00 PM -->
-    <p v-if="showDetailedResults && displayFinalPosition && batchStartsBefore4PM && (batchPasses4PM || runtableClosestPositionFull)">
+    <!-- Display candidate heading (closest position) only if the batch ends at or after 4:00 PM -->
+    <p v-if="showDetailedResults && displayFinalPosition && batchPasses4PM">
       {{ candidateDisplayLabel }}
       <span class="result-value">
         <template v-if="candidateDisplayLabel === 'This Batch Ends At:'">
@@ -115,15 +115,14 @@ export default {
         ""
       );
     });
-    const displayBatchStartTime = computed(() => {
-      return removeSeconds(rawBatchStartTime.value);
-    });
+    const displayBatchStartTime = computed(() => removeSeconds(rawBatchStartTime.value));
 
-    // NEW: Compute whether the batch starts before 4:00 PM.
-    const batchStartsBefore4PM = computed(() => {
-      const timeStr = displayBatchStartTime.value;
-      if (!timeStr) return false;
-      const parts = timeStr.split(" ");
+    // Compute whether the batch ends at or after 4:00 PM.
+    // (If the batch ends before 4:00 PM, then no "closest position" heading is needed.)
+    const batchPasses4PM = computed(() => {
+      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
+      if (!batchTime) return false;
+      const parts = batchTime.split(" ");
       if (parts.length < 2) return false;
       const timePart = parts[0];
       const ampm = parts[1];
@@ -135,7 +134,8 @@ export default {
       if (ampm.toUpperCase() === "AM" && hour === 12) {
         hour = 0;
       }
-      return hour < 16;
+      // Return true if the hour is 16 (4:00 PM) or later.
+      return hour >= 16;
     });
 
     const displayFinalPosition = computed(() => {
@@ -146,7 +146,6 @@ export default {
       );
     });
 
-    const displayTotalRuns = computed(() => !!props.results.totalRuns);
     const additionalRunsExistBool = computed(() => Boolean(props.additionalRunsExist));
 
     const displayControls = computed(() => {
@@ -182,9 +181,7 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(
-        `${startDate.toDateString()} ${batchEndStr}`
-      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) {
         return `${batchEndStr} (${currentDate.value})`;
       }
@@ -214,9 +211,7 @@ export default {
         startMinute,
         startSecond
       );
-      let endDateCandidate = new Date(
-        `${startDate.toDateString()} ${batchEndStr}`
-      );
+      let endDateCandidate = new Date(`${startDate.toDateString()} ${batchEndStr}`);
       if (isNaN(endDateCandidate.getTime())) return false;
       if (endDateCandidate <= startDate) {
         endDateCandidate.setDate(endDateCandidate.getDate() + 1);
@@ -225,24 +220,6 @@ export default {
       const endHour = endDateCandidate.getHours();
       const endMinute = endDateCandidate.getMinutes();
       return endHour > 7 || (endHour === 7 && endMinute >= 30);
-    });
-
-    const batchPasses4PM = computed(() => {
-      const batchTime = props.initialBatchEndTime || props.results.batchEndTime;
-      if (!batchTime) return false;
-      const parts = batchTime.split(" ");
-      if (parts.length < 2) return false;
-      const timePart = parts[0];
-      const ampm = parts[1];
-      const timeParts = timePart.split(":");
-      let hour = parseInt(timeParts[0], 10);
-      if (ampm.toUpperCase() === "PM" && hour < 12) {
-        hour += 12;
-      }
-      if (ampm.toUpperCase() === "AM" && hour === 12) {
-        hour = 0;
-      }
-      return hour >= 16;
     });
 
     const candidateDisplayLabel = computed(() => {
@@ -294,18 +271,19 @@ export default {
       currentDate,
       displayBatchStartTime,
       displayFinalPosition,
-      displayTotalRuns,
       additionalRunsExistBool,
       displayControls,
       displayBatchEndTime,
       initialBatchEndTimeAfter730,
-      showDetailedResults: computed(() => /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value)),
+      showDetailedResults: computed(() =>
+        /^\d{1,2}:\d{2}(?::\d{2})?(?:\s?(?:AM|PM))?$/.test(displayBatchStartTime.value)
+      ),
       candidateDisplayLabel,
       batchPasses4PM,
       displayBatchDuration,
       computedTimeGapTo730AM,
       cleanedRuntableClosestPosition,
-      batchStartsBefore4PM
+      batchStartsBefore4PM, // still available if needed elsewhere
     };
   }
 };
