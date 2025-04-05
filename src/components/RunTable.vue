@@ -332,7 +332,18 @@ export default {
       return `${selectedPositionLabel.value} : ${selectedCandidate.value.startTime} to ${selectedCandidate.value.endTime}`;
     });
 
-    // NEW: Compute the overall batch end time (using the last run's endTime).
+    // NEW: Compute the batch start time from the first run.
+    const computedBatchStartTime = computed(() => {
+      if (!props.runs.length) return null;
+      const firstRun = props.runs[0];
+      const parsed = parseTimeString(firstRun.startTime);
+      if (!parsed) return null;
+      let batchStart = new Date();
+      batchStart.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+      return batchStart;
+    });
+
+    // NEW: Compute the overall batch end time from the last run.
     const computedBatchEndTime = computed(() => {
       if (!props.runs.length) return null;
       const lastRun = props.runs[props.runs.length - 1];
@@ -348,13 +359,14 @@ export default {
     });
 
     // NEW: Compute a flag to decide whether to highlight the candidate.
-    // Only highlight if the overall batch end time equals exactly 4:00 PM.
+    // Highlight only if the batch starts before 4:00 PM and ends after 4:00 PM.
     const highlightCandidate = computed(() => {
+      const batchStart = computedBatchStartTime.value;
       const batchEnd = computedBatchEndTime.value;
-      if (!batchEnd) return false;
-      let cutoff = new Date(batchEnd);
-      cutoff.setHours(16, 0, 0, 0);
-      return batchEnd.getTime() === cutoff.getTime();
+      if (!batchStart || !batchEnd) return false;
+      let fourPM = new Date(batchStart);
+      fourPM.setHours(16, 0, 0, 0);
+      return (batchStart < fourPM && batchEnd > fourPM);
     });
 
     // 12. Compute the last main run number (initial + sequential).
