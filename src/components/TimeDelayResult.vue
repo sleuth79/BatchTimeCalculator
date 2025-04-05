@@ -67,6 +67,7 @@
           <strong>
             {{ computedDelayedRunsStartTime }} to {{ computedDelayedRunsEndTime }}
           </strong>
+          <span class="result-date"> ({{ delayedRunsEndDate }})</span>
         </p>
         <p v-if="Number(timeDelayData.totalDelayedRuns) > 0">
           Time Delay Required:
@@ -265,6 +266,40 @@ export default {
     const computedDelayedRunsStartTime = computed(() => props.delayedRunsStartTime);
     const computedDelayedRunsEndTime = computed(() => props.delayedRunsEndTime);
 
+    // NEW: Compute the delayed runs end date from the delayedRunsEndTime prop.
+    const delayedRunsEndDate = computed(() => {
+      const timeString = props.delayedRunsEndTime;
+      if (!timeString) return '';
+      const parts = timeString.split(" ");
+      if (parts.length < 2) return '';
+      const timePart = parts[0];
+      const meridiem = parts[1];
+      const timeParts = timePart.split(":");
+      if (timeParts.length < 2) return '';
+      let hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      const second = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+      if (meridiem.toUpperCase() === "PM" && hour < 12) {
+        hour += 12;
+      }
+      if (meridiem.toUpperCase() === "AM" && hour === 12) {
+        hour = 0;
+      }
+      const today = new Date();
+      let runEndDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hour,
+        minute,
+        second
+      );
+      if (runEndDate < today) {
+        runEndDate.setDate(runEndDate.getDate() + 1);
+      }
+      return runEndDate.toLocaleDateString();
+    });
+
     return {
       timeDelayData,
       resultsComplete,
@@ -277,6 +312,7 @@ export default {
       finalBatchEndTimeToDisplay,
       computedDelayedRunsStartTime,
       computedDelayedRunsEndTime,
+      delayedRunsEndDate, // Newly added computed property
       sequentialBatchDuration: computed(() => props.sequentialBatchDuration),
       additionalRunsGapTo730AM
     };
