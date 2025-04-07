@@ -254,7 +254,8 @@ export const useGcStore = defineStore('gc', {
       if (delayParts.length > 0) {
         delayHours = parseInt(delayParts[0], 10) || 0;
       }
-      baseDate.setHours(baseDate.getHours() + delayHours);
+      // Adjusted: adding an extra hour to meet the 7:30 AM target.
+      baseDate.setHours(baseDate.getHours() + delayHours + 1);
       return formatTime(baseDate);
     },
   },
