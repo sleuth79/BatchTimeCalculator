@@ -4,7 +4,7 @@
     <table v-if="initialPositionOrder.length">
       <thead>
         <tr class="header-row">
-          <th>Run Name</th>
+          <th>Run</th>
           <th>Start Time</th>
           <th>End Time</th>
           <th>Run #</th>

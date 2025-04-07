@@ -28,12 +28,16 @@
       </span>
     </p>
     <!-- Candidate heading (closest position) -->
-    <p v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'">
+    <p
+      v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'"
+    >
       {{ candidateDisplayLabel }}
-      <span class="result-value">{{ cleanedRuntableClosestPosition }}</span>
+      <span class="result-value highlight-yellow">{{ cleanedRuntableClosestPosition }}</span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
-    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
@@ -221,7 +225,10 @@ export default {
 
     // Decide which candidate label to show.
     const candidateDisplayLabel = computed(() => {
-      if (props.runtableClosestPositionFull && props.runtableClosestPositionFull !== "No candidate found") {
+      if (
+        props.runtableClosestPositionFull &&
+        props.runtableClosestPositionFull !== "No candidate found"
+      ) {
         return "Closest Position Before 4:00 PM:";
       }
       return "This Batch Ends At:";
@@ -245,7 +252,7 @@ export default {
 
     const computedTimeGapTo730AM = computed(() => {
       const endDT = parsedBatchEndDateTime.value;
-      if (!endDT) return '';
+      if (!endDT) return "";
       let target = new Date(endDT);
       target.setHours(7, 30, 0, 0);
       if (endDT > target) {
@@ -362,5 +369,9 @@ hr {
 }
 .highlight-orange {
   color: orange;
+}
+/* New style for highlighting the closest position in yellow */
+.highlight-yellow {
+  background-color: yellow;
 }
 </style>
