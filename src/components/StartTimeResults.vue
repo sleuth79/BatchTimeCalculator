@@ -32,12 +32,11 @@
       v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'"
     >
       {{ candidateDisplayLabel }}
+      <!-- Only the number is highlighted in yellow -->
       <span class="result-value highlight-yellow">{{ cleanedRuntableClosestPosition }}</span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
-    <div
-      v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
-    >
+    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
       <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
@@ -77,8 +76,6 @@ export default {
       type: String,
       default: ""
     }
-    // Note: We removed the separate initialBatchEndTime prop –
-    // the merged batchEndTime value is now contained in props.results.batchEndTime.
   },
   setup(props) {
     const gcStore = useGcStore();
@@ -273,7 +270,7 @@ export default {
       return candidate;
     });
 
-    // NEW: Compute parsed batch start time from displayBatchStartTime.
+    // Compute parsed batch start time from displayBatchStartTime.
     const computedBatchStartTime = computed(() => {
       if (!displayBatchStartTime.value) return null;
       const parts = displayBatchStartTime.value.split(" ");
@@ -290,7 +287,7 @@ export default {
       return d;
     });
 
-    // NEW: Compute parsed batch end time from displayBatchEndTime.
+    // Compute parsed batch end time from displayBatchEndTime.
     const computedBatchEndTime = computed(() => {
       if (!displayBatchEndTime.value) return null;
       const match = displayBatchEndTime.value.match(/^([\d:]+\s*(?:AM|PM))\s*\(/);
@@ -310,7 +307,7 @@ export default {
       return d;
     });
 
-    // NEW: Compute highlightCandidate – true only if the batch starts before 4:00 PM and ends after 4:00 PM.
+    // Compute highlightCandidate – true only if the batch starts before 4:00 PM and ends after 4:00 PM.
     const highlightCandidate = computed(() => {
       const start = computedBatchStartTime.value;
       const end = computedBatchEndTime.value;
@@ -370,7 +367,7 @@ hr {
 .highlight-orange {
   color: orange;
 }
-/* New style for highlighting the closest position in yellow */
+/* Highlight only the candidate number with a yellow background */
 .highlight-yellow {
   background-color: yellow;
 }
