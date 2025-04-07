@@ -383,13 +383,10 @@ hr {
 .highlight-orange {
   color: orange;
 }
-/* Highlight only the candidate number with a yellow background,
-   moved up and centered on the number */
 .highlight-yellow {
   background-color: yellow;
   display: inline-block;
-  position: relative;
-  top: -2px; /* adjust this value as needed */
+  vertical-align: middle;
   padding: 2px 4px;
 }
 </style>
