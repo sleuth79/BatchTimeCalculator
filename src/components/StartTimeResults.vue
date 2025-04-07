@@ -275,7 +275,7 @@ export default {
       return candidate;
     });
 
-    // NEW: Split the candidate into a number and time range.
+    // Split the candidate into a number and time range.
     const candidateParts = computed(() => {
       const fullCandidate = cleanedRuntableClosestPosition.value;
       const parts = fullCandidate.split(" | ");
@@ -383,8 +383,13 @@ hr {
 .highlight-orange {
   color: orange;
 }
-/* Highlight only the candidate number with a yellow background */
+/* Highlight only the candidate number with a yellow background,
+   moved up and centered on the number */
 .highlight-yellow {
   background-color: yellow;
+  display: inline-block;
+  position: relative;
+  top: -2px; /* adjust this value as needed */
+  padding: 2px 4px;
 }
 </style>
