@@ -32,11 +32,15 @@
       v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'"
     >
       {{ candidateDisplayLabel }}
-      <!-- Only the number is highlighted in yellow -->
-      <span class="result-value highlight-yellow">{{ cleanedRuntableClosestPosition }}</span>
+      <!-- Only the number is highlighted -->
+      <span class="result-value highlight-yellow">{{ candidateParts.number }}</span>
+      <!-- Display the time range normally if present -->
+      <span v-if="candidateParts.times" class="result-value"> | {{ candidateParts.times }}</span>
     </p>
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
-    <div v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool">
+    <div
+      v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
+    >
       <p class="time-gap-heading">
         Time Gap to 7:30 AM:
         <span class="result-value">{{ computedTimeGapTo730AM }}</span>
@@ -261,6 +265,7 @@ export default {
       return `${diffHours} hours, ${diffMinutes} minutes`;
     });
 
+    // Clean up the candidate string.
     const cleanedRuntableClosestPosition = computed(() => {
       let candidate = props.runtableClosestPositionFull || "";
       if (candidate.startsWith("Position ")) {
@@ -268,6 +273,16 @@ export default {
       }
       candidate = candidate.replace(/^(\d+)\s*:\s*/, "$1 | ");
       return candidate;
+    });
+
+    // NEW: Split the candidate into a number and time range.
+    const candidateParts = computed(() => {
+      const fullCandidate = cleanedRuntableClosestPosition.value;
+      const parts = fullCandidate.split(" | ");
+      return {
+        number: parts[0] || "",
+        times: parts.length > 1 ? parts.slice(1).join(" | ") : ""
+      };
     });
 
     // Compute parsed batch start time from displayBatchStartTime.
@@ -330,7 +345,8 @@ export default {
       highlightCandidate,
       displayBatchDuration,
       computedTimeGapTo730AM,
-      cleanedRuntableClosestPosition
+      cleanedRuntableClosestPosition,
+      candidateParts
     };
   }
 };

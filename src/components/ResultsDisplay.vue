@@ -127,7 +127,7 @@ export default {
     const runData = computed(() => (gcStore.results ? gcStore.results.runs : []));
     const formattedSelectedGc = computed(() => {
       if (!gcStore.selectedGcData) return "";
-      return `${gcStore.selectedGcData.name} (Runtime: ${gcStore.selectedGcData.runTime})`;
+      return `${gcStore.selectedGcData.name} (Run Time: ${gcStore.selectedGcData.runTime})`;
     });
 
     const currentTime = ref(new Date());
