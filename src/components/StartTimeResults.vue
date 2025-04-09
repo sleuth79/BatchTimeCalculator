@@ -33,7 +33,10 @@
     >
       {{ candidateDisplayLabel }}
       <!-- Only the number is highlighted -->
+      <!-- Commented out yellow highlighting:
       <span class="result-value highlight-yellow">{{ candidateParts.number }}</span>
+      -->
+      <span class="result-value">{{ candidateParts.number }}</span>
       <!-- Display the time range normally if present -->
       <span v-if="candidateParts.times" class="result-value"> | {{ candidateParts.times }}</span>
     </p>
