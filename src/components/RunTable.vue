@@ -343,7 +343,8 @@ export default {
       return batchStart;
     });
 
-    // NEW: Compute the overall batch end time from the last run.
+    // NEW: Compute the overall batch end time from the last run,
+    // with an adjustment for the case where the end time indicates a rollover (i.e. after midnight).
     const computedBatchEndTime = computed(() => {
       if (!props.runs.length) return null;
       const lastRun = props.runs[props.runs.length - 1];
@@ -355,6 +356,10 @@ export default {
       batchStart.setHours(batchStartParsed.hour, batchStartParsed.minute, batchStartParsed.second, 0);
       let batchEnd = new Date(batchStart);
       batchEnd.setHours(parsed.hour, parsed.minute, parsed.second, 0);
+      // Adjust if the computed end time is before (or equal to) the start time.
+      if (batchEnd <= batchStart) {
+        batchEnd.setDate(batchEnd.getDate() + 1);
+      }
       return batchEnd;
     });
 
@@ -637,7 +642,6 @@ export default {
       finalBatchEndTime,
       delayedRunsStartTime,
       delayedRunsEndTime,
-      // Use the new computed property to conditionally apply highlighting.
       highlightCandidate,
       runTableTotalDuration,
       sequentialBatchDuration
