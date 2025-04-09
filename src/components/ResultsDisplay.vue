@@ -39,7 +39,8 @@
       </div>
     </div>
 
-    <!-- Toggle Button for Run Table -->
+    <!-- Toggle Button for Run Table (commented out so the table always displays) -->
+    <!--
     <template
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -47,10 +48,9 @@
         {{ showRunTable ? "Hide Run Table" : "View Run Table" }}
       </button>
     </template>
+    -->
     
-    <!-- Run Table: Always mount if runs exist; control visibility with v-show.
-         Bind the new v-model properties so that any changes in RunTable are passed upward.
-         We add a key so that the run table will re-render when the runs change. -->
+    <!-- Run Table: Always mount if runs exist; the v-show directive has been removed so it is always visible -->
     <div
       v-if="(results && results.runs && results.runs.length > 0) || delayedRunsExist || additionalRunsExist"
     >
@@ -65,7 +65,6 @@
         v-model:delayedRunsStartTime="delayedRunsStartTime"
         v-model:delayedRunsEndTime="delayedRunsEndTime"
         v-model:sequentialBatchDuration="sequentialBatchDuration"
-        v-show="showRunTable"
       />
     </div>
   </div>
@@ -115,7 +114,8 @@ export default {
       return additionalRunsExist.value || delayedRunsExist.value;
     });
 
-    const showRunTable = ref(false);
+    // (Optional) If you no longer need toggling, you can remove these variables.
+    const showRunTable = ref(true);
     const toggleRunTable = () => {
       showRunTable.value = !showRunTable.value;
     };
@@ -224,12 +224,15 @@ export default {
   font-weight: bold;
 }
 
+/* The toggle-run-table-button is commented out now */
+/*
 .toggle-run-table-button {
   width: 150px;
   text-align: center;
   display: block;
   margin-top: 15px;
 }
+*/
 
 /* Remove default margins for paragraph tags inside the results-display */
 .results-display p {
