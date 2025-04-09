@@ -280,23 +280,28 @@ export default {
       return d;
     });
 
-    // Compute parsed batch end time from displayBatchEndTime.
+    // Compute parsed batch end time from displayBatchEndTime with rollover adjustment.
     const computedBatchEndTime = computed(() => {
       if (!displayBatchEndTime.value) return null;
       const match = displayBatchEndTime.value.match(/^([\d:]+\s*(?:AM|PM))\s*\(/);
       if (!match) return null;
-      const timeStr = match[1].trim();
+      const timeStr = match[1].trim(); // e.g., "12:44:36 AM"
       const parts = timeStr.split(" ");
       if (parts.length < 2) return null;
-      const timePart = parts[0];
-      const ampm = parts[1];
+      const timePart = parts[0]; // "12:44:36"
+      const ampm = parts[1];     // "AM"
       const timeParts = timePart.split(":");
       let hour = parseInt(timeParts[0], 10);
       const minute = parseInt(timeParts[1], 10);
       if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
       if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
-      const d = new Date();
+      let d = new Date();
       d.setHours(hour, minute, 0, 0);
+      // Adjust if the computed end time is less than or equal to the batch start time.
+      const start = computedBatchStartTime.value;
+      if (start && d <= start) {
+        d.setDate(d.getDate() + 1);
+      }
       return d;
     });
 
