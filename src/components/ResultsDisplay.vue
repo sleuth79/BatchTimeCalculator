@@ -98,10 +98,6 @@ export default {
     const results = computed(() => gcStore.results);
     const timeDelayResults = computed(() => gcStore.timeDelayResults);
 
-    const batchStartTime = computed(() => gcStore.startTime.batchStartTime);
-    const batchStartTimeAMPM = computed(() => gcStore.startTime.batchStartTimeAMPM);
-    const wait15 = computed(() => gcStore.startTime.wait15);
-
     const additionalRunsExist = computed(() => {
       const tdr = timeDelayResults.value || {};
       return (
@@ -145,6 +141,7 @@ export default {
     );
     const currentDate = computed(() => new Date().toLocaleDateString());
 
+    // v-model properties for RunTable
     const selectedPositionLabel = ref("");
     const runtableClosestPositionFull = ref("");
     const initialBatchEndTime = ref("");
@@ -184,9 +181,6 @@ export default {
       formattedSelectedGc,
       results,
       timeDelayResults,
-      batchStartTime,
-      batchStartTimeAMPM,
-      wait15,
       showRunTable,
       toggleRunTable,
       runData,

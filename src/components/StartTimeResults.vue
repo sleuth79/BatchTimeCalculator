@@ -76,6 +76,7 @@ export default {
       type: [Boolean, Number],
       default: false
     },
+    // New prop that carries the full candidate string from RunTable
     runtableClosestPositionFull: {
       type: String,
       default: ""
@@ -240,42 +241,18 @@ export default {
       return removeDurationSeconds(rawDuration);
     });
 
-    // Parse the Batch End Time into a Date object.
-    const parsedBatchEndDateTime = computed(() => {
-      const batchEnd = displayBatchEndTime.value;
-      if (!batchEnd) return null;
-      const match = batchEnd.match(/^([\d:]+\s*(?:AM|PM))\s*\((.+)\)$/);
-      if (!match) return null;
-      const timePart = match[1].trim();
-      const datePart = match[2].trim();
-      return new Date(`${datePart} ${timePart}`);
-    });
-
-    const computedTimeGapTo730AM = computed(() => {
-      const endDT = parsedBatchEndDateTime.value;
-      if (!endDT) return "";
-      let target = new Date(endDT);
-      target.setHours(7, 30, 0, 0);
-      if (endDT > target) {
-        target.setDate(target.getDate() + 1);
-      }
-      const diffMS = target - endDT;
-      const diffHours = Math.floor(diffMS / (1000 * 60 * 60));
-      const diffMinutes = Math.floor((diffMS % (1000 * 60 * 60)) / (1000 * 60));
-      return `${diffHours} hours, ${diffMinutes} minutes`;
-    });
-
-    // Clean up the candidate string.
+    // --- New Code for Candidate String Processing ---
+    // Clean the candidate string by removing "Position " and reformatting.
     const cleanedRuntableClosestPosition = computed(() => {
       let candidate = props.runtableClosestPositionFull || "";
       if (candidate.startsWith("Position ")) {
         candidate = candidate.substring("Position ".length);
       }
+      // Replace a pattern like "13 : " with "13 | "
       candidate = candidate.replace(/^(\d+)\s*:\s*/, "$1 | ");
       return candidate;
     });
-
-    // Split the candidate into a number and time range.
+    // Split the candidate string into a number and a times part.
     const candidateParts = computed(() => {
       const fullCandidate = cleanedRuntableClosestPosition.value;
       const parts = fullCandidate.split(" | ");
@@ -284,6 +261,7 @@ export default {
         times: parts.length > 1 ? parts.slice(1).join(" | ") : ""
       };
     });
+    // --- End Candidate Processing ---
 
     // Compute parsed batch start time from displayBatchStartTime.
     const computedBatchStartTime = computed(() => {
@@ -322,7 +300,7 @@ export default {
       return d;
     });
 
-    // Compute highlightCandidate – true only if the batch starts before 4:00 PM and ends after 4:00 PM.
+    // Compute highlightCandidate – true only if the batch spans 4:00 PM.
     const highlightCandidate = computed(() => {
       const start = computedBatchStartTime.value;
       const end = computedBatchEndTime.value;
@@ -330,6 +308,20 @@ export default {
       let fourPM = new Date(start);
       fourPM.setHours(16, 0, 0, 0);
       return start < fourPM && end > fourPM;
+    });
+
+    const computedTimeGapTo730AM = computed(() => {
+      const endDT = computedBatchEndTime.value;
+      if (!endDT) return "";
+      let target = new Date(endDT);
+      target.setHours(7, 30, 0, 0);
+      if (endDT > target) {
+        target.setDate(target.getDate() + 1);
+      }
+      const diffMS = target - endDT;
+      const diffHours = Math.floor(diffMS / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMS % (1000 * 60 * 60)) / (1000 * 60));
+      return `${diffHours} hours, ${diffMinutes} minutes`;
     });
 
     return {
