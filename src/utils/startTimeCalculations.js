@@ -128,18 +128,18 @@ export function calculateStartTimeBatch(gc, runtime, currentRun, finalPosition, 
   const workDayEnd = new Date(batchStartTimeDate);
   workDayEnd.setHours(16, 0, 0, 0);
   
-  // Remove candidate selection logic from here:
+  // Remove candidate selection logic from here:=
   let closestPositionBefore4PM = null;
   
   const timeGapTo730AM = calculateTimeGapTo730AM(batchEndTimeDate, effectiveStartTime);
   const timeDelayRequired = computeTimeDelayRequired(batchEndTimeDate, effectiveStartTime);
   
   const runs = [];
-  if (wait15) {
+    if (wait15) {
     runs.push({
       position: "Wait",
       startTime: formatTimeWithAmPmAndSeconds(batchStartTimeDate),
-      endTime: formatTimeWithAmPmAndSeconds(effectiveStartTime)
+      endTime: formatTimeWithAmPmAndSeconds(effectiveStartTime),
     });
   }
   
