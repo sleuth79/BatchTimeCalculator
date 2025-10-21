@@ -1,25 +1,35 @@
 <template>
   <div class="start-time-results">
-    <!-- Always display Batch Start Time -->
+    <!-- Always display Batch Start Time (HIDDEN) -->
+    <!--
     <p>
       Batch Start Time:
       <span class="result-value">{{ displayBatchStartTime }}</span>
     </p>
-    <!-- Controls heading; shows the controls once both are set -->
+    -->
+
+    <!-- Controls heading (HIDDEN) -->
+    <!--
     <p>
       Controls:
       <span class="result-value">{{ displayControls }}</span>
     </p>
-    <!-- Always display Final Position -->
+    -->
+
+    <!-- Always display Final Position (HIDDEN) -->
+    <!--
     <p>
       Final Position:
       <span class="result-value">{{ displayFinalPosition }}</span>
     </p>
+    -->
+
     <!-- Display the computed batch duration (Batch Run Time) without seconds -->
     <p v-if="showDetailedResults && displayBatchDuration">
       Batch Run Time:
       <span class="result-value">{{ displayBatchDuration }}</span>
     </p>
+
     <!-- Batch End Time -->
     <p v-if="showDetailedResults && displayBatchEndTime">
       Batch End Time:
@@ -27,19 +37,16 @@
         {{ displayBatchEndTime }}
       </span>
     </p>
+
     <!-- Candidate heading (closest position) -->
     <p
       v-if="showDetailedResults && displayFinalPosition && highlightCandidate && candidateDisplayLabel !== 'This Batch Ends At:'"
     >
       {{ candidateDisplayLabel }}
-      <!-- Only the number is highlighted -->
-      <!-- Commented out yellow highlighting:
-      <span class="result-value highlight-yellow">{{ candidateParts.number }}</span>
-      -->
       <span class="result-value">{{ candidateParts.number }}</span>
-      <!-- Display the time range normally if present -->
       <span v-if="candidateParts.times" class="result-value"> | {{ candidateParts.times }}</span>
     </p>
+
     <!-- Display the time gap computed locally from the batch end time to 7:30 AM -->
     <div
       v-if="showDetailedResults && computedTimeGapTo730AM !== '' && !delayedRunsExist && !additionalRunsExistBool"
@@ -51,6 +58,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { computed } from "vue";
