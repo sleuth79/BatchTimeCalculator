@@ -7,12 +7,17 @@
            (timeDelayData.additionalRunsDuration !== null && timeDelayData.additionalRunsDuration !== '')"
     >
       <p class="section-heading"><strong>Additional Runs</strong></p>
+
       <div v-if="timeDelayData.sequentialBatchActive">
+        <!-- Final Position for Sequential Batch (HIDDEN) -->
+        <!--
         <p>
           Final Position for Sequential Batch:
           <strong>{{ timeDelayData.sequentialFinalPosition }}</strong>
         </p>
+        -->
       </div>
+
       <div>
         <!-- Always display headings for additional runs -->
         <p>
@@ -35,6 +40,7 @@
           <span class="result-date"> ({{ additionalRunsEndDate }})</span>
         </p>
       </div>
+
       <!-- Calculate and display the time gap from the additional runs end time to 7:30 AM -->
       <div v-if="!hasDelayedRuns">
         <hr class="time-gap-hr" />
@@ -44,7 +50,7 @@
         </p>
       </div>
     </div>
-    
+
     <!-- Delayed Runs Section -->
     <div v-if="hasDelayedRuns">
       <hr v-if="timeDelayData.sequentialBatchActive || timeDelayData.additionalRunsEndTime" />
