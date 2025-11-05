@@ -13,8 +13,8 @@
       <tbody>
         <tr v-if="runsHasWait">
           <td>{{ waitRow.computedTitle || waitRow.title || "15-Min Wait" }}</td>
-          <td>{{ waitRow.startTime }}</td>
-          <td>{{ waitRow.endTime }}</td>
+          <td>{{ waitRow.startTime.split(':').slice(0,2).join(':') + ' ' + waitRow.startTime.split(' ')[1] }}</td>
+          <td>{{ waitRow.endTime.split(':').slice(0,2).join(':') + ' ' + waitRow.endTime.split(' ')[1] }}</td>
           <td>Wait</td>
         </tr>
         <tr
@@ -23,8 +23,8 @@
           :class="{ highlight: highlightCandidate && runtableClosestCandidateIndex === idx }"
         >
           <td>{{ title }}</td>
-          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || "" }}</td>
-          <td>{{ (initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || "" }}</td>
+          <td>{{ ((initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || '').split(':').slice(0,2).join(':') + ' ' + (((initialBaseRuns[idx] && initialBaseRuns[idx].startTime) || '').split(' ')[1] || '') }}</td>
+          <td>{{ ((initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || '').split(':').slice(0,2).join(':') + ' ' + (((initialBaseRuns[idx] && initialBaseRuns[idx].endTime) || '').split(' ')[1] || '') }}</td>
           <td>{{ idx + 1 }}</td>
         </tr>
       </tbody>
@@ -45,8 +45,8 @@
         <tbody>
           <tr v-for="(row, idx) in sequentialRows" :key="'sequential-' + idx">
             <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
+            <td>{{ row.startTime.split(':').slice(0,2).join(':') + ' ' + row.startTime.split(' ')[1] }}</td>
+            <td>{{ row.endTime.split(':').slice(0,2).join(':') + ' ' + row.endTime.split(' ')[1] }}</td>
             <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
@@ -68,8 +68,8 @@
         <tbody>
           <tr v-for="(row, idx) in additionalRows" :key="'additional-' + idx">
             <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
+            <td>{{ row.startTime.split(':').slice(0,2).join(':') + ' ' + row.startTime.split(' ')[1] }}</td>
+            <td>{{ row.endTime.split(':').slice(0,2).join(':') + ' ' + row.endTime.split(' ')[1] }}</td>
             <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
@@ -98,8 +98,8 @@
         <tbody>
           <tr v-for="(row, idx) in prebatchRows" :key="'prebatch-' + idx">
             <td>{{ row.computedTitle }}</td>
-            <td>{{ row.startTime }}</td>
-            <td>{{ row.endTime }}</td>
+            <td>{{ row.startTime.split(':').slice(0,2).join(':') + ' ' + row.startTime.split(' ')[1] }}</td>
+            <td>{{ row.endTime.split(':').slice(0,2).join(':') + ' ' + row.endTime.split(' ')[1] }}</td>
             <td>{{ row.positionDisplay }}</td>
           </tr>
         </tbody>
@@ -682,7 +682,7 @@ export default {
   border-bottom: none;
 }
 .highlight {
-  background-color: yellow;
+  background-color: rgb(24, 255, 55);
 }
 .closest-position-heading {
   font-weight: bold;
