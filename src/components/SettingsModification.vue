@@ -1,8 +1,11 @@
 <template>
   <div class="settings-modification">
     <h3>Config Modification</h3>
+
     <!-- Update GC Section as a 3-column table -->
     <table class="update-table">
+      
+      <!-- Select GC + Update GC button -->
       <tr>
         <td class="label-cell">
           <label for="selectedGC">Select GC:</label>
@@ -10,13 +13,21 @@
         <td class="input-cell">
           <select id="selectedGC" v-model="selectedGC">
             <option disabled value="">-- Select GC --</option>
-            <option v-for="([key, value]) in sortedEntries" :key="key" :value="key">
+            <option
+              v-for="([key, value]) in sortedEntries"
+              :key="key"
+              :value="key"
+            >
               {{ value.name !== key ? value.name : key }}
             </option>
           </select>
         </td>
-        <td class="button-cell"></td>
+        <td class="button-cell">
+          <button @click="updateSettings">Update GC</button>
+        </td>
       </tr>
+
+      <!-- Run Time + Delete GC -->
       <tr>
         <td class="label-cell">
           <label for="newRunTime">Run Time (mm:ss):</label>
@@ -32,9 +43,11 @@
           />
         </td>
         <td class="button-cell">
-          <button @click="updateSettings">Update GC</button>
+          <button class="delete-button" @click="deleteGC">Delete GC</button>
         </td>
       </tr>
+
+      <!-- Type -->
       <tr>
         <td class="label-cell">
           <label for="newType">Type:</label>
@@ -46,10 +59,10 @@
             <option value="Sulphur">Sulphur</option>
           </select>
         </td>
-        <td class="button-cell">
-          <button class="delete-button" @click="deleteGC">Delete GC</button>
-        </td>
+        <td class="button-cell"></td>
       </tr>
+
+      <!-- Change Name -->
       <tr>
         <td class="label-cell">
           <label for="newName">Change Name:</label>
@@ -64,12 +77,15 @@
         </td>
         <td class="button-cell"></td>
       </tr>
+
     </table>
 
-    <!-- Add New GC Section as a 3-column table -->
+    <!-- Add New GC Section -->
     <div class="add-gc">
       <h3>Add New GC</h3>
       <table class="update-table">
+
+        <!-- New GC ID -->
         <tr>
           <td class="label-cell">
             <label for="newGCId">GC name:</label>
@@ -84,6 +100,8 @@
           </td>
           <td class="button-cell"></td>
         </tr>
+
+        <!-- New GC Run Time -->
         <tr>
           <td class="label-cell">
             <label for="newGCRunTime">Run Time (mm:ss):</label>
@@ -102,6 +120,8 @@
             <button @click="addGC">Add New GC</button>
           </td>
         </tr>
+
+        <!-- New GC Type -->
         <tr>
           <td class="label-cell">
             <label for="newGCType">Type:</label>
@@ -115,6 +135,7 @@
           </td>
           <td class="button-cell"></td>
         </tr>
+
       </table>
     </div>
   </div>
@@ -176,21 +197,13 @@ export default {
     validateUpdateRunTime(e) {
       const inputVal = e.target.value;
       const pattern = /^\d{1,2}:\d{2}$/;
-      if (!inputVal || !pattern.test(inputVal)) {
-        this.newRunTime = null;
-      } else {
-        this.newRunTime = inputVal;
-      }
+      this.newRunTime = pattern.test(inputVal) ? inputVal : null;
       this.newRunTimeInput = inputVal;
     },
     validateAddRunTime(e) {
       const inputVal = e.target.value;
       const pattern = /^\d{1,2}:\d{2}$/;
-      if (!inputVal || !pattern.test(inputVal)) {
-        this.newGCRunTime = null;
-      } else {
-        this.newGCRunTime = inputVal;
-      }
+      this.newGCRunTime = pattern.test(inputVal) ? inputVal : null;
       this.newGCRunTimeInput = inputVal;
     },
     updateSettings() {
@@ -203,36 +216,26 @@ export default {
         return;
       }
       const updatedConfig = { ...this.config };
-      if (updatedConfig[this.selectedGC]) {
-        updatedConfig[this.selectedGC] = {
-          ...updatedConfig[this.selectedGC],
-          runTime: this.newRunTime,
-          type: this.newType,
-          name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
-        };
-        this.$emit("update-config", updatedConfig);
-        alert("Config Updating");
-      } else {
-        alert("Selected GC not found in configuration.");
-      }
+      updatedConfig[this.selectedGC] = {
+        ...updatedConfig[this.selectedGC],
+        runTime: this.newRunTime,
+        type: this.newType,
+        name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
+      };
+      this.$emit("update-config", updatedConfig);
+      alert("Config Updating");
     },
     deleteGC() {
       if (!this.selectedGC) {
         alert("Please select a GC to delete.");
         return;
       }
-      if (!confirm("Are you sure you want to delete this GC?")) {
-        return;
-      }
+      if (!confirm("Are you sure you want to delete this GC?")) return;
       const updatedConfig = { ...this.config };
-      if (updatedConfig[this.selectedGC]) {
-        delete updatedConfig[this.selectedGC];
-        this.$emit("update-config", updatedConfig);
-        alert("Deleting GC");
-        this.selectedGC = "";
-      } else {
-        alert("Selected GC not found in configuration.");
-      }
+      delete updatedConfig[this.selectedGC];
+      this.$emit("update-config", updatedConfig);
+      alert("Deleting GC");
+      this.selectedGC = "";
     },
     addGC() {
       if (!this.newGCId || this.newGCRunTime === null || !this.newGCType) {
@@ -272,14 +275,12 @@ export default {
   border-radius: 8px;
 }
 
-/* Reduce top margin on headings */
 .settings-modification h3 {
   margin: 4px 0 8px 0;
   font-size: 1rem;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Uniform element styling with matching drop shadow */
 .input-cell input,
 .input-cell select,
 .button-cell button {
@@ -288,11 +289,9 @@ export default {
   font-size: 0.85rem;
   padding: 0 8px;
   box-sizing: border-box;
-  /* Matching drop shadow to the container's */
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Shared styling for inputs and selects */
 input,
 select {
   width: 100%;
@@ -301,7 +300,6 @@ select {
   border-radius: 4px;
 }
 
-/* Button styling to match the reset button style */
 button {
   border: 1px solid #ccc;
   background-color: var(--highlight-color, #007bff);
@@ -311,7 +309,6 @@ button {
   width: 100%;
   padding: 0 8px;
   transition: background-color 0.2s ease;
-  /* Matching drop shadow to the container's */
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -319,7 +316,6 @@ button:hover {
   background-color: var(--highlight-hover, #0056b3);
 }
 
-/* Specific styling for delete buttons */
 .delete-button {
   background-color: var(--highlight-color, #007bff);
   color: var(--text-highlight, #fff);
@@ -329,7 +325,6 @@ button:hover {
   background-color: var(--highlight-hover, #0056b3);
 }
 
-/* Table layout with adjusted column width and reduced gap */
 .update-table {
   width: 100%;
   table-layout: fixed;
