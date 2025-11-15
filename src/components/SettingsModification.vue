@@ -2,7 +2,7 @@
   <div class="settings-modification">
     <h3>Config Modification</h3>
 
-    <!-- Update GC Section as a 3-column table -->
+    <!-- Update GC Section -->
     <table class="update-table">
       
       <!-- Select GC + Update GC button -->
@@ -45,37 +45,6 @@
         <td class="button-cell">
           <button class="delete-button" @click="deleteGC">Delete GC</button>
         </td>
-      </tr>
-
-      <!-- Type -->
-      <tr>
-        <td class="label-cell">
-          <label for="newType">Type:</label>
-        </td>
-        <td class="input-cell">
-          <select id="newType" v-model="newType">
-            <option disabled value="">--Select--</option>
-            <option value="Energy">Energy</option>
-            <option value="Sulphur">Sulphur</option>
-          </select>
-        </td>
-        <td class="button-cell"></td>
-      </tr>
-
-      <!-- Change Name -->
-      <tr>
-        <td class="label-cell">
-          <label for="newName">Change Name:</label>
-        </td>
-        <td class="input-cell">
-          <input
-            type="text"
-            id="newName"
-            v-model="newName"
-            placeholder="New Name"
-          />
-        </td>
-        <td class="button-cell"></td>
       </tr>
 
     </table>
@@ -153,8 +122,6 @@ export default {
       selectedGC: "",
       newRunTimeInput: "",
       newRunTime: null,
-      newType: "",
-      newName: "",
       newGCId: "",
       newGCRunTimeInput: "",
       newGCRunTime: null,
@@ -168,15 +135,11 @@ export default {
         if (typeof currentRuntime === "number") {
           currentRuntime = this.convertDecimalToMmSs(currentRuntime);
         }
-        this.newRunTimeInput = currentRuntime !== undefined ? currentRuntime : "";
-        this.newRunTime = currentRuntime !== undefined ? currentRuntime : null;
-        this.newType = this.config[newVal].type || "";
-        this.newName = this.config[newVal].name || "";
+        this.newRunTimeInput = currentRuntime || "";
+        this.newRunTime = currentRuntime || null;
       } else {
         this.newRunTimeInput = "";
         this.newRunTime = null;
-        this.newType = "";
-        this.newName = "";
       }
     },
   },
@@ -189,71 +152,56 @@ export default {
     },
     handleNumericInput(e) {
       const allowedChars = /[0-9:]/;
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
-      if (!allowedChars.test(e.key)) {
-        e.preventDefault();
-      }
+      if (!allowedChars.test(e.key)) e.preventDefault();
     },
     validateUpdateRunTime(e) {
-      const inputVal = e.target.value;
-      const pattern = /^\d{1,2}:\d{2}$/;
-      this.newRunTime = pattern.test(inputVal) ? inputVal : null;
-      this.newRunTimeInput = inputVal;
+      const val = e.target.value;
+      this.newRunTime = /^\d{1,2}:\d{2}$/.test(val) ? val : null;
+      this.newRunTimeInput = val;
     },
     validateAddRunTime(e) {
-      const inputVal = e.target.value;
-      const pattern = /^\d{1,2}:\d{2}$/;
-      this.newGCRunTime = pattern.test(inputVal) ? inputVal : null;
-      this.newGCRunTimeInput = inputVal;
+      const val = e.target.value;
+      this.newGCRunTime = /^\d{1,2}:\d{2}$/.test(val) ? val : null;
+      this.newGCRunTimeInput = val;
     },
     updateSettings() {
-      if (!this.selectedGC) {
-        alert("Please select a GC to update.");
-        return;
-      }
-      if (!this.newRunTime) {
-        alert("Please enter a valid run time in mm:ss format. Include a colon");
-        return;
-      }
+      if (!this.selectedGC) return alert("Please select a GC to update.");
+      if (!this.newRunTime) return alert("Please enter a valid mm:ss run time.");
+
       const updatedConfig = { ...this.config };
-      updatedConfig[this.selectedGC] = {
-        ...updatedConfig[this.selectedGC],
-        runTime: this.newRunTime,
-        type: this.newType,
-        name: this.newName ? this.newName : updatedConfig[this.selectedGC].name,
-      };
+      updatedConfig[this.selectedGC].runTime = this.newRunTime;
+
       this.$emit("update-config", updatedConfig);
       alert("Config Updating");
     },
     deleteGC() {
-      if (!this.selectedGC) {
-        alert("Please select a GC to delete.");
-        return;
-      }
-      if (!confirm("Are you sure you want to delete this GC?")) return;
+      if (!this.selectedGC) return alert("Select a GC to delete.");
+      if (!confirm("Are you sure?")) return;
+
       const updatedConfig = { ...this.config };
       delete updatedConfig[this.selectedGC];
+
       this.$emit("update-config", updatedConfig);
       alert("Deleting GC");
       this.selectedGC = "";
     },
     addGC() {
-      if (!this.newGCId || this.newGCRunTime === null || !this.newGCType) {
-        alert("Please fill in all fields to add a new GC. Include a colon in the run time.");
+      if (!this.newGCId || !this.newGCRunTime || !this.newGCType) {
+        alert("Fill in all fields to add.");
         return;
       }
       const updatedConfig = { ...this.config };
-      if (updatedConfig[this.newGCId]) {
-        alert("A GC with that name already exists.");
-        return;
-      }
+      if (updatedConfig[this.newGCId]) return alert("GC already exists.");
+
       updatedConfig[this.newGCId] = {
         name: this.newGCId,
         runTime: this.newGCRunTime,
         type: this.newGCType,
       };
+
       this.$emit("update-config", updatedConfig);
       alert("Adding New GC");
+
       this.newGCId = "";
       this.newGCRunTimeInput = "";
       this.newGCRunTime = null;
@@ -264,6 +212,7 @@ export default {
 </script>
 
 <style scoped>
+/* unchanged styling */
 .settings-modification {
   margin: 5px 0;
   padding: 8px 12px;
@@ -278,7 +227,6 @@ export default {
 .settings-modification h3 {
   margin: 4px 0 8px 0;
   font-size: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .input-cell input,
@@ -292,10 +240,8 @@ export default {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-input,
-select {
+input, select {
   width: 100%;
-  margin: 2px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -303,51 +249,40 @@ select {
 button {
   border: 1px solid #ccc;
   background-color: var(--highlight-color, #007bff);
-  color: var(--text-highlight, #fff);
-  cursor: pointer;
+  color: #fff;
   border-radius: 4px;
   width: 100%;
-  padding: 0 8px;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 button:hover {
   background-color: var(--highlight-hover, #0056b3);
 }
 
-.delete-button {
-  background-color: var(--highlight-color, #007bff);
-  color: var(--text-highlight, #fff);
-}
-
 .delete-button:hover {
-  background-color: var(--highlight-hover, #0056b3);
+  background-color: #c0392b;
 }
 
 .update-table {
   width: 100%;
-  table-layout: fixed;
-  border-collapse: separate;
   border-spacing: 0 4px;
-  margin-bottom: 10px;
 }
 
 .label-cell {
-  width: 21.5%;
-  text-align: left;
+  width: 22%;
   font-weight: bold;
 }
 
 .input-cell {
-  width: 33.3%;
+  width: 33%;
   padding-right: 6px;
 }
 
 .button-cell {
-  width: 33.3%;
-  text-align: center;
+  width: 33%;
   padding-left: 6px;
+  text-align: center;
 }
 
 .add-gc {
